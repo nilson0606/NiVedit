@@ -1,0 +1,182 @@
+<div id="app">
+  <header>
+    <div class="logo">Ni<span>Vedit</span></div>
+    <div class="ver" id="verTag">—</div>
+    <button class="gh" id="langBtn" data-nt title="English / 繁體中文"
+            style="padding:3px 9px;font-size:12px;line-height:1.4">EN</button>
+    <button class="gh" id="themeBtn" type="button" data-nt aria-label="白天模式" aria-pressed="false" title="切換至白天模式">☾ 夜間模式</button>
+    <div class="badge" id="envBadge">檢查瀏覽器支援中…</div>
+    <div class="spacer"></div>
+    <div class="tc">總長 <b id="totalDur">00:00.0</b></div>
+    <button id="btnExport" class="pri">匯出影片</button>
+  </header>
+
+  <main>
+    <!-- ── 左：片段 ─────────────────────── -->
+    <aside id="left">
+      <div class="ph">專案</div>
+      <div id="projbar">
+        <div id="projName" data-nt>未命名（尚未儲存）</div>
+        <div class="pbtns">
+          <button class="gh" id="btnProjNew" title="清空目前內容，開始新的專案">新建</button>
+          <button class="gh" id="btnProjOpen" title="開啟已儲存的專案">開啟</button>
+          <button class="gh" id="btnProjSave" title="儲存到瀏覽器（連素材一起）">儲存…</button>
+          <button class="gh" id="btnProjSaveAs" title="另存成新的專案">另存</button>
+        </div>
+      </div>
+      <div class="ph">片段 <span class="spacer"></span><span id="clipCount" style="font-weight:400">0</span></div>
+      <div class="pb">
+        <div class="drop" id="drop">拖放影片 / 圖片 / 音樂到這裡<br>或點擊選擇檔案
+          <div class="hint" style="margin-top:5px">音檔會自動放到音軌，SRT 會變成字幕</div></div>
+        <div id="clipList" style="margin-top:10px"></div>
+      </div>
+      <div class="ph" id="asrHead" title="點一下可以收起來">AI 字幕
+        <span class="spacer"></span><span id="asrState" style="font-weight:400">—</span>
+        <span id="asrFold" style="font-weight:400;color:var(--fg3)">▾</span></div>
+      <div class="pb" id="asrbox"></div>
+    </aside>
+
+    <!-- ── 中：預覽 ─────────────────────── -->
+    <section id="center">
+      <div id="stage">
+        <canvas id="preview" width="1920" height="1080"></canvas>
+        <div id="empty">
+          <b>還沒有素材</b>
+          <div>從左邊加入影片就可以開始剪了</div>
+        </div>
+      </div>
+
+      <div id="transport">
+        <button id="playBtn" title="播放 / 暫停（空白鍵）">▶</button>
+        <button class="gh" id="btnStart" title="回到開頭">⏮</button>
+        <button class="gh" id="btnEnd" title="跳到結尾">⏭</button>
+        <div class="tc"><b id="curTime">00:00.0</b> / <span id="endTime">00:00.0</span></div>
+        <input type="range" id="seekBar" min="0" max="1000" step="1" value="0"
+               title="拖曳可跳到影片任何位置" style="flex:1;min-width:110px;margin:0 6px">
+        <button class="gh" id="btnAddImage" title="把圖片插進影片軌，佔一段時間">＋ 圖片</button>
+        <button class="gh" id="btnAddOverlay" title="把圖片疊在畫面上方，底下影片照播">＋ 疊圖</button>
+        <button class="gh" id="btnAddSub" title="匯入 SRT 字幕檔，或在字幕軌雙擊新增一句">＋ 字幕</button>
+        <button class="gh" id="btnAddTitle">＋ 標題</button>
+        <button class="gh" id="btnAddMusic">＋ 音軌</button>
+        <button class="gh" id="btnProj">專案設定</button>
+      </div>
+
+      <!-- ── 時間軸 ────────────────────── -->
+      <div id="tlgrip" title="上下拖曳可以調整時間軸區塊的高度"></div>
+      <div id="tl">
+        <div id="tlbar">
+          <span>時間軸</span>
+          <span class="spacer" style="flex:1"></span>
+          <button class="gh" id="btnUndo" disabled>↶ 復原</button>
+          <button class="gh" id="btnRedo" disabled>↷ 重做</button>
+          <span class="hint" style="margin-right:6px">滾輪左右捲動 · Ctrl＋滾輪縮放</span>
+          <span>縮放</span>
+          <input type="range" id="zoom" min="2" max="400" value="80" style="width:110px">
+          <button class="gh" id="btnFit" title="讓整支影片剛好塞進視窗">符合視窗</button>
+          <button class="gh" id="btnSplit" title="在播放頭切開目前片段">✂ 分割</button>
+          <button class="gh" id="btnDel" title="刪除選取項目（Delete）">刪除</button>
+        </div>
+        <div id="tlwrap">
+          <div id="tlinner">
+            <div id="ruler"></div>
+            <div class="trk" id="trkVideo" data-tk="video"></div>
+            <div class="trk" id="trkOver"  data-tk="over"></div>
+            <div class="trk" id="trkSub"   data-tk="sub"></div>
+            <div class="trk" id="trkTitle" data-tk="title"></div>
+            <div class="trk" id="trkMusic" data-tk="music"></div>
+            <div id="head" style="left:0"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 右：屬性 ─────────────────────── -->
+    <aside id="right">
+      <div class="ph" id="propTitle">屬性</div>
+      <div class="pb" id="prop"></div>
+    </aside>
+  </main>
+</div>
+
+<div id="mask">
+  <div class="modal">
+    <h3 id="mTitle">匯出中</h3>
+    <div class="hint" id="mSub">正在合成影格…</div>
+    <div class="bar"><i id="mBar"></i></div>
+    <div class="log" id="mLog">—</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button id="mCancel">取消</button>
+      <button id="mClose" class="pri hide">完成</button>
+    </div>
+  </div>
+</div>
+
+<div id="pmask">
+  <div class="modal" style="width:520px">
+    <h3>專案</h3>
+    <div class="hint" id="pquota" style="margin-bottom:8px"></div>
+    <div id="pbody" style="max-height:46vh;overflow:auto"></div>
+    <div id="pfoot">
+      <div style="display:flex;gap:6px;margin-top:12px;border-top:1px solid var(--line);padding-top:10px">
+        <button id="pExport" style="flex:1">匯出專案檔</button>
+        <button id="pImport" style="flex:1">匯入專案檔</button>
+        <button id="pGC" title="刪掉沒有任何專案在使用的素材">清理素材</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button id="pClose" class="pri">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div id="gmask">
+  <div class="modal" style="width:min(900px,94vw)">
+    <h3 id="gTitle">選擇</h3>
+    <div class="hint" style="margin-bottom:8px">點一下就直接套用，可以邊看邊挑。</div>
+    <div class="chips" id="gTabs"></div>
+    <div id="gGrid"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button id="gClose" class="pri">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div id="qmask">
+  <div class="modal" style="width:440px">
+    <h3 id="qTitle">請選擇</h3>
+    <div class="hint" id="qMsg" style="line-height:1.7"></div>
+    <div id="qBtns" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"></div>
+  </div>
+</div>
+
+<div id="emask">
+  <div class="modal" style="width:min(760px,95vw)">
+    <h3>字幕編輯器 <span class="spacer"></span><span id="eCount" class="hint"></span></h3>
+    <div class="etools">
+      <input id="eFind" placeholder="找這個字…" style="flex:1;min-width:90px">
+      <input id="eRepl" placeholder="換成…" style="flex:1;min-width:90px">
+      <button class="gh" id="eRepl2">整批取代</button>
+      <button class="gh" id="eTW" title="把還是簡體的句子轉成台灣正體">轉台灣正體</button>
+      <button class="gh" id="eAdd" title="在播放頭的位置插一句">＋ 一句</button>
+      <button class="gh" id="eSrt">存成 SRT</button>
+      <button class="gh" id="eClear" title="刪掉全部字幕">清空</button>
+    </div>
+    <div id="eList"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <span class="hint">改完直接關掉就好，預覽會即時跟著變。時間格式：時:分:秒,毫秒</span>
+      <span class="spacer"></span>
+      <button id="eClose" class="pri">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="fileAny" multiple class="hide"
+       accept="video/*,audio/*,image/*,.srt,.vtt,.mp4,.mov,.webm,.mkv,.m4v,.mp3,.wav,.m4a,.aac,.ogg,.flac">
+<input type="file" id="fileVideo" accept="video/*" multiple class="hide">
+<input type="file" id="fileAudio" accept="audio/*" multiple class="hide">
+<input type="file" id="fileImage" accept="image/*" multiple class="hide">
+<input type="file" id="fileOverlay" accept="image/*" multiple class="hide">
+<input type="file" id="fileProj" accept=".nvproj" class="hide">
+<input type="file" id="fileSub" accept=".srt,.txt,text/plain" multiple class="hide">
+<div id="videoPool" class="hide"></div>
