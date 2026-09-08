@@ -1022,4 +1022,5 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 關鍵偵開啟/關閉	Keyframes on/off
 開啟/關閉	On/off
 標題構圖	Title framing
-標題構圖（起點）	Title framing (start)`;
+標題構圖（起點）	Title framing (start)
+快速對位（終點）	Quick align (end)`;

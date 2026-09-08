@@ -914,6 +914,12 @@ function kfGroup(o, id, props, hintOn){
            + `<div class="hint">起點之前維持起點的樣子，終點之後維持終點的樣子。
               兩個菱形標記也可以直接在時間軸的方塊上拖，或在方塊上連點兩下把最近的搬過來。</div>`
            + '<div class="hint">有底色與 ◆ 的項目已設關鍵幀；藍色是起點，紫色是終點。</div>'
+           + (props.some(q => q[0] === 'x') && props.some(q => q[0] === 'y')
+             ? '<div class="row kf-row" data-kf-role="end"><label>快速對位（終點）</label><div class="f">'
+               + '<div class="nine" id="' + id + 'Knine">'
+               + [0.15, 0.5, 0.85].flatMap((y, r) => (id === 't' ? [0.1, 0.5, 0.9] : [0.12, 0.5, 0.88])
+                 .map((x, c) => '<button data-p="' + x + ',' + y + '">' + ['↖','↑','↗','←','●','→','↙','↓','↘'][r * 3 + c] + '</button>')).join('')
+               + '</div></div></div>' : '')
            + props.map(q => rowRange(id + 'K' + q[0], q[1], q[2], q[3], q[4], end(q[0], q[5]), q[6])).join('')
            + rowSel(id + 'Ke', '緩動', EASES, e0)
            + `<div class="hint">${hintOn}</div>`
@@ -939,6 +945,15 @@ function kfBind(o, id, props, after){
     else kfClear(o);
     if (after) after();
     render(); refreshProp();
+  });
+  $$('#' + id + 'Knine button').forEach(b => b.onclick = () => {
+    const [x, y] = b.dataset.p.split(',').map(Number);
+    pushUndo();
+    // 終點對位只改終點位置，保留起點、緩動、時間窗與其他動畫屬性。
+    kfSetEnd(o, 'x', x);
+    kfSetEnd(o, 'y', y);
+    if (after) after();
+    render(); refreshProp(); markDirty(400);
   });
   props.forEach(q => bind(id + 'K' + q[0], 'input', v => {
     kfSetEnd(o, q[0], +v);

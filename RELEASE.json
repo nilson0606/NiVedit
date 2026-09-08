@@ -1,6 +1,6 @@
 {
-  "version": "9.3",
-  "html_sha256": "cb108b313d69e5ee35690775aa9ef87547ed48876e105e9a1d5fb1648cb72436",
-  "html_bytes": 958418,
-  "verification": "Edge dark/light comparison: only Volume curve section enhanced; all other audio headings/help text exactly match v9.1. No audio logic change."
+  "version": "9.4",
+  "html_sha256": "d6ff9dd8948d81ed22c27cd9ed807213bba76895bde029d7a40020515d919f00",
+  "html_bytes": 959385,
+  "verification": "Edge: 237 checks passed (end alignment 90, motion 67, keyframe UI 24, title rotation 15, i18n 41), plus 16 GIF checks including real MP4 export. Dark/light screenshots inspected."
 }
