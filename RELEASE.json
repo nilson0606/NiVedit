@@ -1,6 +1,6 @@
 {
-  "version": "9.5",
-  "html_sha256": "6218e81fa703882f4705c7605f0b173ae37a9375230122609b9084601189cb64",
-  "html_bytes": 963191,
-  "verification": "Edge: 279 checks passed, plus 16 GIF checks with real MP4 export. Native-save adapter tests use actual OPFS streams; OS overwrite dialog itself is not automated. Dark/light UI inspected."
+  "version": "9.6",
+  "html_sha256": "16feea2262ef57f4f0b3256f684d4cb301c5843301cb4a235c6be356986184f2",
+  "html_bytes": 964449,
+  "verification": "Edge: 88 checks passed (subtitle editing 20, dual subtitles 27, i18n 41), plus 16 GIF checks and actual subtitle/GIF MP4 exports."
 }

@@ -4983,7 +4983,8 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 此瀏覽器不支援選擇儲存位置，已交由瀏覽器下載。	This browser cannot choose a save location. The file was sent to browser downloads.
 影片編碼完成	Video encoding complete
 影片編碼完成，請選擇位置儲存。	Video encoding complete. Choose a location to save.
-儲存失敗：	Saving failed: `;
+儲存失敗：	Saving failed: 
+這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。	This cue overlaps another cue on the same track, which may appear in the preview instead. Adjust the timing or move it to the other subtitle track.`;
 
 </script>
 <script>
@@ -5204,7 +5205,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -6089,6 +6090,7 @@ function addSub(startAt,track=subtitleTargetTrack()){
   A.sel = { type:'sub', id:c.id };
   seekTo(s + 0.2);
   render(); refreshProp();
+  return c;
 }
 /** 整批位移，用來把某一段的字幕對到正確位置 */
 function shiftSubs(delta){
@@ -9526,6 +9528,8 @@ function refreshProp(){
       `<div class="grp"><h4>這一句</h4>
         ${rowSel('sTrack','字幕軌道',[['1','字幕上軌'],['0','字幕下軌']],String(subTrack(c)))}
         <div class="hint">兩軌字幕可同時顯示，樣式與位置各自設定；也可拖曳字幕方塊換軌。</div>
+        ${A.subs.some(x => x.id !== c.id && subTrack(x) === subTrack(c) && x.start < c.end && x.end > c.start)
+          ? '<div class="hint" style="color:var(--warn)" id="subOverlapHint">這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。</div>' : ''}
         <textarea id="sText" rows="3">${esc(c.text)}</textarea>
         <div class="hint" style="margin-top:5px">太長會自動換行；按 Enter 可強制換行。</div></div>
        <div class="grp"><h4>時間</h4>
@@ -9567,9 +9571,10 @@ function refreshProp(){
         <button id="sClear" style="width:100%;margin-top:6px">清空全部字幕</button></div>
        <button id="sDel" style="width:100%">刪除這一句</button>`;
     bind('sTrack','change',v=>{pushUndo();c.track=+v;render();refreshProp();markDirty(400);});
-    bind('sText','input', v => { c.text = v; renderTimeline(); show(); });
+    bind('sText','input', v => { c.text = v; renderTimeline(); show(); markDirty(); });
     bind('sStart','input', v => { c.start = clamp(+v, 0, c.end - 0.2); renderTimeline(); });
     bind('sEnd','input',   v => { c.end = Math.max(c.start + 0.2, +v); renderTimeline(); });
+    ['sStart','sEnd'].forEach(id => bind(id,'change', () => refreshProp()));
     on('sStartNow', () => { const len = c.end - c.start; c.start = A.playhead; c.end = c.start + len; render(); refreshProp(); });
     on('sEndNow',   () => { c.end = Math.max(c.start + 0.2, A.playhead); render(); refreshProp(); });
     const sorted = [...A.subs].filter(x=>subTrack(x)===subTrack(c)).sort((a,b)=>a.start-b.start);
@@ -9898,7 +9903,7 @@ function initUI(){
   });
 
   $('#tlinner').addEventListener('mousedown', e => {
-    if (e.target.closest('.blk,.tblk,.mblk')) return;
+    if (e.target.closest('.blk,.tblk,.mblk,.sblk,.oblk')) return;
     scrub(e);
     const mv = ev => scrub(ev);
     const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
@@ -12124,18 +12129,28 @@ let _seSel = null;
 
 function openSubEditor(){
   if (!A.subs.length && !confirm('目前沒有字幕，還是要開編輯器嗎？（可以手動一句一句加）')) return;
+  if (A.sel.type === 'sub' && A.subs.some(c => c.id === A.sel.id)) _seSel = A.sel.id;
   $('#emask').classList.add('on');
   renderSubEditor();
+  focusSubEditor(_seSel);
 }
-function closeSubEditor(){ $('#emask').classList.remove('on'); }
+function closeSubEditor(){ $('#emask').classList.remove('on'); renderTimeline(); refreshProp(); markDirty(); }
+function focusSubEditor(id, selectText=false){
+  const row = Array.from($('#eList').querySelectorAll('.scue')).find(el => el.dataset.id === id);
+  if (!row) return;
+  row.scrollIntoView({block:'nearest'});
+  const input = row.querySelector('.tx');
+  input.focus({preventScroll:true});
+  if (selectText) input.select();
+}
 
 function renderSubEditor(keepScroll){
   const box = $('#eList');
   if (!box) return;
   const top = keepScroll ? box.scrollTop : 0;
-  A.subs.sort((a, b) => a.start - b.start);
+  const cues = [...A.subs].sort((a, b) => a.start - b.start);
   $('#eCount').textContent = A.subs.length + ' 句';
-  box.innerHTML = A.subs.map((c, i) => `
+  box.innerHTML = cues.map((c, i) => `
     <div class="scue${_seSel === c.id ? ' sel' : ''}" data-id="${c.id}">
       <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕上軌</option><option value="0"${subTrack(c)===0?' selected':''}>字幕下軌</option></select></div>
       <div class="tm">
@@ -12176,7 +12191,7 @@ function renderSubEditor(keepScroll){
       pushUndo();
       if (a === 'del') A.subs = A.subs.filter(y => y.id !== id);
       if (a === 'merge'){
-        const i = A.subs.indexOf(x), nx = A.subs.slice(i+1).find(c=>subTrack(c)===subTrack(x));
+        const i = cues.findIndex(c => c.id === id), nx = cues.slice(i+1).find(c=>subTrack(c)===subTrack(x));
         if (nx){ x.text = (x.text + ' ' + nx.text).trim(); x.end = nx.end; A.subs.splice(A.subs.indexOf(nx), 1); }
       }
       render(); refreshProp(); asrUpdateState(); renderSubEditor(true);
@@ -12234,7 +12249,12 @@ function initASR(){
     $('#asrFold').textContent = off ? '▸' : '▾';
   });
   on('eClose', closeSubEditor);
-  on('eAdd',   () => { addSub(A.playhead); renderSubEditor(true); asrUpdateState(); });
+  on('eAdd', () => {
+    const cue = addSub(A.playhead);
+    _seSel = cue.id;
+    renderSubEditor(true); asrUpdateState();
+    focusSubEditor(cue.id, true);
+  });
   on('eRepl2', subReplaceAll);
   on('eTW',    subToTWAll);
   on('eClear', subClearAll);

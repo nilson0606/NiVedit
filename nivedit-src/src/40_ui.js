@@ -1404,6 +1404,8 @@ function refreshProp(){
       `<div class="grp"><h4>這一句</h4>
         ${rowSel('sTrack','字幕軌道',[['1','字幕上軌'],['0','字幕下軌']],String(subTrack(c)))}
         <div class="hint">兩軌字幕可同時顯示，樣式與位置各自設定；也可拖曳字幕方塊換軌。</div>
+        ${A.subs.some(x => x.id !== c.id && subTrack(x) === subTrack(c) && x.start < c.end && x.end > c.start)
+          ? '<div class="hint" style="color:var(--warn)" id="subOverlapHint">這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。</div>' : ''}
         <textarea id="sText" rows="3">${esc(c.text)}</textarea>
         <div class="hint" style="margin-top:5px">太長會自動換行；按 Enter 可強制換行。</div></div>
        <div class="grp"><h4>時間</h4>
@@ -1445,9 +1447,10 @@ function refreshProp(){
         <button id="sClear" style="width:100%;margin-top:6px">清空全部字幕</button></div>
        <button id="sDel" style="width:100%">刪除這一句</button>`;
     bind('sTrack','change',v=>{pushUndo();c.track=+v;render();refreshProp();markDirty(400);});
-    bind('sText','input', v => { c.text = v; renderTimeline(); show(); });
+    bind('sText','input', v => { c.text = v; renderTimeline(); show(); markDirty(); });
     bind('sStart','input', v => { c.start = clamp(+v, 0, c.end - 0.2); renderTimeline(); });
     bind('sEnd','input',   v => { c.end = Math.max(c.start + 0.2, +v); renderTimeline(); });
+    ['sStart','sEnd'].forEach(id => bind(id,'change', () => refreshProp()));
     on('sStartNow', () => { const len = c.end - c.start; c.start = A.playhead; c.end = c.start + len; render(); refreshProp(); });
     on('sEndNow',   () => { c.end = Math.max(c.start + 0.2, A.playhead); render(); refreshProp(); });
     const sorted = [...A.subs].filter(x=>subTrack(x)===subTrack(c)).sort((a,b)=>a.start-b.start);
@@ -1776,7 +1779,7 @@ function initUI(){
   });
 
   $('#tlinner').addEventListener('mousedown', e => {
-    if (e.target.closest('.blk,.tblk,.mblk')) return;
+    if (e.target.closest('.blk,.tblk,.mblk,.sblk,.oblk')) return;
     scrub(e);
     const mv = ev => scrub(ev);
     const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };

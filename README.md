@@ -1,4 +1,4 @@
-# NiVedit v9.5
+# NiVedit v9.6
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -8,7 +8,7 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Rotation sliders for video/image clips, PNG/GIF overlays and titles now range from -360 to +360 degrees at both keyframe endpoints. After encoding, choose a folder and filename with the native Save As dialog, which confirms replacement of existing files. Canceled or failed saves can be retried without re-encoding.
+Adding a subtitle now selects and focuses the new cue. Reopening the Subtitle Editor follows the timeline selection, and closing it refreshes the properties panel. Same-track overlapping cues are explained in the panel; existing AI subtitles and rendering priority are preserved.
 
 ## Features
 
@@ -28,7 +28,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v9.5 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v9.6 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -40,6 +40,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v9.5 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v9.6 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

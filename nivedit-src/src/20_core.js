@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -888,6 +888,7 @@ function addSub(startAt,track=subtitleTargetTrack()){
   A.sel = { type:'sub', id:c.id };
   seekTo(s + 0.2);
   render(); refreshProp();
+  return c;
 }
 /** 整批位移，用來把某一段的字幕對到正確位置 */
 function shiftSubs(delta){

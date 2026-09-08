@@ -877,18 +877,28 @@ let _seSel = null;
 
 function openSubEditor(){
   if (!A.subs.length && !confirm('目前沒有字幕，還是要開編輯器嗎？（可以手動一句一句加）')) return;
+  if (A.sel.type === 'sub' && A.subs.some(c => c.id === A.sel.id)) _seSel = A.sel.id;
   $('#emask').classList.add('on');
   renderSubEditor();
+  focusSubEditor(_seSel);
 }
-function closeSubEditor(){ $('#emask').classList.remove('on'); }
+function closeSubEditor(){ $('#emask').classList.remove('on'); renderTimeline(); refreshProp(); markDirty(); }
+function focusSubEditor(id, selectText=false){
+  const row = Array.from($('#eList').querySelectorAll('.scue')).find(el => el.dataset.id === id);
+  if (!row) return;
+  row.scrollIntoView({block:'nearest'});
+  const input = row.querySelector('.tx');
+  input.focus({preventScroll:true});
+  if (selectText) input.select();
+}
 
 function renderSubEditor(keepScroll){
   const box = $('#eList');
   if (!box) return;
   const top = keepScroll ? box.scrollTop : 0;
-  A.subs.sort((a, b) => a.start - b.start);
+  const cues = [...A.subs].sort((a, b) => a.start - b.start);
   $('#eCount').textContent = A.subs.length + ' 句';
-  box.innerHTML = A.subs.map((c, i) => `
+  box.innerHTML = cues.map((c, i) => `
     <div class="scue${_seSel === c.id ? ' sel' : ''}" data-id="${c.id}">
       <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕上軌</option><option value="0"${subTrack(c)===0?' selected':''}>字幕下軌</option></select></div>
       <div class="tm">
@@ -929,7 +939,7 @@ function renderSubEditor(keepScroll){
       pushUndo();
       if (a === 'del') A.subs = A.subs.filter(y => y.id !== id);
       if (a === 'merge'){
-        const i = A.subs.indexOf(x), nx = A.subs.slice(i+1).find(c=>subTrack(c)===subTrack(x));
+        const i = cues.findIndex(c => c.id === id), nx = cues.slice(i+1).find(c=>subTrack(c)===subTrack(x));
         if (nx){ x.text = (x.text + ' ' + nx.text).trim(); x.end = nx.end; A.subs.splice(A.subs.indexOf(nx), 1); }
       }
       render(); refreshProp(); asrUpdateState(); renderSubEditor(true);
@@ -987,7 +997,12 @@ function initASR(){
     $('#asrFold').textContent = off ? '▸' : '▾';
   });
   on('eClose', closeSubEditor);
-  on('eAdd',   () => { addSub(A.playhead); renderSubEditor(true); asrUpdateState(); });
+  on('eAdd', () => {
+    const cue = addSub(A.playhead);
+    _seSel = cue.id;
+    renderSubEditor(true); asrUpdateState();
+    focusSubEditor(cue.id, true);
+  });
   on('eRepl2', subReplaceAll);
   on('eTW',    subToTWAll);
   on('eClear', subClearAll);
