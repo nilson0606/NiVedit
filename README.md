@@ -1,10 +1,14 @@
-# NiVedit v9.1
+# NiVedit v9.2
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
 **Open the editor:** https://nilson0606.github.io/NiVedit/
 
 Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
+
+## Latest update
+
+Audio-track help text and section headings are larger and use higher-contrast colors in both dark and light modes. Audio behavior is unchanged.
 
 ## Features
 
@@ -24,7 +28,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v9.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v9.2 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -36,6 +40,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v9.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v9.2 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

@@ -1076,6 +1076,7 @@ function clipCropProps(c){
 
 function refreshProp(){
   const p = $('#prop'), s = A.sel;
+  p.classList.toggle('music-properties', s.type === 'music');
   if (s.type === 'clip'){
     const c = A.clips.find(x => x.id === s.id);
     if (!c){ A.sel = { type:'proj' }; return refreshProp(); }

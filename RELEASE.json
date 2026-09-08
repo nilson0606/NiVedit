@@ -1,6 +1,6 @@
 {
-  "version": "9.1",
-  "html_sha256": "a878da45a85154971147ad745277f9d8422deb305d81efb453c79a5a47be3c47",
-  "html_bytes": 958165,
-  "verification": "357 assertions passed in Microsoft Edge; published HTML matches the important v9.1 restore point byte-for-byte."
+  "version": "9.2",
+  "html_sha256": "38fc67b038c3ba6b06c6b202ce506749aacadf68ee73a127c42e274c1a1b4f2a",
+  "html_bytes": 958463,
+  "verification": "Edge: audio-panel dark/light contrast and scope checks; existing i18n 41/41 and volume-curve 20/20 passed. Original v9.1 restore point preserved."
 }
