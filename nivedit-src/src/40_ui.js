@@ -1076,7 +1076,6 @@ function clipCropProps(c){
 
 function refreshProp(){
   const p = $('#prop'), s = A.sel;
-  p.classList.toggle('music-properties', s.type === 'music');
   if (s.type === 'clip'){
     const c = A.clips.find(x => x.id === s.id);
     if (!c){ A.sel = { type:'proj' }; return refreshProp(); }
@@ -1563,7 +1562,7 @@ function refreshProp(){
         ${rowRange('mFi','淡入',0,10,0.1,m.fadeIn,' 秒')}
         ${rowRange('mFo','淡出',0,10,0.1,m.fadeOut,' 秒')}
         <div class="hint">想讓某段只剩配樂，把那段影片設成「原聲靜音」。多條音軌會直接疊加。</div></div>
-       <div class="grp"><h4>音量曲線</h4>
+       <div class="grp volume-curve-help"><h4>音量曲線</h4>
         <div class="row"><div class="f" style="gap:6px">
           <button class="gh" id="mVkAdd" style="flex:1">在播放頭加一點</button>
           <button class="gh" id="mVkClr"${(m.vk && m.vk.length) ? '' : ' disabled'}>清除曲線</button>

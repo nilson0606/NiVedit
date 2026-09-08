@@ -235,9 +235,9 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .row>.f{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .row .val{font-size:11px;color:var(--fg3);width:44px;text-align:right;font-variant-numeric:tabular-nums;flex:none}
 .hint{font-size:11px;color:var(--fg3);line-height:1.6}
-/* 音軌操作說明使用高對比文字，日夜模式皆保持清楚。 */
-#prop.music-properties .hint{font-size:13px;color:var(--fg);line-height:1.75}
-#prop.music-properties .grp>h4{font-size:14px;font-weight:700;color:var(--fg)}
+/* 僅音量曲線區塊加強可讀性，其他音軌說明維持原樣。 */
+#prop .volume-curve-help .hint{font-size:13px;color:var(--fg);line-height:1.75}
+#prop .volume-curve-help>h4{font-size:14px;font-weight:700;color:var(--fg)}
 .row .f .hint{white-space:nowrap}
 .trx .tname{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:9px;
   color:#cfe0ff;background:rgba(16,18,22,.75);border-radius:3px;padding:1px 4px;white-space:nowrap}
@@ -5192,7 +5192,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -9186,7 +9186,6 @@ function clipCropProps(c){
 
 function refreshProp(){
   const p = $('#prop'), s = A.sel;
-  p.classList.toggle('music-properties', s.type === 'music');
   if (s.type === 'clip'){
     const c = A.clips.find(x => x.id === s.id);
     if (!c){ A.sel = { type:'proj' }; return refreshProp(); }
@@ -9673,7 +9672,7 @@ function refreshProp(){
         ${rowRange('mFi','淡入',0,10,0.1,m.fadeIn,' 秒')}
         ${rowRange('mFo','淡出',0,10,0.1,m.fadeOut,' 秒')}
         <div class="hint">想讓某段只剩配樂，把那段影片設成「原聲靜音」。多條音軌會直接疊加。</div></div>
-       <div class="grp"><h4>音量曲線</h4>
+       <div class="grp volume-curve-help"><h4>音量曲線</h4>
         <div class="row"><div class="f" style="gap:6px">
           <button class="gh" id="mVkAdd" style="flex:1">在播放頭加一點</button>
           <button class="gh" id="mVkClr"${(m.vk && m.vk.length) ? '' : ' disabled'}>清除曲線</button>

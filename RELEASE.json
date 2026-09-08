@@ -1,6 +1,6 @@
 {
-  "version": "9.2",
-  "html_sha256": "38fc67b038c3ba6b06c6b202ce506749aacadf68ee73a127c42e274c1a1b4f2a",
-  "html_bytes": 958463,
-  "verification": "Edge: audio-panel dark/light contrast and scope checks; existing i18n 41/41 and volume-curve 20/20 passed. Original v9.1 restore point preserved."
+  "version": "9.3",
+  "html_sha256": "cb108b313d69e5ee35690775aa9ef87547ed48876e105e9a1d5fb1648cb72436",
+  "html_bytes": 958418,
+  "verification": "Edge dark/light comparison: only Volume curve section enhanced; all other audio headings/help text exactly match v9.1. No audio logic change."
 }

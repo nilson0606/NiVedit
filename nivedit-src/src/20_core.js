@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
