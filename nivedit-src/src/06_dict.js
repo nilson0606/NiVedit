@@ -1023,4 +1023,15 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 開啟/關閉	On/off
 標題構圖	Title framing
 標題構圖（起點）	Title framing (start)
-快速對位（終點）	Quick align (end)`;
+快速對位（終點）	Quick align (end)
+選擇位置並儲存	Choose location and save
+選擇資料夾與檔名；同名檔案會詢問是否覆蓋，不覆蓋請改名。	Choose a folder and filename. Confirm replacement for an existing file, or decline and rename.
+影片已編碼完成，尚未儲存。	Video encoding is complete. The file has not been saved yet.
+正在儲存影片…	Saving video…
+影片已儲存。	Video saved.
+已取消本次儲存，可重新選擇位置或改名。	Save canceled. You can choose another location or filename.
+儲存失敗，可重試；影片不需重新編碼。	Saving failed. Retry without encoding the video again.
+此瀏覽器不支援選擇儲存位置，已交由瀏覽器下載。	This browser cannot choose a save location. The file was sent to browser downloads.
+影片編碼完成	Video encoding complete
+影片編碼完成，請選擇位置儲存。	Video encoding complete. Choose a location to save.
+儲存失敗：	Saving failed: `;

@@ -1,6 +1,6 @@
 {
-  "version": "9.4",
-  "html_sha256": "d6ff9dd8948d81ed22c27cd9ed807213bba76895bde029d7a40020515d919f00",
-  "html_bytes": 959385,
-  "verification": "Edge: 237 checks passed (end alignment 90, motion 67, keyframe UI 24, title rotation 15, i18n 41), plus 16 GIF checks including real MP4 export. Dark/light screenshots inspected."
+  "version": "9.5",
+  "html_sha256": "6218e81fa703882f4705c7605f0b173ae37a9375230122609b9084601189cb64",
+  "html_bytes": 963191,
+  "verification": "Edge: 279 checks passed, plus 16 GIF checks with real MP4 export. Native-save adapter tests use actual OPFS streams; OS overwrite dialog itself is not automated. Dark/light UI inspected."
 }

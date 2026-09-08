@@ -41,6 +41,7 @@ function mShow(title, sub){
   $('#mLog').textContent = '準備中…';
   $('#mCancel').classList.remove('hide');
   $('#mClose').classList.add('hide');
+  $('#mClose').textContent = '完成';
 }
 function mProg(pct, log){
   $('#mBar').style.width = clamp(pct, 0, 100).toFixed(1) + '%';
@@ -53,6 +54,66 @@ function mDone(title, sub, log){
   $('#mBar').style.width = '100%';
   $('#mCancel').classList.add('hide');
   $('#mClose').classList.remove('hide');
+}
+
+/* 完成編碼後再由使用者按儲存，保留原生檔案選擇器要求的 user activation。
+   Windows 另存視窗負責同名覆蓋確認；取消／拒絕覆蓋時不取得 handle，也不寫檔。 */
+function offerExportSave(blob, name){
+  const box = document.createElement('div');
+  box.style.marginTop = '16px';
+  const status = document.createElement('div');
+  status.className = 'hint'; status.style.marginTop = '10px';
+  status.setAttribute('role', 'status');
+  if (typeof window.showSaveFilePicker !== 'function'){
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    status.textContent = '此瀏覽器不支援選擇儲存位置，已交由瀏覽器下載。';
+    box.append(status); $('#mLog').append(box);
+    return;
+  }
+  $('#mClose').textContent = '關閉';
+  const button = document.createElement('button');
+  button.id = 'mSaveExport'; button.className = 'pri';
+  button.textContent = '選擇位置並儲存';
+  const help = document.createElement('div');
+  help.className = 'hint'; help.style.marginTop = '10px';
+  help.textContent = '選擇資料夾與檔名；同名檔案會詢問是否覆蓋，不覆蓋請改名。';
+  status.id = 'mSaveStatus';
+  status.textContent = '影片已編碼完成，尚未儲存。';
+  box.append(button, help, status); $('#mLog').append(box);
+  button.onclick = async () => {
+    if (button.disabled) return;
+    button.disabled = true; $('#mClose').disabled = true;
+    let stream = null;
+    try {
+      const ext = blob.type === 'video/webm' ? '.webm' : '.mp4';
+      const fh = await window.showSaveFilePicker({
+        id:'nivedit-exports', suggestedName:name, excludeAcceptAllOption:true,
+        types:[{description:ext === '.mp4' ? 'MP4 video' : 'WebM video', accept:{[blob.type]:[ext]}}]
+      });
+      status.textContent = '正在儲存影片…';
+      stream = await fh.createWritable();
+      await stream.write(blob);
+      await stream.close(); stream = null;
+      name = fh.name;
+      const savedName = document.createElement('span');
+      savedName.setAttribute('data-nt', ''); savedName.textContent = name;
+      $('#mSub').replaceChildren(savedName);
+      $('#mTitle').textContent = '匯出完成';
+      $('#mClose').textContent = '完成';
+      status.textContent = '影片已儲存。';
+      toast('影片已儲存。');
+    } catch(err){
+      if (stream){ try { await stream.abort(); } catch(e){} }
+      status.textContent = err.name === 'AbortError'
+        ? '已取消本次儲存，可重新選擇位置或改名。'
+        : '儲存失敗，可重試；影片不需重新編碼。';
+      if (err.name !== 'AbortError') toast(L('儲存失敗：') + (err.message || err), true);
+    } finally {
+      button.disabled = false; $('#mClose').disabled = false;
+    }
+  };
 }
 
 /* ── 編碼器能力偵測 ────────────────────────────────────────── */
@@ -676,10 +737,6 @@ async function startExport(){
     const ext = isMp4 ? 'mp4' : 'webm';
     const blob = new Blob([target.buffer], { type: isMp4 ? 'video/mp4' : 'video/webm' });
     const name = `NiVedit_${new Date().toISOString().slice(0,19).replace(/[:T-]/g,'').slice(0,14)}.${ext}`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
 
     const mb = (blob.size / 1048576).toFixed(1);
     const secs = Math.round((performance.now() - t0) / 1000);
@@ -689,16 +746,16 @@ async function startExport(){
     const codecName = isMp4
       ? `MP4（H.264${cap.audio ? ' + AAC' : '，無音軌'}）`
       : 'WebM（VP9 + Opus）';
-    mDone('匯出完成',
+    mDone(typeof window.showSaveFilePicker === 'function' ? '影片編碼完成' : '匯出完成',
       `${name}`,
       `${codecName}　${w}×${h}　${fps}fps　${mb} MB　耗時 ${secs} 秒` +
       `　${speed}　${cap.hw ? '硬體編碼' : '軟體編碼'}　平均 ${(nFrames/Math.max(1,secs))|0} fps` +
       `<br><span style="color:var(--fg3)">每格花費：取幀 ${(msDecode/nFrames).toFixed(1)} ms　`+
       `合成 ${(msRender/nFrames).toFixed(1)} ms　編碼 ${(msEncode/nFrames).toFixed(1)} ms　`+
       `（合計 ${((msDecode+msRender+msEncode)/nFrames).toFixed(1)} ms）</span>` +
-      (cap.note ? `<br><br><span style="color:var(--warn)">⚠ ${cap.note}</span>` : '') +
-      `<br><br><span style="color:var(--fg3)">檔案已下載到瀏覽器的下載資料夾。</span>`);
-    toast('匯出完成');
+      (cap.note ? `<br><br><span style="color:var(--warn)">⚠ ${cap.note}</span>` : ''));
+    offerExportSave(blob, name);
+    toast(typeof window.showSaveFilePicker === 'function' ? '影片編碼完成，請選擇位置儲存。' : '匯出完成');
 
   } catch(err){
     if (String(err.message) === '__cancel__'){

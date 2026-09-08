@@ -1106,7 +1106,7 @@ function refreshProp(){
     const motionProps = [
       ['x','水平',0,1,0.01,c.x,''], ['y','垂直',0,1,0.01,c.y,''],
       ['scale','大小',0.05,3,0.01,c.scale,''], ['opacity','不透明度',0,1,0.02,c.opacity,''],
-      ['motionRot','旋轉',-180,180,1,c.motionRot,'°'], ...clipCropProps(c)];
+      ['motionRot','旋轉',-360,360,1,c.motionRot,'°'], ...clipCropProps(c)];
 
     $('#propTitle').textContent = `片段 ${i+1}`;
     p.innerHTML =
@@ -1145,7 +1145,7 @@ function refreshProp(){
         ${rowRange('cY','垂直',0,1,0.01,c.y,'')}
         ${rowRange('cScale','大小',0.05,3,0.01,c.scale,'')}
         ${rowRange('cOpa','不透明度',0,1,0.02,c.opacity,'')}
-        ${rowRange('cMotionRot','旋轉',-180,180,1,c.motionRot,'°')}
+        ${rowRange('cMotionRot','旋轉',-360,360,1,c.motionRot,'°')}
         <div class="hint">大小 1.00 代表目前專案的顯示大小；畫面方向仍在下一組設定。</div></div>
        <div class="grp"><h4>${kfOn(c) ? '畫面裁切（起點）' : '畫面裁切'}</h4>
         ${rowSel('cCropShape','裁切形狀',[['none','不裁切'],['rect','矩形'],['circle','圓形']],c.cropShape)}
@@ -1291,7 +1291,7 @@ function refreshProp(){
     const titleMotionProps = [
       ['x','水平',0,1,0.01,t.x,''],['y','垂直',0,1,0.01,t.y,''],
       ['size','大小',16,240,2,t.size,' px'],['opacity','不透明度',0,1,0.02,t.opacity,''],
-      ['rot','旋轉',-180,180,1,t.rot,'°']
+      ['rot','旋轉',-360,360,1,t.rot,'°']
     ];
     $('#propTitle').textContent = '標題';
     p.innerHTML =
@@ -1319,7 +1319,7 @@ function refreshProp(){
         ${rowRange('tY','垂直',0,1,0.01,t.y,'')}
         ${rowRange('tSize','大小',16,240,2,t.size,' px')}
         ${rowRange('tOpa','不透明度',0,1,0.02,t.opacity,'')}
-        ${rowRange('tRot','旋轉',-180,180,1,t.rot,'°')}
+        ${rowRange('tRot','旋轉',-360,360,1,t.rot,'°')}
         ${rowSel('tAlign','對齊',[['left','靠左'],['center','置中'],['right','靠右']],t.align)}</div>
        <div class="grp"><h4>時間</h4>
         ${rowNum('tStart','出現', t.start, 0.1, '<button class="gh" id="tStartNow" style="padding:5px 8px">現在</button>')}
@@ -1497,7 +1497,7 @@ function refreshProp(){
         ${rowRange('oX','水平',0,1,0.01,o.x,'')}
         ${rowRange('oY','垂直',0,1,0.01,o.y,'')}
         ${rowRange('oScale','大小',0.02,1.5,0.01,o.scale,'')}
-        ${rowRange('oRot','旋轉',-180,180,1,o.rot,'°')}</div>
+        ${rowRange('oRot','旋轉',-360,360,1,o.rot,'°')}</div>
        <div class="grp"><h4>${kfOn(o) ? '透明與淡入淡出（起點）' : '透明與淡入淡出'}</h4>
         ${rowRange('oOpa','不透明度',0,1,0.02,o.opacity,'')}
         ${rowRange('oFi','淡入',0,5,0.1,o.fadeIn,' 秒')}
@@ -1507,7 +1507,7 @@ function refreshProp(){
           ['y','垂直',0,1,0.01,o.y,''],
           ['scale','大小',0.02,1.5,0.01,o.scale,''],
           ['opacity','不透明度',0,1,0.02,o.opacity,''],
-          ['rot','旋轉',-180,180,1,o.rot||0,'°'],
+          ['rot','旋轉',-360,360,1,o.rot||0,'°'],
          ],
          '這一段時間內從上面的起點平滑走到這裡的終點。淡入淡出與圖層順序照舊。')}
        <button id="oDel" style="width:100%">移除這張疊圖</button>`;
@@ -1529,7 +1529,7 @@ function refreshProp(){
     bind('oFo','input', v => { o.fadeOut = +v; setVal('oFo', (+v).toFixed(1) + ' 秒'); });
     kfBind(o, 'o', [['x','',0,1,0.01,o.x,''],['y','',0,1,0.01,o.y,''],
                     ['scale','',0.02,1.5,0.01,o.scale,''],['opacity','',0,1,0.02,o.opacity,''],
-                    ['rot','',-180,180,1,o.rot||0,'°']], show);
+                    ['rot','',-360,360,1,o.rot||0,'°']], show);
     $$('#onine button').forEach(b => b.onclick = () => {
       const [x, y] = b.dataset.p.split(',').map(Number);
       pushUndo();

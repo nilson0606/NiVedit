@@ -4972,7 +4972,18 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 開啟/關閉	On/off
 標題構圖	Title framing
 標題構圖（起點）	Title framing (start)
-快速對位（終點）	Quick align (end)`;
+快速對位（終點）	Quick align (end)
+選擇位置並儲存	Choose location and save
+選擇資料夾與檔名；同名檔案會詢問是否覆蓋，不覆蓋請改名。	Choose a folder and filename. Confirm replacement for an existing file, or decline and rename.
+影片已編碼完成，尚未儲存。	Video encoding is complete. The file has not been saved yet.
+正在儲存影片…	Saving video…
+影片已儲存。	Video saved.
+已取消本次儲存，可重新選擇位置或改名。	Save canceled. You can choose another location or filename.
+儲存失敗，可重試；影片不需重新編碼。	Saving failed. Retry without encoding the video again.
+此瀏覽器不支援選擇儲存位置，已交由瀏覽器下載。	This browser cannot choose a save location. The file was sent to browser downloads.
+影片編碼完成	Video encoding complete
+影片編碼完成，請選擇位置儲存。	Video encoding complete. Choose a location to save.
+儲存失敗：	Saving failed: `;
 
 </script>
 <script>
@@ -5193,7 +5204,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -9217,7 +9228,7 @@ function refreshProp(){
     const motionProps = [
       ['x','水平',0,1,0.01,c.x,''], ['y','垂直',0,1,0.01,c.y,''],
       ['scale','大小',0.05,3,0.01,c.scale,''], ['opacity','不透明度',0,1,0.02,c.opacity,''],
-      ['motionRot','旋轉',-180,180,1,c.motionRot,'°'], ...clipCropProps(c)];
+      ['motionRot','旋轉',-360,360,1,c.motionRot,'°'], ...clipCropProps(c)];
 
     $('#propTitle').textContent = `片段 ${i+1}`;
     p.innerHTML =
@@ -9256,7 +9267,7 @@ function refreshProp(){
         ${rowRange('cY','垂直',0,1,0.01,c.y,'')}
         ${rowRange('cScale','大小',0.05,3,0.01,c.scale,'')}
         ${rowRange('cOpa','不透明度',0,1,0.02,c.opacity,'')}
-        ${rowRange('cMotionRot','旋轉',-180,180,1,c.motionRot,'°')}
+        ${rowRange('cMotionRot','旋轉',-360,360,1,c.motionRot,'°')}
         <div class="hint">大小 1.00 代表目前專案的顯示大小；畫面方向仍在下一組設定。</div></div>
        <div class="grp"><h4>${kfOn(c) ? '畫面裁切（起點）' : '畫面裁切'}</h4>
         ${rowSel('cCropShape','裁切形狀',[['none','不裁切'],['rect','矩形'],['circle','圓形']],c.cropShape)}
@@ -9402,7 +9413,7 @@ function refreshProp(){
     const titleMotionProps = [
       ['x','水平',0,1,0.01,t.x,''],['y','垂直',0,1,0.01,t.y,''],
       ['size','大小',16,240,2,t.size,' px'],['opacity','不透明度',0,1,0.02,t.opacity,''],
-      ['rot','旋轉',-180,180,1,t.rot,'°']
+      ['rot','旋轉',-360,360,1,t.rot,'°']
     ];
     $('#propTitle').textContent = '標題';
     p.innerHTML =
@@ -9430,7 +9441,7 @@ function refreshProp(){
         ${rowRange('tY','垂直',0,1,0.01,t.y,'')}
         ${rowRange('tSize','大小',16,240,2,t.size,' px')}
         ${rowRange('tOpa','不透明度',0,1,0.02,t.opacity,'')}
-        ${rowRange('tRot','旋轉',-180,180,1,t.rot,'°')}
+        ${rowRange('tRot','旋轉',-360,360,1,t.rot,'°')}
         ${rowSel('tAlign','對齊',[['left','靠左'],['center','置中'],['right','靠右']],t.align)}</div>
        <div class="grp"><h4>時間</h4>
         ${rowNum('tStart','出現', t.start, 0.1, '<button class="gh" id="tStartNow" style="padding:5px 8px">現在</button>')}
@@ -9608,7 +9619,7 @@ function refreshProp(){
         ${rowRange('oX','水平',0,1,0.01,o.x,'')}
         ${rowRange('oY','垂直',0,1,0.01,o.y,'')}
         ${rowRange('oScale','大小',0.02,1.5,0.01,o.scale,'')}
-        ${rowRange('oRot','旋轉',-180,180,1,o.rot,'°')}</div>
+        ${rowRange('oRot','旋轉',-360,360,1,o.rot,'°')}</div>
        <div class="grp"><h4>${kfOn(o) ? '透明與淡入淡出（起點）' : '透明與淡入淡出'}</h4>
         ${rowRange('oOpa','不透明度',0,1,0.02,o.opacity,'')}
         ${rowRange('oFi','淡入',0,5,0.1,o.fadeIn,' 秒')}
@@ -9618,7 +9629,7 @@ function refreshProp(){
           ['y','垂直',0,1,0.01,o.y,''],
           ['scale','大小',0.02,1.5,0.01,o.scale,''],
           ['opacity','不透明度',0,1,0.02,o.opacity,''],
-          ['rot','旋轉',-180,180,1,o.rot||0,'°'],
+          ['rot','旋轉',-360,360,1,o.rot||0,'°'],
          ],
          '這一段時間內從上面的起點平滑走到這裡的終點。淡入淡出與圖層順序照舊。')}
        <button id="oDel" style="width:100%">移除這張疊圖</button>`;
@@ -9640,7 +9651,7 @@ function refreshProp(){
     bind('oFo','input', v => { o.fadeOut = +v; setVal('oFo', (+v).toFixed(1) + ' 秒'); });
     kfBind(o, 'o', [['x','',0,1,0.01,o.x,''],['y','',0,1,0.01,o.y,''],
                     ['scale','',0.02,1.5,0.01,o.scale,''],['opacity','',0,1,0.02,o.opacity,''],
-                    ['rot','',-180,180,1,o.rot||0,'°']], show);
+                    ['rot','',-360,360,1,o.rot||0,'°']], show);
     $$('#onine button').forEach(b => b.onclick = () => {
       const [x, y] = b.dataset.p.split(',').map(Number);
       pushUndo();
@@ -12277,6 +12288,7 @@ function mShow(title, sub){
   $('#mLog').textContent = '準備中…';
   $('#mCancel').classList.remove('hide');
   $('#mClose').classList.add('hide');
+  $('#mClose').textContent = '完成';
 }
 function mProg(pct, log){
   $('#mBar').style.width = clamp(pct, 0, 100).toFixed(1) + '%';
@@ -12289,6 +12301,66 @@ function mDone(title, sub, log){
   $('#mBar').style.width = '100%';
   $('#mCancel').classList.add('hide');
   $('#mClose').classList.remove('hide');
+}
+
+/* 完成編碼後再由使用者按儲存，保留原生檔案選擇器要求的 user activation。
+   Windows 另存視窗負責同名覆蓋確認；取消／拒絕覆蓋時不取得 handle，也不寫檔。 */
+function offerExportSave(blob, name){
+  const box = document.createElement('div');
+  box.style.marginTop = '16px';
+  const status = document.createElement('div');
+  status.className = 'hint'; status.style.marginTop = '10px';
+  status.setAttribute('role', 'status');
+  if (typeof window.showSaveFilePicker !== 'function'){
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    status.textContent = '此瀏覽器不支援選擇儲存位置，已交由瀏覽器下載。';
+    box.append(status); $('#mLog').append(box);
+    return;
+  }
+  $('#mClose').textContent = '關閉';
+  const button = document.createElement('button');
+  button.id = 'mSaveExport'; button.className = 'pri';
+  button.textContent = '選擇位置並儲存';
+  const help = document.createElement('div');
+  help.className = 'hint'; help.style.marginTop = '10px';
+  help.textContent = '選擇資料夾與檔名；同名檔案會詢問是否覆蓋，不覆蓋請改名。';
+  status.id = 'mSaveStatus';
+  status.textContent = '影片已編碼完成，尚未儲存。';
+  box.append(button, help, status); $('#mLog').append(box);
+  button.onclick = async () => {
+    if (button.disabled) return;
+    button.disabled = true; $('#mClose').disabled = true;
+    let stream = null;
+    try {
+      const ext = blob.type === 'video/webm' ? '.webm' : '.mp4';
+      const fh = await window.showSaveFilePicker({
+        id:'nivedit-exports', suggestedName:name, excludeAcceptAllOption:true,
+        types:[{description:ext === '.mp4' ? 'MP4 video' : 'WebM video', accept:{[blob.type]:[ext]}}]
+      });
+      status.textContent = '正在儲存影片…';
+      stream = await fh.createWritable();
+      await stream.write(blob);
+      await stream.close(); stream = null;
+      name = fh.name;
+      const savedName = document.createElement('span');
+      savedName.setAttribute('data-nt', ''); savedName.textContent = name;
+      $('#mSub').replaceChildren(savedName);
+      $('#mTitle').textContent = '匯出完成';
+      $('#mClose').textContent = '完成';
+      status.textContent = '影片已儲存。';
+      toast('影片已儲存。');
+    } catch(err){
+      if (stream){ try { await stream.abort(); } catch(e){} }
+      status.textContent = err.name === 'AbortError'
+        ? '已取消本次儲存，可重新選擇位置或改名。'
+        : '儲存失敗，可重試；影片不需重新編碼。';
+      if (err.name !== 'AbortError') toast(L('儲存失敗：') + (err.message || err), true);
+    } finally {
+      button.disabled = false; $('#mClose').disabled = false;
+    }
+  };
 }
 
 /* ── 編碼器能力偵測 ────────────────────────────────────────── */
@@ -12912,10 +12984,6 @@ async function startExport(){
     const ext = isMp4 ? 'mp4' : 'webm';
     const blob = new Blob([target.buffer], { type: isMp4 ? 'video/mp4' : 'video/webm' });
     const name = `NiVedit_${new Date().toISOString().slice(0,19).replace(/[:T-]/g,'').slice(0,14)}.${ext}`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
 
     const mb = (blob.size / 1048576).toFixed(1);
     const secs = Math.round((performance.now() - t0) / 1000);
@@ -12925,16 +12993,16 @@ async function startExport(){
     const codecName = isMp4
       ? `MP4（H.264${cap.audio ? ' + AAC' : '，無音軌'}）`
       : 'WebM（VP9 + Opus）';
-    mDone('匯出完成',
+    mDone(typeof window.showSaveFilePicker === 'function' ? '影片編碼完成' : '匯出完成',
       `${name}`,
       `${codecName}　${w}×${h}　${fps}fps　${mb} MB　耗時 ${secs} 秒` +
       `　${speed}　${cap.hw ? '硬體編碼' : '軟體編碼'}　平均 ${(nFrames/Math.max(1,secs))|0} fps` +
       `<br><span style="color:var(--fg3)">每格花費：取幀 ${(msDecode/nFrames).toFixed(1)} ms　`+
       `合成 ${(msRender/nFrames).toFixed(1)} ms　編碼 ${(msEncode/nFrames).toFixed(1)} ms　`+
       `（合計 ${((msDecode+msRender+msEncode)/nFrames).toFixed(1)} ms）</span>` +
-      (cap.note ? `<br><br><span style="color:var(--warn)">⚠ ${cap.note}</span>` : '') +
-      `<br><br><span style="color:var(--fg3)">檔案已下載到瀏覽器的下載資料夾。</span>`);
-    toast('匯出完成');
+      (cap.note ? `<br><br><span style="color:var(--warn)">⚠ ${cap.note}</span>` : ''));
+    offerExportSave(blob, name);
+    toast(typeof window.showSaveFilePicker === 'function' ? '影片編碼完成，請選擇位置儲存。' : '匯出完成');
 
   } catch(err){
     if (String(err.message) === '__cancel__'){
