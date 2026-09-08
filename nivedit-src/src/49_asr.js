@@ -693,10 +693,11 @@ async function srtSaveBeside(cuesForToast){
   return null;
 }
 /** 使用者主動按「存成 SRT」時走這條：一定會問要存哪 */
-async function srtSaveAs(){
-  if (!A.subs.length){ toast('目前沒有字幕', true); return; }
-  const name = srtName();
-  const blob = new Blob(['﻿' + toSRT(A.subs)], { type:'text/plain;charset=utf-8' });
+async function srtSaveAs(cues, name){
+  cues = Array.isArray(cues) ? cues : A.subs;
+  if (!cues.length){ toast('目前沒有字幕', true); return; }
+  name = typeof name === 'string' ? name : srtName();
+  const blob = new Blob(['﻿' + toSRT(cues)], { type:'text/plain;charset=utf-8' });
   try {
     const d = await ensureDir(false);
     if (d){
@@ -715,7 +716,7 @@ async function srtSaveAs(){
       return;
     } catch(e){ if (e && e.name === 'AbortError') return; }
   }
-  exportSRT();
+  exportSRT(cues, name);
 }
 
 /* ── 左側面板 ─────────────────────────────────────────────── */
@@ -874,10 +875,21 @@ async function showModelCache(){
 
 /* ── 字幕編輯器 ───────────────────────────────────────────── */
 let _seSel = null;
+let _seTrack = null;  // 編輯器本身的目標軌；新增不可再由舊的 A.sel 猜測。
+function subEditorCues(){ return A.subs.filter(c => subTrack(c) === (_seTrack === 1 ? 1 : 0)); }
+function setSubEditorTrack(track){
+  _seTrack = +track === 1 ? 1 : 0;
+  const cue = subEditorCues().find(c => c.id === _seSel) || subEditorCues()[0];
+  _seSel = cue ? cue.id : null;
+  A.sel = cue ? {type:'sub', id:cue.id} : {type:'proj', id:null};
+  render(); refreshProp(); renderSubEditor();
+}
+
 
 function openSubEditor(){
-  if (!A.subs.length && !confirm('目前沒有字幕，還是要開編輯器嗎？（可以手動一句一句加）')) return;
-  if (A.sel.type === 'sub' && A.subs.some(c => c.id === A.sel.id)) _seSel = A.sel.id;
+  if (_seTrack === null || A.sel.type === 'sub' || A.sel.type === 'clip') _seTrack = subtitleTargetTrack();
+  const selected = subEditorCues().find(c => A.sel.type === 'sub' && c.id === A.sel.id);
+  _seSel = selected ? selected.id : null;
   $('#emask').classList.add('on');
   renderSubEditor();
   focusSubEditor(_seSel);
@@ -896,8 +908,9 @@ function renderSubEditor(keepScroll){
   const box = $('#eList');
   if (!box) return;
   const top = keepScroll ? box.scrollTop : 0;
-  const cues = [...A.subs].sort((a, b) => a.start - b.start);
-  $('#eCount').textContent = A.subs.length + ' 句';
+  const cues = subEditorCues().sort((a, b) => a.start - b.start);
+  $('#eTrack').value = String(_seTrack === 1 ? 1 : 0);
+  $('#eCount').textContent = cues.length + ' 句';
   box.innerHTML = cues.map((c, i) => `
     <div class="scue${_seSel === c.id ? ' sel' : ''}" data-id="${c.id}">
       <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕上軌</option><option value="0"${subTrack(c)===0?' selected':''}>字幕下軌</option></select></div>
@@ -909,15 +922,16 @@ function renderSubEditor(keepScroll){
       <textarea class="tx" rows="2" spellcheck="false">${esc(c.text)}</textarea>
       <div class="ops">
         <button class="x" data-a="go"    title="跳到這一句">▶</button>
-        <button class="x" data-a="merge" title="跟下一句合併"${i === A.subs.length - 1 ? ' disabled' : ''}>⇊</button>
+        <button class="x" data-a="merge" title="跟下一句合併"${i === cues.length - 1 ? ' disabled' : ''}>⇊</button>
         <button class="x" data-a="del"   title="刪除這一句">✕</button>
       </div>
     </div>`).join('');
+  if (!cues.length) box.innerHTML = '<div class="hint" style="padding:24px 8px">此軌目前沒有字幕，按「＋ 一句」開始新增。</div>';
 
   box.querySelectorAll('.scue').forEach(el => {
     const id = el.dataset.id;
     const c = () => A.subs.find(x => x.id === id);
-    el.querySelector('.subTrackSelect').onchange=e=>{pushUndo();c().track=+e.target.value;render();refreshProp();};
+    el.querySelector('.subTrackSelect').onchange=e=>{pushUndo();c().track=+e.target.value;_seSel=null;render();refreshProp();renderSubEditor(true);};
     el.querySelector('.tx').oninput = e => { const x = c(); if (x){ x.text = e.target.value; markDirty(); } };
     el.querySelector('.tx').onfocus = () => { _seSel = id; A.sel = { type:'sub', id }; box.querySelectorAll('.scue').forEach(n => n.classList.toggle('sel', n.dataset.id === id)); };
     el.querySelectorAll('.ts').forEach(inp => {
@@ -966,7 +980,7 @@ function subReplaceAll(){
   const to = $('#eRepl').value;
   let n = 0;
   pushUndo();
-  for (const c of A.subs){
+  for (const c of subEditorCues()){
     if (c.text.indexOf(from) < 0) continue;
     c.text = c.text.split(from).join(to);
     n++;
@@ -977,15 +991,19 @@ function subReplaceAll(){
 function subToTWAll(){
   pushUndo();
   let n = 0;
-  for (const c of A.subs){ const t = toTW(c.text); if (t !== c.text){ c.text = t; n++; } }
+  for (const c of subEditorCues()){ const t = toTW(c.text); if (t !== c.text){ c.text = t; n++; } }
   render(); renderSubEditor(true);
   toast(n ? `轉了 ${n} 句` : '本來就都是繁體了');
 }
 function subClearAll(){
-  if (!A.subs.length) return;
-  if (!confirm(`確定要刪掉全部 ${A.subs.length} 句字幕？`)) return;
+  const cues = subEditorCues();
+  if (!cues.length) return;
+  if (!confirm(`確定要刪掉本軌的 ${cues.length} 句字幕？`)) return;
   pushUndo();
-  A.subs = [];
+  const ids = new Set(cues.map(c => c.id));
+  A.subs = A.subs.filter(c => !ids.has(c.id));
+  if (A.sel.type === 'sub' && ids.has(A.sel.id)) A.sel = {type:'proj',id:null};
+  _seSel = null;
   render(); refreshProp(); asrUpdateState(); renderSubEditor();
 }
 
@@ -997,8 +1015,9 @@ function initASR(){
     $('#asrFold').textContent = off ? '▸' : '▾';
   });
   on('eClose', closeSubEditor);
+  bind('eTrack','change', v => setSubEditorTrack(v));
   on('eAdd', () => {
-    const cue = addSub(A.playhead);
+    const cue = addSub(A.playhead, _seTrack === 1 ? 1 : 0);
     _seSel = cue.id;
     renderSubEditor(true); asrUpdateState();
     focusSubEditor(cue.id, true);
@@ -1006,7 +1025,7 @@ function initASR(){
   on('eRepl2', subReplaceAll);
   on('eTW',    subToTWAll);
   on('eClear', subClearAll);
-  on('eSrt',   srtSaveAs);
+  on('eSrt', () => srtSaveAs(subEditorCues(), srtName().replace(/\.srt$/i, _seTrack === 1 ? '_upper.srt' : '_lower.srt')));
   const em = $('#emask');
   if (em) em.addEventListener('mousedown', e => { if (e.target === em) closeSubEditor(); });
 }

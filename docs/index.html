@@ -510,6 +510,13 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 <div id="emask">
   <div class="modal" style="width:min(760px,95vw)">
     <h3>字幕編輯器 <span class="spacer"></span><span id="eCount" class="hint"></span></h3>
+    <div class="row">
+      <label for="eTrack" style="font-weight:700;color:var(--fg)">編輯軌道</label>
+      <div class="f"><select id="eTrack" style="font-weight:700;max-width:220px">
+        <option value="1">字幕上軌</option><option value="0">字幕下軌</option>
+      </select></div>
+    </div>
+    <div class="hint" style="margin-bottom:10px">只顯示目前軌道；新增、整批操作與存成 SRT 都只作用於本軌。</div>
     <div class="etools">
       <input id="eFind" placeholder="找這個字…" style="flex:1;min-width:90px">
       <input id="eRepl" placeholder="換成…" style="flex:1;min-width:90px">
@@ -517,7 +524,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
       <button class="gh" id="eTW" title="把還是簡體的句子轉成台灣正體">轉台灣正體</button>
       <button class="gh" id="eAdd" title="在播放頭的位置插一句">＋ 一句</button>
       <button class="gh" id="eSrt">存成 SRT</button>
-      <button class="gh" id="eClear" title="刪掉全部字幕">清空</button>
+      <button class="gh" id="eClear" title="刪掉目前字幕軌的全部字幕">清空本軌</button>
     </div>
     <div id="eList"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
@@ -4984,7 +4991,13 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 影片編碼完成	Video encoding complete
 影片編碼完成，請選擇位置儲存。	Video encoding complete. Choose a location to save.
 儲存失敗：	Saving failed: 
-這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。	This cue overlaps another cue on the same track, which may appear in the preview instead. Adjust the timing or move it to the other subtitle track.`;
+這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。	This cue overlaps another cue on the same track, which may appear in the preview instead. Adjust the timing or move it to the other subtitle track.
+編輯軌道	Editing track
+只顯示目前軌道；新增、整批操作與存成 SRT 都只作用於本軌。	Only the selected track is shown. Adding cues, batch edits and Save as SRT apply only to this track.
+刪掉目前字幕軌的全部字幕	Delete all cues on the selected subtitle track
+清空本軌	Clear this track
+此軌目前沒有字幕，按「＋ 一句」開始新增。	This track has no subtitles. Press Add cue to begin.
+確定要刪掉本軌的	Delete all cues on this track:`;
 
 </script>
 <script>
@@ -5205,7 +5218,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -6071,15 +6084,16 @@ async function importSRT(file){
   toast(`已匯入 ${cues.length} 句字幕（${fmt(cues[0].start)} ~ ${fmt(cues[cues.length-1].end)}）` +
         (cues.skipped ? `，另有 ${cues.skipped} 句時間碼格式有問題讀不進來` : ''), !!cues.skipped);
 }
-function exportSRT(){
-  if (!A.subs.length){ toast('目前沒有字幕', true); return; }
-  const blob = new Blob([toSRT(A.subs)], { type:'text/plain;charset=utf-8' });
+function exportSRT(cues, name){
+  cues = Array.isArray(cues) ? cues : A.subs;
+  if (!cues.length){ toast('目前沒有字幕', true); return; }
+  const blob = new Blob([toSRT(cues)], { type:'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'NiVedit字幕.srt';
+  a.download = typeof name === 'string' ? name : 'NiVedit字幕.srt';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-  toast(`已匯出 ${A.subs.length} 句字幕`);
+  toast(`已匯出 ${cues.length} 句字幕`);
 }
 function addSub(startAt,track=subtitleTargetTrack()){
   const s = Math.max(0, startAt === undefined ? A.playhead : startAt);
@@ -11945,10 +11959,11 @@ async function srtSaveBeside(cuesForToast){
   return null;
 }
 /** 使用者主動按「存成 SRT」時走這條：一定會問要存哪 */
-async function srtSaveAs(){
-  if (!A.subs.length){ toast('目前沒有字幕', true); return; }
-  const name = srtName();
-  const blob = new Blob(['﻿' + toSRT(A.subs)], { type:'text/plain;charset=utf-8' });
+async function srtSaveAs(cues, name){
+  cues = Array.isArray(cues) ? cues : A.subs;
+  if (!cues.length){ toast('目前沒有字幕', true); return; }
+  name = typeof name === 'string' ? name : srtName();
+  const blob = new Blob(['﻿' + toSRT(cues)], { type:'text/plain;charset=utf-8' });
   try {
     const d = await ensureDir(false);
     if (d){
@@ -11967,7 +11982,7 @@ async function srtSaveAs(){
       return;
     } catch(e){ if (e && e.name === 'AbortError') return; }
   }
-  exportSRT();
+  exportSRT(cues, name);
 }
 
 /* ── 左側面板 ─────────────────────────────────────────────── */
@@ -12126,10 +12141,21 @@ async function showModelCache(){
 
 /* ── 字幕編輯器 ───────────────────────────────────────────── */
 let _seSel = null;
+let _seTrack = null;  // 編輯器本身的目標軌；新增不可再由舊的 A.sel 猜測。
+function subEditorCues(){ return A.subs.filter(c => subTrack(c) === (_seTrack === 1 ? 1 : 0)); }
+function setSubEditorTrack(track){
+  _seTrack = +track === 1 ? 1 : 0;
+  const cue = subEditorCues().find(c => c.id === _seSel) || subEditorCues()[0];
+  _seSel = cue ? cue.id : null;
+  A.sel = cue ? {type:'sub', id:cue.id} : {type:'proj', id:null};
+  render(); refreshProp(); renderSubEditor();
+}
+
 
 function openSubEditor(){
-  if (!A.subs.length && !confirm('目前沒有字幕，還是要開編輯器嗎？（可以手動一句一句加）')) return;
-  if (A.sel.type === 'sub' && A.subs.some(c => c.id === A.sel.id)) _seSel = A.sel.id;
+  if (_seTrack === null || A.sel.type === 'sub' || A.sel.type === 'clip') _seTrack = subtitleTargetTrack();
+  const selected = subEditorCues().find(c => A.sel.type === 'sub' && c.id === A.sel.id);
+  _seSel = selected ? selected.id : null;
   $('#emask').classList.add('on');
   renderSubEditor();
   focusSubEditor(_seSel);
@@ -12148,8 +12174,9 @@ function renderSubEditor(keepScroll){
   const box = $('#eList');
   if (!box) return;
   const top = keepScroll ? box.scrollTop : 0;
-  const cues = [...A.subs].sort((a, b) => a.start - b.start);
-  $('#eCount').textContent = A.subs.length + ' 句';
+  const cues = subEditorCues().sort((a, b) => a.start - b.start);
+  $('#eTrack').value = String(_seTrack === 1 ? 1 : 0);
+  $('#eCount').textContent = cues.length + ' 句';
   box.innerHTML = cues.map((c, i) => `
     <div class="scue${_seSel === c.id ? ' sel' : ''}" data-id="${c.id}">
       <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕上軌</option><option value="0"${subTrack(c)===0?' selected':''}>字幕下軌</option></select></div>
@@ -12161,15 +12188,16 @@ function renderSubEditor(keepScroll){
       <textarea class="tx" rows="2" spellcheck="false">${esc(c.text)}</textarea>
       <div class="ops">
         <button class="x" data-a="go"    title="跳到這一句">▶</button>
-        <button class="x" data-a="merge" title="跟下一句合併"${i === A.subs.length - 1 ? ' disabled' : ''}>⇊</button>
+        <button class="x" data-a="merge" title="跟下一句合併"${i === cues.length - 1 ? ' disabled' : ''}>⇊</button>
         <button class="x" data-a="del"   title="刪除這一句">✕</button>
       </div>
     </div>`).join('');
+  if (!cues.length) box.innerHTML = '<div class="hint" style="padding:24px 8px">此軌目前沒有字幕，按「＋ 一句」開始新增。</div>';
 
   box.querySelectorAll('.scue').forEach(el => {
     const id = el.dataset.id;
     const c = () => A.subs.find(x => x.id === id);
-    el.querySelector('.subTrackSelect').onchange=e=>{pushUndo();c().track=+e.target.value;render();refreshProp();};
+    el.querySelector('.subTrackSelect').onchange=e=>{pushUndo();c().track=+e.target.value;_seSel=null;render();refreshProp();renderSubEditor(true);};
     el.querySelector('.tx').oninput = e => { const x = c(); if (x){ x.text = e.target.value; markDirty(); } };
     el.querySelector('.tx').onfocus = () => { _seSel = id; A.sel = { type:'sub', id }; box.querySelectorAll('.scue').forEach(n => n.classList.toggle('sel', n.dataset.id === id)); };
     el.querySelectorAll('.ts').forEach(inp => {
@@ -12218,7 +12246,7 @@ function subReplaceAll(){
   const to = $('#eRepl').value;
   let n = 0;
   pushUndo();
-  for (const c of A.subs){
+  for (const c of subEditorCues()){
     if (c.text.indexOf(from) < 0) continue;
     c.text = c.text.split(from).join(to);
     n++;
@@ -12229,15 +12257,19 @@ function subReplaceAll(){
 function subToTWAll(){
   pushUndo();
   let n = 0;
-  for (const c of A.subs){ const t = toTW(c.text); if (t !== c.text){ c.text = t; n++; } }
+  for (const c of subEditorCues()){ const t = toTW(c.text); if (t !== c.text){ c.text = t; n++; } }
   render(); renderSubEditor(true);
   toast(n ? `轉了 ${n} 句` : '本來就都是繁體了');
 }
 function subClearAll(){
-  if (!A.subs.length) return;
-  if (!confirm(`確定要刪掉全部 ${A.subs.length} 句字幕？`)) return;
+  const cues = subEditorCues();
+  if (!cues.length) return;
+  if (!confirm(`確定要刪掉本軌的 ${cues.length} 句字幕？`)) return;
   pushUndo();
-  A.subs = [];
+  const ids = new Set(cues.map(c => c.id));
+  A.subs = A.subs.filter(c => !ids.has(c.id));
+  if (A.sel.type === 'sub' && ids.has(A.sel.id)) A.sel = {type:'proj',id:null};
+  _seSel = null;
   render(); refreshProp(); asrUpdateState(); renderSubEditor();
 }
 
@@ -12249,8 +12281,9 @@ function initASR(){
     $('#asrFold').textContent = off ? '▸' : '▾';
   });
   on('eClose', closeSubEditor);
+  bind('eTrack','change', v => setSubEditorTrack(v));
   on('eAdd', () => {
-    const cue = addSub(A.playhead);
+    const cue = addSub(A.playhead, _seTrack === 1 ? 1 : 0);
     _seSel = cue.id;
     renderSubEditor(true); asrUpdateState();
     focusSubEditor(cue.id, true);
@@ -12258,7 +12291,7 @@ function initASR(){
   on('eRepl2', subReplaceAll);
   on('eTW',    subToTWAll);
   on('eClear', subClearAll);
-  on('eSrt',   srtSaveAs);
+  on('eSrt', () => srtSaveAs(subEditorCues(), srtName().replace(/\.srt$/i, _seTrack === 1 ? '_upper.srt' : '_lower.srt')));
   const em = $('#emask');
   if (em) em.addEventListener('mousedown', e => { if (e.target === em) closeSubEditor(); });
 }

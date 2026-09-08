@@ -1,6 +1,6 @@
 {
-  "version": "9.6",
-  "html_sha256": "16feea2262ef57f4f0b3256f684d4cb301c5843301cb4a235c6be356986184f2",
-  "html_bytes": 964449,
-  "verification": "Edge: 88 checks passed (subtitle editing 20, dual subtitles 27, i18n 41), plus 16 GIF checks and actual subtitle/GIF MP4 exports."
+  "version": "9.7",
+  "html_sha256": "8bb06e0a5bee7c0039be1cfc5056e0cb40e7ee96235c7dc84c2b1ad08fe0ae3d",
+  "html_bytes": 966746,
+  "verification": "Edge: 114 checks passed (track-scoped subtitle editor 26, subtitle editing 20, dual subtitles 27, i18n 41), including scoped SRT writes/downloads and real dual-subtitle MP4 export."
 }

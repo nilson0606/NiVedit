@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -869,15 +869,16 @@ async function importSRT(file){
   toast(`已匯入 ${cues.length} 句字幕（${fmt(cues[0].start)} ~ ${fmt(cues[cues.length-1].end)}）` +
         (cues.skipped ? `，另有 ${cues.skipped} 句時間碼格式有問題讀不進來` : ''), !!cues.skipped);
 }
-function exportSRT(){
-  if (!A.subs.length){ toast('目前沒有字幕', true); return; }
-  const blob = new Blob([toSRT(A.subs)], { type:'text/plain;charset=utf-8' });
+function exportSRT(cues, name){
+  cues = Array.isArray(cues) ? cues : A.subs;
+  if (!cues.length){ toast('目前沒有字幕', true); return; }
+  const blob = new Blob([toSRT(cues)], { type:'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'NiVedit字幕.srt';
+  a.download = typeof name === 'string' ? name : 'NiVedit字幕.srt';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-  toast(`已匯出 ${A.subs.length} 句字幕`);
+  toast(`已匯出 ${cues.length} 句字幕`);
 }
 function addSub(startAt,track=subtitleTargetTrack()){
   const s = Math.max(0, startAt === undefined ? A.playhead : startAt);

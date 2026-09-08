@@ -1035,4 +1035,10 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 影片編碼完成	Video encoding complete
 影片編碼完成，請選擇位置儲存。	Video encoding complete. Choose a location to save.
 儲存失敗：	Saving failed: 
-這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。	This cue overlaps another cue on the same track, which may appear in the preview instead. Adjust the timing or move it to the other subtitle track.`;
+這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。	This cue overlaps another cue on the same track, which may appear in the preview instead. Adjust the timing or move it to the other subtitle track.
+編輯軌道	Editing track
+只顯示目前軌道；新增、整批操作與存成 SRT 都只作用於本軌。	Only the selected track is shown. Adding cues, batch edits and Save as SRT apply only to this track.
+刪掉目前字幕軌的全部字幕	Delete all cues on the selected subtitle track
+清空本軌	Clear this track
+此軌目前沒有字幕，按「＋ 一句」開始新增。	This track has no subtitles. Press Add cue to begin.
+確定要刪掉本軌的	Delete all cues on this track:`;
