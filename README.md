@@ -4,6 +4,10 @@ A browser-based video editor with English and Traditional Chinese interfaces.
 
 **Open the editor:** https://nilson0606.github.io/NiVedit/
 
+**操作手冊 / User guide（繁體中文）：** [HTML 操作手冊](https://nilson0606.github.io/NiVedit/manual.html)
+
+The guide has 15 chapters with a home index, direct chapter links, search, dark/light modes and print styling.
+
 Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
 
 ## Latest update
