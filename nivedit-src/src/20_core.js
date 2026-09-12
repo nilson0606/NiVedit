@@ -3,7 +3,11 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.8';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/12';
+// 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
+// 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
+// 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];

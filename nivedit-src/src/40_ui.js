@@ -1821,6 +1821,7 @@ function initUI(){
 function checkSupport(){
   const b = $('#envBadge');
   $('#verTag').textContent = VER;
+  $('#verDate').textContent = VER_DATE;
   if (typeof VideoEncoder === 'undefined'){
     b.textContent = '⚠ 此瀏覽器不支援 WebCodecs，無法匯出（請用 Chrome / Edge）';
     b.style.color = 'var(--error-text)'; b.style.borderColor = 'var(--danger)';

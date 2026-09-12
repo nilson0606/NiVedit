@@ -1,6 +1,6 @@
 {
-  "version": "9.7",
-  "html_sha256": "8bb06e0a5bee7c0039be1cfc5056e0cb40e7ee96235c7dc84c2b1ad08fe0ae3d",
-  "html_bytes": 966746,
-  "verification": "Edge: 114 checks passed (track-scoped subtitle editor 26, subtitle editing 20, dual subtitles 27, i18n 41), including scoped SRT writes/downloads and real dual-subtitle MP4 export."
+  "version": "9.8",
+  "html_sha256": "4e73793822dd1904330745f43f9cb3dd12d5b6d63f01d67aaffb366a8c4aa056",
+  "html_bytes": 967236,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 539 checks passed across fifteen suites. Export-container assertions now follow the browser's actual H.264+AAC capability via tests/_fmt.cjs, so both MP4-capable and WebM-fallback environments verify fully."
 }

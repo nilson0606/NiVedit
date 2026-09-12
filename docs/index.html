@@ -71,6 +71,7 @@ header{display:flex;align-items:center;gap:13px;padding:0 13px;height:48px;
 .badge{font-size:11px;color:var(--fg3);border:1px solid var(--line);border-radius:20px;padding:2px 8px}
 .ver{font-size:11px;font-weight:700;color:#101216;background:var(--acc);border-radius:20px;
   padding:2px 9px;letter-spacing:.5px}
+.verdate{font-size:11px;font-weight:600;color:var(--fg3);letter-spacing:.3px;margin-left:-2px}
 .spacer{flex:1}
 main{flex:1;display:flex;min-height:0}
 aside{background:var(--bg2);display:flex;flex-direction:column;min-height:0}
@@ -360,6 +361,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
   <header>
     <div class="logo">Ni<span>Vedit</span></div>
     <div class="ver" id="verTag">—</div>
+    <div class="verdate" id="verDate" data-nt></div>
     <button class="gh" id="langBtn" data-nt title="English / 繁體中文"
             style="padding:3px 9px;font-size:12px;line-height:1.4">EN</button>
     <button class="gh" id="themeBtn" type="button" data-nt aria-label="白天模式" aria-pressed="false" title="切換至白天模式">☾ 夜間模式</button>
@@ -5218,7 +5220,11 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.8';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/12';
+// 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
+// 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
+// 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -9959,6 +9965,7 @@ function initUI(){
 function checkSupport(){
   const b = $('#envBadge');
   $('#verTag').textContent = VER;
+  $('#verDate').textContent = VER_DATE;
   if (typeof VideoEncoder === 'undefined'){
     b.textContent = '⚠ 此瀏覽器不支援 WebCodecs，無法匯出（請用 Chrome / Edge）';
     b.style.color = 'var(--error-text)'; b.style.borderColor = 'var(--danger)';
