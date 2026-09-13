@@ -1457,11 +1457,16 @@ function wrapText(ctx, text, maxW){
 }
 
 function drawSubs(ctx, T, W, H){
+  for(const track of [0,1]) drawSubTrack(ctx, track, T, W, H);
+}
+/** 單一字幕軌。字幕與同編號的影片軌【連動】：上軌字幕貼著上軌影片，
+    下軌字幕貼著下軌影片，由 renderFrame 畫完那一軌之後立刻呼叫。
+    所以上軌整組（影片＋字幕）會蓋住下軌整組，那是刻意的。
+    那一軌當下沒有片段（留白）時字幕照畫，與 v9.8 以前一致。 */
+function drawSubTrack(ctx, track, T, W, H){
   if (!A.subs.length) return;
-  for(const track of [0,1]){
-    const cue=A.subs.find(c=>subTrack(c)===track&&T>=c.start-1e-6&&T<c.end);
-    if(cue&&String(cue.text).trim())drawSubCue(ctx,cue,subStyleFor(track),W,H);
-  }
+  const cue=A.subs.find(c=>subTrack(c)===track&&T>=c.start-1e-6&&T<c.end);
+  if(cue&&String(cue.text).trim())drawSubCue(ctx,cue,subStyleFor(track),W,H);
 }
 function drawSubCue(ctx,cue,st,W,H){
   const s=H/1080;
@@ -1509,7 +1514,21 @@ function drawSubCue(ctx,cue,st,W,H){
 /* ── 單張影格 ──────────────────────────────────────────────── */
 function renderFrame(ctx, T, W, H){
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  for (const act of activeTracksAt(T)){
+  const acts = activeTracksAt(T);
+  for (const track of [0, 1]){
+    const act = acts.find(a => a.track === track);
+    if (act) drawVideoTrack(ctx, act, T, W, H);
+    drawSubTrack(ctx, track, T, W, H);   // 字幕緊貼自己那一軌的影片，兩者連動
+  }
+  // 疊圖與標題共用一條 z 軸，數字大的畫在後面（顯示在前方）
+  for (const it of layerOrder()){
+    if (it.kind === 'overlay') drawOverlay(ctx, it.obj, T, W, H);
+    else drawTitle(ctx, it.obj, T, W, H);
+  }
+}
+
+function drawVideoTrack(ctx, act, T, W, H){
+  {
     const upper = act.track === 1;
     const layer = bufs('clipLayer'+act.track+W+'x'+H,1,W,H)[0];
     const target = layer.x;
@@ -1525,7 +1544,4 @@ function renderFrame(ctx, T, W, H){
     ctx.save();ctx.globalAlpha=clipFadeGain(act.a.clip,T,layout()[act.idx]);
     ctx.drawImage(layer.c,0,0);ctx.restore();
   }
-  for (const o of A.overlays) drawOverlay(ctx, o, T, W, H);   // 疊圖在影片之上
-  drawSubs(ctx, T, W, H);                                      // 字幕
-  for (const t of A.titles) drawTitle(ctx, t, T, W, H);       // 標題在最上面
 }

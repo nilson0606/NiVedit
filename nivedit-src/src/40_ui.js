@@ -468,6 +468,7 @@ function renderTimeline(){
     }
   }
   videoGroup.querySelectorAll('.blk,.trx').forEach(n => n.remove());
+  const LZ = layerLabels();          // 這一輪重繪共用同一份 L 編號
   const L = layout();
   A.clips.forEach((c, i) => {
     const tv = clipTrack(c) ? $('#videoUpper') : $('#videoLower');
@@ -481,6 +482,7 @@ function renderTimeline(){
                   `${c.thumb ? `<img class="tn" src="${c.thumb}">` : ''}<div class="nm" data-nt>${esc(c.name)}</div>` +
                   (c.muted ? '<div class="mu">🔇</div>' : '') +
                   kfMarks(c, Math.max(14, L[i].span * pps)) +
+                  lzTag(LZ.clip[c.id], Math.max(14, L[i].span * pps)) +
                   `<div class="hd r" title="拖曳裁切結尾"></div>`;
     b.onmousedown = e => {
       if (kfBlockMouse(e, c, b)) return;
@@ -530,6 +532,7 @@ function renderTimeline(){
     b.innerHTML = `<div class="hd l"></div>` +
       `${o.thumb ? `<img class="tn" src="${o.thumb}">` : ''}<div class="nm" data-nt>${esc(o.name)}</div>` +
       kfMarks(o, Math.max(28, (o.end - o.start) * pps)) +
+      lzTag(LZ.item[o.id], Math.max(28, (o.end - o.start) * pps)) +
       `<div class="hd r"></div>`;
     b.onmousedown = e => startOverlayDrag(e, o);
     to.appendChild(b);
@@ -555,7 +558,8 @@ function renderTimeline(){
       b.className='sblk'+(A.sel.type==='sub'&&A.sel.id===c.id?' sel':'');
       b.style.left=(c.start*pps)+'px';b.style.width=Math.max(22,(c.end-c.start)*pps)+'px';
       b.style.top=(16+ln*30)+'px';b.style.height='26px';
-      b.innerHTML=`<div class="hd l"></div><div class="nm" data-nt>${esc(String(c.text).split('\n')[0].slice(0,18))}</div><div class="hd r"></div>`;
+      b.innerHTML=`<div class="hd l"></div><div class="nm" data-nt>${esc(String(c.text).split('\n')[0].slice(0,18))}</div>`
+        +lzTag(LZ.sub[track],Math.max(22,(c.end-c.start)*pps))+`<div class="hd r"></div>`;
       b.onmousedown=e=>startSubDrag(e,c);lane.appendChild(b);
     });
     const h=18+Math.max(1,ends.length)*30;lane.style.height=h+'px';subTop+=h;videoGroup.appendChild(lane);
@@ -585,7 +589,8 @@ function renderTimeline(){
     b.style.width = Math.max(28, (t.end - t.start) * pps) + 'px';
     b.style.top = (ln * ROW + 5) + 'px';
     b.innerHTML = `<div class="hd l"></div><div class="nm" data-nt>T ${esc(t.text.split('\n')[0].slice(0,14))}</div>`
-                + kfMarks(t, Math.max(28, (t.end - t.start) * pps)) + `<div class="hd r"></div>`;
+                + kfMarks(t, Math.max(28, (t.end - t.start) * pps))
+                + lzTag(LZ.item[t.id], Math.max(28, (t.end - t.start) * pps)) + `<div class="hd r"></div>`;
     b.onmousedown = e => startTitleDrag(e, t, b);
     tt.appendChild(b);
   }
@@ -834,6 +839,14 @@ function kfBlockSpan(obj,w){
   const i=A.clips.indexOf(obj),q=i>=0?layout()[i]:null;
   return q ? {left:(q.start-q.startAt)/q.span*w,width:q.dur/q.span*w} : {left:0,width:w};
 }
+
+/** 方塊右端的圖層編號。太窄就不畫——寧可不顯示，也不要蓋掉名稱。
+    音軌不呼叫這支：聲音沒有前後遮蓋的問題。 */
+function lzTag(n, w){
+  if (!Number.isFinite(n) || w < 46) return '';
+  return `<div class="lz" data-nt>L${n}</div>`;
+}
+
 function kfMarks(obj, wpx){
   if (!kfOn(obj)) return '';
   const [a, b] = kfWin(obj), w = Math.max(28, wpx);
@@ -1339,11 +1352,7 @@ function refreshProp(){
         ${rowRange('tAnimOD','時長',0.1,5,0.05, t.animOutDur == null ? 0.4 : t.animOutDur,' 秒')}</div>
        ${kfGroup(t, 't', titleMotionProps,
          '這一段時間內從上面的起點平滑走到這裡的終點。進場與退場動畫照樣疊在上面，不衝突。')}
-       <div class="grp"><h4>圖層順序（誰蓋在誰上面）</h4>
-        <div class="row"><div class="f" style="gap:6px">
-          <button id="tUp" style="flex:1">往上一層</button>
-          <button id="tDn" style="flex:1">往下一層</button></div></div>
-        <div class="hint">目前第 ${A.titles.indexOf(t)+1} / ${A.titles.length} 層，數字越大越前面。</div></div>`;
+       ${lzGroup(t, '標題與疊圖共用同一條，所以標題也可以拉到疊圖後面。')}`;
     // 改任何外觀設定時，如果播放頭不在這個標題的時間內就自動跳進去，
     // 不然使用者會以為「改了沒反應」
     // 改設定時跳到「進場動畫已經跑完」的時間點，才看得到最終樣子
@@ -1368,8 +1377,7 @@ function refreshProp(){
     bind('tEnd','input', v => { t.end = Math.max(t.start + 0.3, +v); renderTimeline(); });
     on('tStartNow', () => { const len = t.end - t.start; t.start = A.playhead; t.end = t.start + len; render(); refreshProp(); });
     on('tEndNow',   () => { t.end = Math.max(t.start + 0.3, A.playhead); render(); refreshProp(); });
-    on('tUp', () => moveLayer(A.titles, t, +1));
-    on('tDn', () => moveLayer(A.titles, t, -1));
+    lzWire(t);
     bind('tAnim','change', v => { t.animIn = v; seekTo(t.start); });
     bind('tAnimD','input', v => { t.animDur = +v; setVal('tAnimD', (+v).toFixed(2) + ' 秒'); seekTo(t.start); });
     on('tAnimPick', () => openPicker('anim', t.animIn, id => {
@@ -1540,13 +1548,8 @@ function refreshProp(){
       show(); markDirty(); refreshProp();
     });
     p.insertAdjacentHTML('beforeend',
-      `<div class="grp" style="margin-top:12px"><h4>圖層順序（誰蓋在誰上面）</h4>
-        <div class="row"><div class="f" style="gap:6px">
-          <button id="oUp" style="flex:1">往上一層</button>
-          <button id="oDn" style="flex:1">往下一層</button></div></div>
-        <div class="hint">目前第 ${A.overlays.indexOf(o)+1} / ${A.overlays.length} 層，數字越大越前面。疊圖永遠在影片之上、標題之下。</div></div>`);
-    on('oUp', () => moveLayer(A.overlays, o, +1));
-    on('oDn', () => moveLayer(A.overlays, o, -1));
+      lzGroup(o, '疊圖與標題共用同一條，所以疊圖也可以拉到標題前面。'));
+    lzWire(o);
     on('oDel', () => { A.sel = { type:'overlay', id:o.id }; delSelected(); });
 
   } else if (s.type === 'music'){
@@ -1666,6 +1669,35 @@ function refreshProp(){
   }
 }
 function bind(id, ev, fn){ const el = $('#' + id); if (el) el.addEventListener(ev, e => fn(el.value, el)); }
+
+/** 疊圖／標題共用的「圖層順序」區塊內容。
+    疊圖與標題共用同一條 z 軸，所以疊圖可以拉到標題前面，反過來也行。
+    影片與字幕【沒有】這一區，而且是刻意的：字幕綁在自己的影片軌上，
+    要跟著那一軌一起上下，單獨拉層級會讓字幕跑到別軌影片後面。 */
+function lzGroup(obj, extra){
+  const LZ = layerLabels();
+  const n = LZ.item[obj.id], ord = layerOrder().length;
+  return `<div class="grp" style="margin-top:12px"><h4>圖層順序（誰蓋在誰上面）</h4>
+    <div class="row"><div class="f" style="gap:6px">
+      <button id="lzUp" style="flex:1">往上一層</button>
+      <button id="lzDown" style="flex:1">往下一層</button></div></div>
+    <div class="hint">目前 L${n}，可調的共 ${ord} 層，數字越大越顯示在前方。${extra || ''}</div></div>`;
+}
+/** 把上面那兩顆按鈕接起來。呼叫端在 innerHTML 之後叫一次。 */
+function lzWire(obj){
+  const go = dir => () => {
+    // 先確認邊界再動手：layerMove 會直接改 z，不能拿它當「試試看」用。
+    const ord = layerOrder(), i = ord.findIndex(it => it.obj === obj);
+    if (i < 0 || i + dir < 0 || i + dir >= ord.length)
+      return toast(dir > 0 ? '已經在最前面了' : '已經在最後面了');
+    pushUndo();
+    layerMove(obj, dir);
+    render(); refreshProp();
+  };
+  on('lzUp', go(1));
+  on('lzDown', go(-1));
+}
+
 function on(id, fn){ const el = $('#' + id); if (el) el.addEventListener('click', fn); }
 function setVal(id, v){ const el = $('#' + id + '_v'); if (el) el.textContent = v; }
 

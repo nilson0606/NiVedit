@@ -164,6 +164,11 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .blk .hd{background:linear-gradient(90deg,rgba(76,141,255,.0),rgba(76,141,255,.0))}
 .blk:hover .hd.l{background:linear-gradient(90deg,rgba(76,141,255,.85),rgba(76,141,255,0))}
 .blk:hover .hd.r{background:linear-gradient(270deg,rgba(76,141,255,.85),rgba(76,141,255,0))}
+/* 圖層編號：方塊右端的 L1/L2…。右邊 11px 是讓開裁切把手（.hd.r 寬 9px），
+   貼底是讓開上緣的關鍵幀菱形（.kfm 在 top:1px）。音軌不顯示。 */
+.lz{position:absolute;right:11px;bottom:1px;z-index:5;pointer-events:none;
+  font-size:9px;font-weight:700;letter-spacing:.3px;line-height:1.35;padding:0 3px;
+  border-radius:3px;color:#cfd6e4;background:rgba(0,0,0,.45)}
 .mblk .rep{position:absolute;top:0;height:100%;width:0;border-left:1px dashed rgba(255,255,255,.35)}
 .mblk .empty{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,
   rgba(0,0,0,.35) 0 6px,rgba(0,0,0,.15) 6px 12px)}
@@ -349,6 +354,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 :root[data-theme="light"] .vkline.flat polyline{stroke:rgba(20,50,90,.18)}
 :root[data-theme="light"] .vkline .vkd{stroke:#fff}
 :root[data-theme="light"] .kfm{border-color:rgba(255,255,255,.8)}
+:root[data-theme="light"] .lz{color:#1d2430;background:rgba(255,255,255,.78)}
 :root[data-theme="light"] .mblk .empty{background:repeating-linear-gradient(45deg,rgba(20,60,40,.15) 0 6px,rgba(20,60,40,.05) 6px 12px)}
 :root[data-theme="light"] .trx .tname{color:#174884;background:rgba(255,255,255,.9)}
 :root[data-theme="light"] #toast.err{color:var(--danger)}

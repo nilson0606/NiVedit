@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v9.8';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v9.9';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/12';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -666,6 +666,71 @@ function activeAt(T,track=0,L=layout()){
 }
 function activeTracksAt(T){const L=layout();return [activeAt(T,0,L),activeAt(T,1,L)].filter(Boolean);}
 
+/* ── 圖層（L 編號）──────────────────────────────────────────
+   疊圖與標題共用一條 z 軸：數字大的畫在前面，會蓋住數字小的。
+
+   影片軌與字幕【不】在這條軸上，而且是刻意的：
+   字幕綁在自己的影片軌（subTrack），要跟著那一軌一起上下，
+   不能單獨拉層級。所以堆疊順序永遠是
+
+       影片下軌 → 字幕下軌 → 影片上軌 → 字幕上軌 → 疊圖/標題（依 z）
+
+   字幕與同編號的影片軌【連動】：上軌字幕貼上軌影片、下軌字幕貼下軌影片，
+   所以上軌整組會蓋住下軌整組。字幕就算那一軌當下沒有片段（中間留白）
+   也照樣畫，跟 v9.8 以前一致。
+
+   顯示用的 L 編號是壓縮的：沒有內容的層不佔號碼，
+   所以只有單軌時是 影片L1／字幕L2／疊圖L3…，不會跳號。 */
+
+/** 疊圖＋標題，補好 z 之後由小到大排序（小的先畫、在後面）。 */
+function layerOrder(){
+  const items = [
+    ...A.overlays.map(o => ({ kind:'overlay', obj:o })),
+    ...A.titles.map(t => ({ kind:'title', obj:t })),
+  ];
+  // 舊專案沒有 z：疊圖在前、標題在後，重現 v9.8 以前的外觀。
+  let next = 0;
+  for (const it of items) if (Number.isFinite(it.obj.z)) next = Math.max(next, it.obj.z);
+  for (const it of items) if (!Number.isFinite(it.obj.z)) it.obj.z = ++next;
+  return items.sort((a, b) => a.obj.z - b.obj.z);
+}
+
+/** 新增疊圖／標題時用的 z：放到最上面。
+    先叫 layerOrder() 把舊專案沒有 z 的項目補齊，否則在舊專案上
+    max 會是 0，新項目拿到 z=1，反而變成【最底層】。 */
+function layerTopZ(){
+  const ord = layerOrder();
+  return ord.length ? ord[ord.length - 1].obj.z + 1 : 1;
+}
+
+/** 把某個疊圖／標題往上（dir=1）或往下（dir=-1）移一層。
+    回傳有沒有真的動到——已經在頂／底時回 false，呼叫端才知道要不要提示。 */
+function layerMove(obj, dir){
+  const ord = layerOrder();
+  const i = ord.findIndex(it => it.obj === obj);
+  const j = i + (dir > 0 ? 1 : -1);
+  if (i < 0 || j < 0 || j >= ord.length) return false;
+  const a = ord[i].obj, b = ord[j].obj;
+  const t = a.z; a.z = b.z; b.z = t;
+  return true;
+}
+
+/** 每個項目要顯示的 L 編號。回傳 { clip:{id:n}, sub:{0:n,1:n}, item:{id:n}, max }。
+    只有真的有內容的層才佔號碼。 */
+function layerLabels(){
+  const hasClip = t => A.clips.some(c => clipTrack(c) === t);
+  const hasSub  = t => A.subs.some(c => subTrack(c) === t);
+  const out = { clip:{}, sub:{}, item:{}, max:0 };
+  let n = 0;
+  for (const t of [0, 1]){
+    if (hasClip(t)){ n++; for (const c of A.clips) if (clipTrack(c) === t) out.clip[c.id] = n; }
+    if (hasSub(t)){ n++; out.sub[t] = n; }
+  }
+  for (const it of layerOrder()) out.item[it.obj.id] = ++n;
+  out.max = n;
+  return out;
+}
+
 /* ── 素材匯入 ──────────────────────────────────────────────── */
 /** 一批檔案進來，依副檔名／型別各自送到對的地方。
     左側素材區的點擊、拖曳到視窗，兩條路都走這裡，行為才會一致。 */
@@ -817,7 +882,8 @@ async function addOverlayFiles(files){
         w: im.naturalWidth, h: im.naturalHeight,
         start: st, end: Math.min(tot || st + 5, st + 5),
         x: 0.5, y: 0.5, scale: 0.3, opacity: 1, rot: 0,
-        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im)
+        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im),
+        z: layerTopZ()                       // 新疊圖放到最上層
       };
       if (o.end - o.start < 0.5) o.end = o.start + 3;
       A.overlays.push(o); regMedia(o);
@@ -936,7 +1002,8 @@ function addTitle(startAt){
     stroke: '#000000', strokeW: 0, bold: true, shadow: true,
     x: 0.5, y: 0.5, opacity: 1, rot: 0, align: 'center',
     start: s, end: Math.min(totalDur() || 5, s + 3),
-    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null
+    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null,
+    z: layerTopZ()                       // 新標題放到最上層
   };
   if (t.end - t.start < 0.5) t.end = t.start + 1.5;
   A.titles.push(t);

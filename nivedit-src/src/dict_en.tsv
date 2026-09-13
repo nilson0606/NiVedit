@@ -1044,3 +1044,13 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 清空本軌	Clear this track
 此軌目前沒有字幕，按「＋ 一句」開始新增。	This track has no subtitles. Press Add cue to begin.
 確定要刪掉本軌的	Delete all cues on this track:
+圖層順序（誰蓋在誰上面）	Layer order (what covers what)
+往上一層	Bring forward
+往下一層	Send backward
+目前 L	Currently L
+，可調的共	, of
+層，數字越大越顯示在前方。	adjustable layers; a higher number shows in front.
+標題與疊圖共用同一條，所以標題也可以拉到疊圖後面。	Titles and overlays share one axis, so a title can also go behind an overlay.
+疊圖與標題共用同一條，所以疊圖也可以拉到標題前面。	Overlays and titles share one axis, so an overlay can also go in front of a title.
+已經在最前面了	Already at the front
+已經在最後面了	Already at the back

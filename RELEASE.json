@@ -1,6 +1,6 @@
 {
-  "version": "9.8",
-  "html_sha256": "4e73793822dd1904330745f43f9cb3dd12d5b6d63f01d67aaffb366a8c4aa056",
-  "html_bytes": 967236,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 539 checks passed across fifteen suites. Export-container assertions now follow the browser's actual H.264+AAC capability via tests/_fmt.cjs, so both MP4-capable and WebM-fallback environments verify fully."
+  "version": "9.9",
+  "html_sha256": "3bed6b174edbcfebffd1fff46aeefaf1375a5e973878eb302eb4e263e7d2cf46",
+  "html_bytes": 973473,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 579 checks passed across sixteen suites, including the new layers suite (39). Timeline blocks now show layer numbers (L1, L2, ...); higher numbers draw in front. Subtitles are tied to their own video track and move with it; overlays and titles share one adjustable z axis."
 }
