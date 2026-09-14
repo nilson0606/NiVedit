@@ -5248,7 +5248,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -5878,10 +5878,15 @@ function tagSub(c, L, preferred){
 }
 function tagSubs(){ const L = layout(); for (const c of A.subs) tagSub(c, L); A._laySig = layoutSig(L); }
 
+/** 排版指紋：syncSubsToClips 靠它判斷「排版有沒有變」。
+
+    軌道一定要記進去。少了它的話，「同一個時間、換一條軌」算出來的指紋跟之前一樣，
+    整個字幕重算就不會被觸發 —— 影片搬到上軌了，字幕卻留在下軌。
+    （v10.3 剛修好字幕跟著換軌，卻被這個指紋擋在門外，白修。） */
 function layoutSig(L){
   L = L || layout();
   return A.clips.map((c, i) => c.id + '@' + L[i].start.toFixed(4) + '+' + L[i].dur.toFixed(4)
-                               + '#' + c.inP.toFixed(4)).join('|');
+                               + '#' + c.inP.toFixed(4) + '/' + L[i].track).join('|');
 }
 
 /** 排版變了就把字幕搬回原來對到的畫面上。

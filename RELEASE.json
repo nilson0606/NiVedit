@@ -1,6 +1,6 @@
 {
-  "version": "10.3",
-  "html_sha256": "39c7e2e9116e30a6d0c358154644eaa60000eb7062e356b301bb453a624eda46",
-  "html_bytes": 983784,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 614 checks passed across sixteen suites, plus the GIF suite. Subtitles now follow their clip across video tracks, and the timeline lists tracks so layer numbers increase downward."
+  "version": "10.4",
+  "html_sha256": "855a7504e0d63c5bf42033a2f0de0cfd68d2523591aed1e19c503320eddd59ca",
+  "html_bytes": 984190,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 618 checks passed across sixteen suites, plus the GIF suite. Fixes subtitles not following their clip when the clip changes video track without changing its time."
 }

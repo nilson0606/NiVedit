@@ -1,4 +1,4 @@
-# NiVedit v10.3
+# NiVedit v10.4
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-A subtitle stays with the clip it belongs to. Move that clip along the timeline and the subtitle moves with it, keeping its offset; move the clip to the other video track and the subtitle changes track too, so it is never hidden behind its own footage.
+Subtitles follow the clip they belong to. Move that clip along the timeline and the subtitles move with it, keeping their offsets; move it to the other video track — even without changing its time — and the subtitles change track too, so they are never hidden behind their own footage.
 
-The timeline now lists tracks so layer numbers increase downward: lower video and its subtitles (L1), upper video and its subtitles (L2), then images (L3), overlays (L4) and titles (L5). "Upper" and "lower" describe stacking order, not the row position.
+The timeline lists tracks so layer numbers increase downward: lower video and its subtitles (L1), upper video and its subtitles (L2), then images (L3), overlays (L4) and titles (L5). "Upper" and "lower" describe stacking order, not the row position.
 
 ## Features
 
@@ -34,7 +34,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v10.3 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v10.4 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -46,6 +46,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v10.3 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v10.4 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
