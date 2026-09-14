@@ -59,7 +59,7 @@ function serialize(){
       pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
       { mediaKey: reg(m.file, m) })),
     overlays: A.overlays.map(o => Object.assign(
-      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT']),
+      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT','z']),
       { mediaKey: reg(o.file, o) })),
     titles: A.titles.map(t => ({ ...t })),
     subs: A.subs.map(c => ({ ...c })),

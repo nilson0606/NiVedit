@@ -1,6 +1,6 @@
 {
-  "version": "9.9",
-  "html_sha256": "3bed6b174edbcfebffd1fff46aeefaf1375a5e973878eb302eb4e263e7d2cf46",
-  "html_bytes": 973473,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 579 checks passed across sixteen suites, including the new layers suite (39). Timeline blocks now show layer numbers (L1, L2, ...); higher numbers draw in front. Subtitles are tied to their own video track and move with it; overlays and titles share one adjustable z axis."
+  "version": "10.0",
+  "html_sha256": "9d2433c707502e52812117c6771d86c4cf140477e9da7efdb5418301f0f5a443",
+  "html_bytes": 973474,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 579 checks passed across sixteen suites, including the layers suite (39). Marked by the author as a milestone release. Same behaviour as v9.9; only the version string and the release date shown beside it changed."
 }
