@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -341,7 +341,7 @@ const A = {
               x:0.5, y:0.925, maxW:0.86 },
   sel: { type: 'proj', id: null },
   proj: { aspect:'16:9', w:1920, h:1080, fps:30, bitrate:8, fit:'contain',
-          tracks: ['video','over','sub','title','music'] },   // 軌道上下順序，可自己換
+          tracks: ['video','img','over','title','music'] },  // 軌道上下順序＝圖層順序，可自己換
   playhead: 0, playing: false, pps: 80, exporting: false,
   gradeBypass: false                 // 「看原始」按鈕用，不存進專案也不進復原
 };
@@ -458,8 +458,14 @@ function syncAutoLens(){
   }
 }
 
-// track 0 = 下軌（舊專案），track 1 = 上軌；兩軌各自串接。
-const clipTrack = c => c && c.track === 1 ? 1 : 0;
+/* track 0 = 影片下軌（舊專案），1 = 影片上軌，2 = 圖片軌。三軌各自串接。
+
+   圖片一律回 2，不看存檔裡寫什麼 —— v10.2 以前圖片是排在影片軌上的片段，
+   這樣寫等於讓舊專案一開啟就自動搬到圖片軌，不需要另外的遷移程式碼。
+   （搬走之後影片軌會空出一段；deserialize 會先 pinFreeClips() 把每一段的
+   絕對時間釘死，剩下的影片才不會整串往前補位。） */
+const clipTrack = c => !c ? 0 : isImg(c) ? 2 : c.track === 1 ? 1 : 0;
+const IMG_TRACK = 2;
 const VIDEO_MODES = [
   ['overlap','內扣（使用原片動態畫面）'],
   ['add','外加（延長首尾定格畫面）']
@@ -476,7 +482,9 @@ function clipFadeGain(c,T,q){
 }
 // 舊版每軌轉場複製到各片段；整片淡化移到每軌首段／末段，之後各段獨立。
 function upgradeClipSettings(proj){
-  for(const track of [0,1]){
+  // 三條片段軌都要補：v10.2 起圖片自己一條（IMG_TRACK），
+  // 只跑 [0,1] 的話舊專案裡的圖片會留下 fadeIn/fadeOut = null。
+  for(const track of [0,1,IMG_TRACK]){
     const clips=A.clips.filter(c=>clipTrack(c)===track);
     const legacy=proj.videoModes&&proj.videoModes[track];
     for(const [i,c] of clips.entries()){
@@ -488,6 +496,23 @@ function upgradeClipSettings(proj){
   }
   for(const key of ['videoModes','transAdd','fadeIn','fadeOut','fadeAudio'])delete A.proj[key];
 }
+/** v10.2 之前圖片是排在影片軌上的一段；現在圖片自己一條軌（IMG_TRACK）。
+
+    夠舊的專案沒有存 at（每一段的絕對時間），純靠陣列順序在軌上接龍。
+    那種檔案如果直接讓圖片搬家，後面的影片會整串往前補位、時間軸全變。
+    所以開檔時先用【舊的軌道歸屬】把每一段的絕對時間算出來釘死，再讓圖片搬走。
+    已經有 at 的專案（v8.3 以後）什麼都不用做。 */
+function pinLegacyClipTimes(clips){
+  if (!clips || clips.every(c => Number.isFinite(c.at))) return;
+  const end = { 0:0, 1:0 };
+  for (const c of clips){
+    const t = c.track === 1 ? 1 : 0;                 // 舊模型只有下軌／上軌
+    const at = Math.max(end[t], Number.isFinite(c.at) ? c.at : 0);
+    c.at = at;
+    end[t] = at + clipEdges(c).span;
+  }
+}
+
 function clipEdges(c){
   const add=clipMode(c)==='add',d=clipDur(c);
   let head=c.trans&&c.trans.type!=='none'?Math.max(0,c.trans.dur||0):0;
@@ -496,7 +521,7 @@ function clipEdges(c){
   return {add,head,tail,span:d+(add?head+tail:0)};
 }
 function layout(){
-  const L=[],prev=[-1,-1];
+  const L=[],prev=[-1,-1,-1];        // 影片下軌／影片上軌／圖片軌，各自串接
   A.clips.forEach((c,i)=>{
     const track=clipTrack(c),pi=prev[track],edge=clipEdges(c),dur=clipDur(c);
     const startAt=Math.max(pi<0?0:L[pi].end,Number.isFinite(c.at)?c.at:0);
@@ -514,6 +539,7 @@ function nextClipIndex(i, L){
 }
 /** 放進指定影片軌與時間。同軌按先後串接，不產生第三層重疊。 */
 function placeClip(c,track,at){
+  track = isImg(c) ? IMG_TRACK : (track===1 ? 1 : 0);   // 圖片只住圖片軌
   pinFreeClips();
   const L=layout(),i=A.clips.indexOf(c);if(i<0)return;
   at=Math.max(0,Number.isFinite(at)?at:L[i].startAt);
@@ -586,7 +612,8 @@ function subStyleFor(track){
 }
 function subtitleTargetTrack(){
   if(A.sel.type==='sub')return subTrack(A.subs.find(c=>c.id===A.sel.id));
-  if(A.sel.type==='clip')return clipTrack(A.clips.find(c=>c.id===A.sel.id));
+  // 字幕只有上下兩軌：選到圖片（IMG_TRACK）時沒有對應的字幕軌，落回下軌。
+  if(A.sel.type==='clip'){const t=clipTrack(A.clips.find(c=>c.id===A.sel.id));return t===1?1:0;}
   return 0;
 }
 function tagSub(c, L, preferred){
@@ -695,70 +722,57 @@ function activeAt(T,track=0,L=layout()){
   return {a,b:null,p:0,type:null,idx:i,track,
     intro:entering?{type:c.trans.type,p:clamp((T-q.startAt)/q.inDur,0,1)}:null,out};
 }
-function activeTracksAt(T){const L=layout();return [activeAt(T,0,L),activeAt(T,1,L)].filter(Boolean);}
+function activeTracksAt(T){const L=layout();return [0,1,IMG_TRACK].map(t=>activeAt(T,t,L)).filter(Boolean);}
 
 /* ── 圖層（L 編號）──────────────────────────────────────────
-   疊圖與標題共用一條 z 軸：數字大的畫在前面，會蓋住數字小的。
+   v10.2 起 L 編號是【固定】的，由軌道種類與軌道順序決定，
+   不再隨物件數量增減。三張疊圖全部都是同一號。
 
-   影片軌與字幕【不】在這條軸上，而且是刻意的：
-   字幕綁在自己的影片軌（subTrack），要跟著那一軌一起上下，
-   不能單獨拉層級。所以堆疊順序永遠是
+       L1  影片下軌 ＋ 下軌字幕（字幕畫在自己那一軌的影片前面）
+       L2  影片上軌 ＋ 上軌字幕　　整組蓋住 L1
+       L3  ↑ 圖片／疊圖／標題三軌，依目前的軌道順序取號，
+       L4  │ 用時間軸左側的 ▲▼ 換順序就換號碼，
+       L5  ↓ L3 是地板 —— 換不進 L1／L2。音軌不取號。
 
-       影片下軌 → 字幕下軌 → 影片上軌 → 字幕上軌 → 疊圖/標題（依 z）
+   數字越大越顯示在前方。同一號之內（例如三張疊圖都是 L4），
+   時間軸上【起始時間較後的蓋住較前的】。
 
-   字幕與同編號的影片軌【連動】：上軌字幕貼上軌影片、下軌字幕貼下軌影片，
-   所以上軌整組會蓋住下軌整組。字幕就算那一軌當下沒有片段（中間留白）
-   也照樣畫，跟 v9.8 以前一致。
+   字幕綁在自己的影片軌（subTrack），跟那一軌是同一層、一起上下，
+   不能單獨拉層級。那一軌當下沒有片段（中間留白）時字幕照畫。
 
-   顯示用的 L 編號是壓縮的：沒有內容的層不佔號碼，
-   所以只有單軌時是 影片L1／字幕L2／疊圖L3…，不會跳號。 */
+   舊版的 per-object z 軸已經拿掉：那正是「每加一個疊圖就多一號」的成因。
+   舊專案裡殘留的 z 欄位讀進來會被忽略，不影響外觀。 */
 
-/** 疊圖＋標題，補好 z 之後由小到大排序（小的先畫、在後面）。 */
-function layerOrder(){
-  const items = [
-    ...A.overlays.map(o => ({ kind:'overlay', obj:o })),
-    ...A.titles.map(t => ({ kind:'title', obj:t })),
-  ];
-  // 舊專案沒有 z：疊圖在前、標題在後，重現 v9.8 以前的外觀。
-  let next = 0;
-  for (const it of items) if (Number.isFinite(it.obj.z)) next = Math.max(next, it.obj.z);
-  for (const it of items) if (!Number.isFinite(it.obj.z)) it.obj.z = ++next;
-  return items.sort((a, b) => a.obj.z - b.obj.z);
+/** 可移動的三軌，順序即層級。影片組固定佔 L1／L2，所以從 L3 起跳。 */
+const LZ_TRACKS = ['img', 'over', 'title'];
+const LZ_FLOOR = 3;
+
+/** 某一軌（img／over／title）目前的 L 編號。 */
+function layerOfTrack(k){
+  const order = (typeof trackOrder === 'function' ? trackOrder() : LZ_TRACKS)
+                  .filter(x => LZ_TRACKS.includes(x));
+  const i = order.indexOf(k);
+  return i < 0 ? LZ_FLOOR : LZ_FLOOR + i;
 }
 
-/** 新增疊圖／標題時用的 z：放到最上面。
-    先叫 layerOrder() 把舊專案沒有 z 的項目補齊，否則在舊專案上
-    max 會是 0，新項目拿到 z=1，反而變成【最底層】。 */
-function layerTopZ(){
-  const ord = layerOrder();
-  return ord.length ? ord[ord.length - 1].obj.z + 1 : 1;
+/** L3 以上要畫的東西，已經排好順序：先比 L 編號，同號比起始時間。
+    圖片軌是一整條接龍（有轉場），所以它在清單裡是一個整體，不是逐張圖。 */
+function layerPlan(){
+  const rows = [{ layer: layerOfTrack('img'), kind: 'imgtrack', obj: null, start: -Infinity }];
+  const ov = layerOfTrack('over'), ti = layerOfTrack('title');
+  for (const o of A.overlays) rows.push({ layer: ov, kind: 'overlay', obj: o, start: o.start || 0 });
+  for (const t of A.titles)   rows.push({ layer: ti, kind: 'title',   obj: t, start: t.start || 0 });
+  return rows.sort((a, b) => a.layer - b.layer || a.start - b.start);
 }
 
-/** 把某個疊圖／標題往上（dir=1）或往下（dir=-1）移一層。
-    回傳有沒有真的動到——已經在頂／底時回 false，呼叫端才知道要不要提示。 */
-function layerMove(obj, dir){
-  const ord = layerOrder();
-  const i = ord.findIndex(it => it.obj === obj);
-  const j = i + (dir > 0 ? 1 : -1);
-  if (i < 0 || j < 0 || j >= ord.length) return false;
-  const a = ord[i].obj, b = ord[j].obj;
-  const t = a.z; a.z = b.z; b.z = t;
-  return true;
-}
-
-/** 每個項目要顯示的 L 編號。回傳 { clip:{id:n}, sub:{0:n,1:n}, item:{id:n}, max }。
-    只有真的有內容的層才佔號碼。 */
+/** 每個項目要顯示的 L 編號。回傳 { clip:{id:n}, sub:{0:n,1:n}, item:{id:n}, max }。 */
 function layerLabels(){
-  const hasClip = t => A.clips.some(c => clipTrack(c) === t);
-  const hasSub  = t => A.subs.some(c => subTrack(c) === t);
-  const out = { clip:{}, sub:{}, item:{}, max:0 };
-  let n = 0;
-  for (const t of [0, 1]){
-    if (hasClip(t)){ n++; for (const c of A.clips) if (clipTrack(c) === t) out.clip[c.id] = n; }
-    if (hasSub(t)){ n++; out.sub[t] = n; }
-  }
-  for (const it of layerOrder()) out.item[it.obj.id] = ++n;
-  out.max = n;
+  const out = { clip:{}, sub:{ 0:1, 1:2 }, item:{}, max:0 };
+  const im = layerOfTrack('img'), ov = layerOfTrack('over'), ti = layerOfTrack('title');
+  for (const c of A.clips) out.clip[c.id] = isImg(c) ? im : (clipTrack(c) === 1 ? 2 : 1);
+  for (const o of A.overlays) out.item[o.id] = ov;
+  for (const t of A.titles)   out.item[t.id] = ti;
+  out.max = Math.max(2, im, ov, ti);
   return out;
 }
 
@@ -915,8 +929,7 @@ async function addOverlayFiles(files){
         w: im.naturalWidth, h: im.naturalHeight,
         start: st, end: Math.min(tot || st + 5, st + 5),
         x: 0.5, y: 0.5, scale: 0.3, opacity: 1, rot: 0,
-        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im),
-        z: layerTopZ()                       // 新疊圖放到最上層
+        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im)
       };
       if (o.end - o.start < 0.5) o.end = o.start + 3;
       A.overlays.push(o); regMedia(o);
@@ -1035,8 +1048,7 @@ function addTitle(startAt){
     stroke: '#000000', strokeW: 0, bold: true, shadow: true,
     x: 0.5, y: 0.5, opacity: 1, rot: 0, align: 'center',
     start: s, end: Math.min(totalDur() || 5, s + 3),
-    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null,
-    z: layerTopZ()                       // 新標題放到最上層
+    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null
   };
   if (t.end - t.start < 0.5) t.end = t.start + 1.5;
   A.titles.push(t);

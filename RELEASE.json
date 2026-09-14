@@ -1,6 +1,6 @@
 {
-  "version": "10.1",
-  "html_sha256": "5b856f5de4263628962a8ff6b8d4d99ba43eb0ff756f7fb93ef4ffbe9a507264",
-  "html_bytes": 977729,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 596 checks passed across sixteen suites, plus the GIF suite (16 assertions), which now runs on plain Chromium as well. Subtitle placement moved to free x/y positioning; the drop zone accepts video and audio only."
+  "version": "10.2",
+  "html_sha256": "c620dc9a254757418fea7df1b4128ccadf00a15a3139322f5bad1ef676ed9137",
+  "html_bytes": 983157,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 610 checks passed across sixteen suites, plus the GIF suite. Layer numbers are now fixed per track instead of per object, and images have their own track drawn above the video while keeping transitions, cropping, colour grading and keyframes."
 }

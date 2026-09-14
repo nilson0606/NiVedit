@@ -59,7 +59,7 @@ function serialize(){
       pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
       { mediaKey: reg(m.file, m) })),
     overlays: A.overlays.map(o => Object.assign(
-      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT','z']),
+      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT']),   // v10.2 起沒有 per-object z 了
       { mediaKey: reg(o.file, o) })),
     titles: A.titles.map(t => ({ ...t })),
     subs: A.subs.map(c => ({ ...c })),
@@ -115,6 +115,7 @@ async function deserialize(st, blobs){
     });
     A.clips.push(nc); regMedia(nc);
   }
+  pinLegacyClipTimes(A.clips);
 
   A.musics = [];
   for (const m of st.musics){
@@ -144,6 +145,9 @@ async function deserialize(st, blobs){
   A.subStyleUpper=st.subStyleUpper ? subStyleMigrate({...st.subStyleUpper}) : null;
   if (st.subStyle) subStyleAssign(A.subStyle, st.subStyle);
   Object.assign(A.proj, st.proj || {});
+  // 舊專案的軌道順序沒有 img、也可能把 video 排在別的位置。
+  // 這裡先正規化一次，A.proj.tracks 才不會在下一次重繪之前處於舊格式。
+  if (typeof trackOrder === 'function') trackOrder();
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;
   A.playhead = clamp(st.playhead || 0, 0, totalDur());

@@ -396,6 +396,13 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 陰影	Shadow
 位置	Position
 快速對位	Quick align
+圖層（誰蓋在誰上面）	Layer (what covers what)
+數字越大越顯示在前方；同一層之內，時間軸上起始時間較後的蓋住較前的。要換層請用時間軸左側軌道名稱旁的 ▲▼，整軌一起換。	A larger number is drawn in front. Within one layer, whichever starts later on the timeline covers the earlier one. To change layers use the ▲▼ beside the track name on the left of the timeline — the whole track moves together.
+往上一列（L 數字變小，更容易被蓋住）	Move up one row (smaller L, more easily covered)
+往下一列（L 數字變大，更顯示在前方）	Move down one row (larger L, drawn further in front)
+這一軌的圖片會蓋在影片上方 —— 按上面「＋ 圖片」	Images on this track cover the video — use "+ Image" above
+軌變成 L	 track is now L
+（數字越大越顯示在前方）	 (a larger number is drawn in front)
 位置（套用到這一軌字幕）	Position (applies to this subtitle track)
 水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。	Horizontal is the centre of the subtitle box, vertical is its bottom edge: a second line grows upward, so the last line stays at the same height. Each track keeps its own position; applying a style preset above also brings that preset's position.
 水平	Horizontal

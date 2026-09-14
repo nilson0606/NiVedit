@@ -1,4 +1,4 @@
-# NiVedit v10.1
+# NiVedit v10.2
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Subtitles can now be placed anywhere on the frame. Each subtitle track has its own horizontal and vertical position, set with two sliders and a quick-align grid. Horizontal is the centre of the subtitle box; vertical is its bottom edge, so a second line grows upward and the last line stays at the same height. Projects saved with the older top/bottom-plus-margin setting are converted on open.
+Timeline layer numbers are now fixed. Each track has one number instead of each object having its own, so adding a second overlay no longer pushes the numbers up — every overlay stays on the same layer. Video and its subtitles share a layer (L1 lower, L2 upper); images, overlays and titles take L3, L4 and L5 and are reordered with the ▲▼ beside the track name, never below L3. Within one layer, whichever starts later on the timeline is drawn in front.
 
-The drop zone on the left now accepts video and audio only. Images still go in through the "+ Image" and "+ Overlay" buttons, which are unchanged.
+Images now have their own track, drawn above the video, and keep everything a video clip has: transitions, cropping, colour grading, keyframes and fades. Projects saved before this change move their images onto the new track when opened, which also means an image now covers subtitles.
 
 ## Features
 
@@ -34,7 +34,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v10.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v10.2 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -46,6 +46,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v10.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v10.2 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

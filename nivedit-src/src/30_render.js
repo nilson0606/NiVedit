@@ -1517,21 +1517,26 @@ function drawSubCue(ctx,cue,st,W,H){
 function renderFrame(ctx, T, W, H){
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   const acts = activeTracksAt(T);
+  // L1 與 L2：影片軌各自帶著自己那一軌的字幕，整組上下
   for (const track of [0, 1]){
     const act = acts.find(a => a.track === track);
     if (act) drawVideoTrack(ctx, act, T, W, H);
-    drawSubTrack(ctx, track, T, W, H);   // 字幕緊貼自己那一軌的影片，兩者連動
+    drawSubTrack(ctx, track, T, W, H);
   }
-  // 疊圖與標題共用一條 z 軸，數字大的畫在後面（顯示在前方）
-  for (const it of layerOrder()){
-    if (it.kind === 'overlay') drawOverlay(ctx, it.obj, T, W, H);
-    else drawTitle(ctx, it.obj, T, W, H);
+  // L3 以上：圖片軌／疊圖／標題，依 L 編號，同號依起始時間（後面的蓋前面的）
+  for (const row of layerPlan()){
+    if (row.kind === 'imgtrack'){
+      const act = acts.find(a => a.track === IMG_TRACK);
+      if (act) drawVideoTrack(ctx, act, T, W, H);
+    }
+    else if (row.kind === 'overlay') drawOverlay(ctx, row.obj, T, W, H);
+    else drawTitle(ctx, row.obj, T, W, H);
   }
 }
 
 function drawVideoTrack(ctx, act, T, W, H){
   {
-    const upper = act.track === 1;
+    const upper = act.track >= 1;      // 上軌與圖片軌都要透明合成，不然會用黑底蓋掉底下
     const layer = bufs('clipLayer'+act.track+W+'x'+H,1,W,H)[0];
     const target = layer.x;
     const paint = upper ? (x,ref,w,h) => {

@@ -146,8 +146,9 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
   pointer-events:auto;cursor:ew-resize;z-index:7}
 .kfm:hover{background:#fff}
 .trklb .ord[disabled]{opacity:.28;cursor:default;border-color:var(--line);color:var(--fg3)}
-.trkhint{position:absolute;left:78px;top:14px;font-size:11px;color:#5a6270;pointer-events:none;
-  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:3px 10px}
+/* 空軌只有 26px 高（ROW_EMPTY），提示要往上收才不會滿出來 */
+.trkhint{position:absolute;left:78px;top:4px;font-size:11px;color:#5a6270;pointer-events:none;
+  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:2px 10px}
 .blk{position:absolute;top:8px;height:34px;border-radius:5px;overflow:hidden;cursor:pointer;
   border:1px solid #3a4150;background:linear-gradient(180deg,#2c3442,#232a35);display:flex;align-items:center}
 .videoLane .blk,.videoLane .trx{height:28px}
@@ -446,6 +447,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
           <div id="tlinner">
             <div id="ruler"></div>
             <div class="trk" id="trkVideo" data-tk="video"></div>
+            <div class="trk" id="trkImg"   data-tk="img"></div>
             <div class="trk" id="trkOver"  data-tk="over"></div>
             <div class="trk" id="trkSub"   data-tk="sub"></div>
             <div class="trk" id="trkTitle" data-tk="title"></div>
@@ -4360,6 +4362,13 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 陰影	Shadow
 位置	Position
 快速對位	Quick align
+圖層（誰蓋在誰上面）	Layer (what covers what)
+數字越大越顯示在前方；同一層之內，時間軸上起始時間較後的蓋住較前的。要換層請用時間軸左側軌道名稱旁的 ▲▼，整軌一起換。	A larger number is drawn in front. Within one layer, whichever starts later on the timeline covers the earlier one. To change layers use the ▲▼ beside the track name on the left of the timeline — the whole track moves together.
+往上一列（L 數字變小，更容易被蓋住）	Move up one row (smaller L, more easily covered)
+往下一列（L 數字變大，更顯示在前方）	Move down one row (larger L, drawn further in front)
+這一軌的圖片會蓋在影片上方 —— 按上面「＋ 圖片」	Images on this track cover the video — use "+ Image" above
+軌變成 L	 track is now L
+（數字越大越顯示在前方）	 (a larger number is drawn in front)
 位置（套用到這一軌字幕）	Position (applies to this subtitle track)
 水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。	Horizontal is the centre of the subtitle box, vertical is its bottom edge: a second line grows upward, so the last line stays at the same height. Each track keeps its own position; applying a style preset above also brings that preset's position.
 水平	Horizontal
@@ -5239,7 +5248,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -5577,7 +5586,7 @@ const A = {
               x:0.5, y:0.925, maxW:0.86 },
   sel: { type: 'proj', id: null },
   proj: { aspect:'16:9', w:1920, h:1080, fps:30, bitrate:8, fit:'contain',
-          tracks: ['video','over','sub','title','music'] },   // 軌道上下順序，可自己換
+          tracks: ['video','img','over','title','music'] },  // 軌道上下順序＝圖層順序，可自己換
   playhead: 0, playing: false, pps: 80, exporting: false,
   gradeBypass: false                 // 「看原始」按鈕用，不存進專案也不進復原
 };
@@ -5694,8 +5703,14 @@ function syncAutoLens(){
   }
 }
 
-// track 0 = 下軌（舊專案），track 1 = 上軌；兩軌各自串接。
-const clipTrack = c => c && c.track === 1 ? 1 : 0;
+/* track 0 = 影片下軌（舊專案），1 = 影片上軌，2 = 圖片軌。三軌各自串接。
+
+   圖片一律回 2，不看存檔裡寫什麼 —— v10.2 以前圖片是排在影片軌上的片段，
+   這樣寫等於讓舊專案一開啟就自動搬到圖片軌，不需要另外的遷移程式碼。
+   （搬走之後影片軌會空出一段；deserialize 會先 pinFreeClips() 把每一段的
+   絕對時間釘死，剩下的影片才不會整串往前補位。） */
+const clipTrack = c => !c ? 0 : isImg(c) ? 2 : c.track === 1 ? 1 : 0;
+const IMG_TRACK = 2;
 const VIDEO_MODES = [
   ['overlap','內扣（使用原片動態畫面）'],
   ['add','外加（延長首尾定格畫面）']
@@ -5712,7 +5727,9 @@ function clipFadeGain(c,T,q){
 }
 // 舊版每軌轉場複製到各片段；整片淡化移到每軌首段／末段，之後各段獨立。
 function upgradeClipSettings(proj){
-  for(const track of [0,1]){
+  // 三條片段軌都要補：v10.2 起圖片自己一條（IMG_TRACK），
+  // 只跑 [0,1] 的話舊專案裡的圖片會留下 fadeIn/fadeOut = null。
+  for(const track of [0,1,IMG_TRACK]){
     const clips=A.clips.filter(c=>clipTrack(c)===track);
     const legacy=proj.videoModes&&proj.videoModes[track];
     for(const [i,c] of clips.entries()){
@@ -5724,6 +5741,23 @@ function upgradeClipSettings(proj){
   }
   for(const key of ['videoModes','transAdd','fadeIn','fadeOut','fadeAudio'])delete A.proj[key];
 }
+/** v10.2 之前圖片是排在影片軌上的一段；現在圖片自己一條軌（IMG_TRACK）。
+
+    夠舊的專案沒有存 at（每一段的絕對時間），純靠陣列順序在軌上接龍。
+    那種檔案如果直接讓圖片搬家，後面的影片會整串往前補位、時間軸全變。
+    所以開檔時先用【舊的軌道歸屬】把每一段的絕對時間算出來釘死，再讓圖片搬走。
+    已經有 at 的專案（v8.3 以後）什麼都不用做。 */
+function pinLegacyClipTimes(clips){
+  if (!clips || clips.every(c => Number.isFinite(c.at))) return;
+  const end = { 0:0, 1:0 };
+  for (const c of clips){
+    const t = c.track === 1 ? 1 : 0;                 // 舊模型只有下軌／上軌
+    const at = Math.max(end[t], Number.isFinite(c.at) ? c.at : 0);
+    c.at = at;
+    end[t] = at + clipEdges(c).span;
+  }
+}
+
 function clipEdges(c){
   const add=clipMode(c)==='add',d=clipDur(c);
   let head=c.trans&&c.trans.type!=='none'?Math.max(0,c.trans.dur||0):0;
@@ -5732,7 +5766,7 @@ function clipEdges(c){
   return {add,head,tail,span:d+(add?head+tail:0)};
 }
 function layout(){
-  const L=[],prev=[-1,-1];
+  const L=[],prev=[-1,-1,-1];        // 影片下軌／影片上軌／圖片軌，各自串接
   A.clips.forEach((c,i)=>{
     const track=clipTrack(c),pi=prev[track],edge=clipEdges(c),dur=clipDur(c);
     const startAt=Math.max(pi<0?0:L[pi].end,Number.isFinite(c.at)?c.at:0);
@@ -5750,6 +5784,7 @@ function nextClipIndex(i, L){
 }
 /** 放進指定影片軌與時間。同軌按先後串接，不產生第三層重疊。 */
 function placeClip(c,track,at){
+  track = isImg(c) ? IMG_TRACK : (track===1 ? 1 : 0);   // 圖片只住圖片軌
   pinFreeClips();
   const L=layout(),i=A.clips.indexOf(c);if(i<0)return;
   at=Math.max(0,Number.isFinite(at)?at:L[i].startAt);
@@ -5822,7 +5857,8 @@ function subStyleFor(track){
 }
 function subtitleTargetTrack(){
   if(A.sel.type==='sub')return subTrack(A.subs.find(c=>c.id===A.sel.id));
-  if(A.sel.type==='clip')return clipTrack(A.clips.find(c=>c.id===A.sel.id));
+  // 字幕只有上下兩軌：選到圖片（IMG_TRACK）時沒有對應的字幕軌，落回下軌。
+  if(A.sel.type==='clip'){const t=clipTrack(A.clips.find(c=>c.id===A.sel.id));return t===1?1:0;}
   return 0;
 }
 function tagSub(c, L, preferred){
@@ -5931,70 +5967,57 @@ function activeAt(T,track=0,L=layout()){
   return {a,b:null,p:0,type:null,idx:i,track,
     intro:entering?{type:c.trans.type,p:clamp((T-q.startAt)/q.inDur,0,1)}:null,out};
 }
-function activeTracksAt(T){const L=layout();return [activeAt(T,0,L),activeAt(T,1,L)].filter(Boolean);}
+function activeTracksAt(T){const L=layout();return [0,1,IMG_TRACK].map(t=>activeAt(T,t,L)).filter(Boolean);}
 
 /* ── 圖層（L 編號）──────────────────────────────────────────
-   疊圖與標題共用一條 z 軸：數字大的畫在前面，會蓋住數字小的。
+   v10.2 起 L 編號是【固定】的，由軌道種類與軌道順序決定，
+   不再隨物件數量增減。三張疊圖全部都是同一號。
 
-   影片軌與字幕【不】在這條軸上，而且是刻意的：
-   字幕綁在自己的影片軌（subTrack），要跟著那一軌一起上下，
-   不能單獨拉層級。所以堆疊順序永遠是
+       L1  影片下軌 ＋ 下軌字幕（字幕畫在自己那一軌的影片前面）
+       L2  影片上軌 ＋ 上軌字幕　　整組蓋住 L1
+       L3  ↑ 圖片／疊圖／標題三軌，依目前的軌道順序取號，
+       L4  │ 用時間軸左側的 ▲▼ 換順序就換號碼，
+       L5  ↓ L3 是地板 —— 換不進 L1／L2。音軌不取號。
 
-       影片下軌 → 字幕下軌 → 影片上軌 → 字幕上軌 → 疊圖/標題（依 z）
+   數字越大越顯示在前方。同一號之內（例如三張疊圖都是 L4），
+   時間軸上【起始時間較後的蓋住較前的】。
 
-   字幕與同編號的影片軌【連動】：上軌字幕貼上軌影片、下軌字幕貼下軌影片，
-   所以上軌整組會蓋住下軌整組。字幕就算那一軌當下沒有片段（中間留白）
-   也照樣畫，跟 v9.8 以前一致。
+   字幕綁在自己的影片軌（subTrack），跟那一軌是同一層、一起上下，
+   不能單獨拉層級。那一軌當下沒有片段（中間留白）時字幕照畫。
 
-   顯示用的 L 編號是壓縮的：沒有內容的層不佔號碼，
-   所以只有單軌時是 影片L1／字幕L2／疊圖L3…，不會跳號。 */
+   舊版的 per-object z 軸已經拿掉：那正是「每加一個疊圖就多一號」的成因。
+   舊專案裡殘留的 z 欄位讀進來會被忽略，不影響外觀。 */
 
-/** 疊圖＋標題，補好 z 之後由小到大排序（小的先畫、在後面）。 */
-function layerOrder(){
-  const items = [
-    ...A.overlays.map(o => ({ kind:'overlay', obj:o })),
-    ...A.titles.map(t => ({ kind:'title', obj:t })),
-  ];
-  // 舊專案沒有 z：疊圖在前、標題在後，重現 v9.8 以前的外觀。
-  let next = 0;
-  for (const it of items) if (Number.isFinite(it.obj.z)) next = Math.max(next, it.obj.z);
-  for (const it of items) if (!Number.isFinite(it.obj.z)) it.obj.z = ++next;
-  return items.sort((a, b) => a.obj.z - b.obj.z);
+/** 可移動的三軌，順序即層級。影片組固定佔 L1／L2，所以從 L3 起跳。 */
+const LZ_TRACKS = ['img', 'over', 'title'];
+const LZ_FLOOR = 3;
+
+/** 某一軌（img／over／title）目前的 L 編號。 */
+function layerOfTrack(k){
+  const order = (typeof trackOrder === 'function' ? trackOrder() : LZ_TRACKS)
+                  .filter(x => LZ_TRACKS.includes(x));
+  const i = order.indexOf(k);
+  return i < 0 ? LZ_FLOOR : LZ_FLOOR + i;
 }
 
-/** 新增疊圖／標題時用的 z：放到最上面。
-    先叫 layerOrder() 把舊專案沒有 z 的項目補齊，否則在舊專案上
-    max 會是 0，新項目拿到 z=1，反而變成【最底層】。 */
-function layerTopZ(){
-  const ord = layerOrder();
-  return ord.length ? ord[ord.length - 1].obj.z + 1 : 1;
+/** L3 以上要畫的東西，已經排好順序：先比 L 編號，同號比起始時間。
+    圖片軌是一整條接龍（有轉場），所以它在清單裡是一個整體，不是逐張圖。 */
+function layerPlan(){
+  const rows = [{ layer: layerOfTrack('img'), kind: 'imgtrack', obj: null, start: -Infinity }];
+  const ov = layerOfTrack('over'), ti = layerOfTrack('title');
+  for (const o of A.overlays) rows.push({ layer: ov, kind: 'overlay', obj: o, start: o.start || 0 });
+  for (const t of A.titles)   rows.push({ layer: ti, kind: 'title',   obj: t, start: t.start || 0 });
+  return rows.sort((a, b) => a.layer - b.layer || a.start - b.start);
 }
 
-/** 把某個疊圖／標題往上（dir=1）或往下（dir=-1）移一層。
-    回傳有沒有真的動到——已經在頂／底時回 false，呼叫端才知道要不要提示。 */
-function layerMove(obj, dir){
-  const ord = layerOrder();
-  const i = ord.findIndex(it => it.obj === obj);
-  const j = i + (dir > 0 ? 1 : -1);
-  if (i < 0 || j < 0 || j >= ord.length) return false;
-  const a = ord[i].obj, b = ord[j].obj;
-  const t = a.z; a.z = b.z; b.z = t;
-  return true;
-}
-
-/** 每個項目要顯示的 L 編號。回傳 { clip:{id:n}, sub:{0:n,1:n}, item:{id:n}, max }。
-    只有真的有內容的層才佔號碼。 */
+/** 每個項目要顯示的 L 編號。回傳 { clip:{id:n}, sub:{0:n,1:n}, item:{id:n}, max }。 */
 function layerLabels(){
-  const hasClip = t => A.clips.some(c => clipTrack(c) === t);
-  const hasSub  = t => A.subs.some(c => subTrack(c) === t);
-  const out = { clip:{}, sub:{}, item:{}, max:0 };
-  let n = 0;
-  for (const t of [0, 1]){
-    if (hasClip(t)){ n++; for (const c of A.clips) if (clipTrack(c) === t) out.clip[c.id] = n; }
-    if (hasSub(t)){ n++; out.sub[t] = n; }
-  }
-  for (const it of layerOrder()) out.item[it.obj.id] = ++n;
-  out.max = n;
+  const out = { clip:{}, sub:{ 0:1, 1:2 }, item:{}, max:0 };
+  const im = layerOfTrack('img'), ov = layerOfTrack('over'), ti = layerOfTrack('title');
+  for (const c of A.clips) out.clip[c.id] = isImg(c) ? im : (clipTrack(c) === 1 ? 2 : 1);
+  for (const o of A.overlays) out.item[o.id] = ov;
+  for (const t of A.titles)   out.item[t.id] = ti;
+  out.max = Math.max(2, im, ov, ti);
   return out;
 }
 
@@ -6151,8 +6174,7 @@ async function addOverlayFiles(files){
         w: im.naturalWidth, h: im.naturalHeight,
         start: st, end: Math.min(tot || st + 5, st + 5),
         x: 0.5, y: 0.5, scale: 0.3, opacity: 1, rot: 0,
-        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im),
-        z: layerTopZ()                       // 新疊圖放到最上層
+        fadeIn: 0, fadeOut: 0, thumb: imgThumb(im)
       };
       if (o.end - o.start < 0.5) o.end = o.start + 3;
       A.overlays.push(o); regMedia(o);
@@ -6271,8 +6293,7 @@ function addTitle(startAt){
     stroke: '#000000', strokeW: 0, bold: true, shadow: true,
     x: 0.5, y: 0.5, opacity: 1, rot: 0, align: 'center',
     start: s, end: Math.min(totalDur() || 5, s + 3),
-    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null,
-    z: layerTopZ()                       // 新標題放到最上層
+    animIn: 'fade', animDur: 0.6, animOut: 'fade', animOutDur: 0.4, preset: null
   };
   if (t.end - t.start < 0.5) t.end = t.start + 1.5;
   A.titles.push(t);
@@ -8246,21 +8267,26 @@ function drawSubCue(ctx,cue,st,W,H){
 function renderFrame(ctx, T, W, H){
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   const acts = activeTracksAt(T);
+  // L1 與 L2：影片軌各自帶著自己那一軌的字幕，整組上下
   for (const track of [0, 1]){
     const act = acts.find(a => a.track === track);
     if (act) drawVideoTrack(ctx, act, T, W, H);
-    drawSubTrack(ctx, track, T, W, H);   // 字幕緊貼自己那一軌的影片，兩者連動
+    drawSubTrack(ctx, track, T, W, H);
   }
-  // 疊圖與標題共用一條 z 軸，數字大的畫在後面（顯示在前方）
-  for (const it of layerOrder()){
-    if (it.kind === 'overlay') drawOverlay(ctx, it.obj, T, W, H);
-    else drawTitle(ctx, it.obj, T, W, H);
+  // L3 以上：圖片軌／疊圖／標題，依 L 編號，同號依起始時間（後面的蓋前面的）
+  for (const row of layerPlan()){
+    if (row.kind === 'imgtrack'){
+      const act = acts.find(a => a.track === IMG_TRACK);
+      if (act) drawVideoTrack(ctx, act, T, W, H);
+    }
+    else if (row.kind === 'overlay') drawOverlay(ctx, row.obj, T, W, H);
+    else drawTitle(ctx, row.obj, T, W, H);
   }
 }
 
 function drawVideoTrack(ctx, act, T, W, H){
   {
-    const upper = act.track === 1;
+    const upper = act.track >= 1;      // 上軌與圖片軌都要透明合成，不然會用黑底蓋掉底下
     const layer = bufs('clipLayer'+act.track+W+'x'+H,1,W,H)[0];
     const target = layer.x;
     const paint = upper ? (x,ref,w,h) => {
@@ -8287,6 +8313,9 @@ function drawVideoTrack(ctx, act, T, W, H){
 const pcv  = $('#preview');
 const pctx = pcv.getContext('2d');
 const ROW  = 42;                    // 時間軸每一列的高度
+// 空的圖片／疊圖／標題軌只佔一半高度。v10.2 多了一條圖片軌，
+// 四條都用滿高的話 1366×768 這種常見筆電畫面會把音軌擠到看不到。
+const ROW_EMPTY = 26;
 let _last = performance.now();
 
 /* ── 預覽解析度 ────────────────────────────────────────────────
@@ -8579,17 +8608,31 @@ function fixInnerWidth(){
    ─────────────────────────────────────────────────────── */
 const TRACK_DEF = [
   { k:'video', id:'trkVideo', name:'影片' },
+  { k:'img',   id:'trkImg',   name:'圖片' },
   { k:'over',  id:'trkOver',  name:'疊圖' },
   { k:'title', id:'trkTitle', name:'標題' },
   { k:'music', id:'trkMusic', name:'音軌' }
 ];
 const DEF_ORDER = TRACK_DEF.map(t => t.k);
 
-/** 補齊／清掉不合法的值，永遠回傳一份完整的四組順序 */
+/** 補齊／清掉不合法的值，永遠回傳一份完整的順序。
+    影片軌永遠釘在第一個：它固定佔 L1／L2，排到別的位置的話
+    時間軸的上下順序就會跟 L 編號對不起來。 */
 function trackOrder(){
   const cur = Array.isArray(A.proj.tracks) ? A.proj.tracks.filter(k => DEF_ORDER.includes(k)) : [];
-  const out = [...new Set(cur)];
-  for (const k of DEF_ORDER) if (!out.includes(k)) out.push(k);
+  const out = [...new Set(cur)].filter(k => k !== 'video');
+  out.unshift('video');
+  // 少掉的軌要補在「它該在的位置」，不能一律塞到最後 ——
+  // v10.2 以前的專案沒有 img，直接 push 的話圖片軌會變成 L5、跑到標題前面。
+  for (const k of DEF_ORDER){
+    if (out.includes(k)) continue;
+    let at = 1;                                   // 0 永遠是影片軌
+    for (let i = DEF_ORDER.indexOf(k) - 1; i >= 1; i--){
+      const j = out.indexOf(DEF_ORDER[i]);
+      if (j >= 0){ at = j + 1; break; }
+    }
+    out.splice(at, 0, k);
+  }
   A.proj.tracks = out;
   return out;
 }
@@ -8611,10 +8654,15 @@ function applyTrackOrder(force){
     let lb = el.querySelector('.trklb');
     if (!lb){ lb = document.createElement('div'); lb.className = 'trklb'; el.appendChild(lb); }
     const i = order.indexOf(k);
+    // 影片軌釘在第一個不能動；其餘的也不能排到它前面（j=0 是影片軌的位置）。
+    const lz = LZ_TRACKS.includes(k) ? layerOfTrack(k) : 0;
+    const noUp = k === 'video' || i <= 1;
+    const noDn = k === 'video' || i === order.length - 1;
     lb.innerHTML =
-      `<button class="ord" data-mv="up" data-tk="${k}" title="這一軌往上移（只改時間軸排列）"${i === 0 ? ' disabled' : ''}>▲</button>` +
-      `<button class="ord" data-mv="dn" data-tk="${k}" title="這一軌往下移（只改時間軸排列）"${i === order.length - 1 ? ' disabled' : ''}>▼</button>` +
-      `<span class="tkname" title="拖曳可以上下換軌道順序">${def.name}</span>`;
+      `<button class="ord" data-mv="up" data-tk="${k}" title="往上一列（L 數字變小，更容易被蓋住）"${noUp ? ' disabled' : ''}>▲</button>` +
+      `<button class="ord" data-mv="dn" data-tk="${k}" title="往下一列（L 數字變大，更顯示在前方）"${noDn ? ' disabled' : ''}>▼</button>` +
+      `<span class="tkname" title="拖曳可以上下換軌道順序">${def.name}</span>` +
+      (lz ? `<span class="tklz">L${lz}</span>` : '');
     lb.querySelectorAll('.ord').forEach(btn => btn.onclick = e => {
       e.stopPropagation(); e.preventDefault();
       moveTrack(btn.dataset.tk, btn.dataset.mv === 'up' ? -1 : 1);
@@ -8704,17 +8752,22 @@ function finishTrackDrag(d){
   toast(`${nm}軌移到第 ${d.order.indexOf(d.k) + 1} 條（只是時間軸排列，不影響畫面上的疊放順序）`);
 }
 
+/** 換軌道順序。v10.2 起這【就是】在換圖層：圖片／疊圖／標題三軌的
+    先後決定 L3、L4、L5…，所以提示要講對，不能再說「只是時間軸排列」。
+    影片軌釘死在第一個，誰也不能排到它前面。 */
 function moveTrack(k, dir){
   const order = trackOrder();
+  if (k === 'video') return;                       // 影片軌固定 L1／L2
   const i = order.indexOf(k), j = i + dir;
-  if (i < 0 || j < 0 || j >= order.length) return;
+  if (i < 0 || j < 1 || j >= order.length) return; // j 不能是 0：那是影片軌的位置
   pushUndo();
   order[i] = order[j]; order[j] = k;
   A.proj.tracks = order;
   applyTrackOrder(true); renderTimeline();
   const nm = (TRACK_DEF.find(t => t.k === k) || {}).name || '';
-  // 講清楚：這只是時間軸的排版，畫面上誰蓋在誰上面是另一回事
-  toast(`${nm}軌移到第 ${j + 1} 條（只是時間軸排列，不影響畫面上的疊放順序）`);
+  const lz = LZ_TRACKS.includes(k) ? layerOfTrack(k) : 0;
+  toast(lz ? `${nm}軌變成 L${lz}（數字越大越顯示在前方）`
+           : `${nm}軌移到第 ${j + 1} 條`);
 }
 
 function renderTimeline(){
@@ -8749,13 +8802,24 @@ function renderTimeline(){
     }
   }
   videoGroup.querySelectorAll('.blk,.trx').forEach(n => n.remove());
+
+  // 圖片軌（v10.2）：跟影片軌同一套片段機制，只是畫在影片上方、帶透明。
+  const imgTrack = $('#trkImg');
+  imgTrack.querySelectorAll('.blk,.trx,.trkhint').forEach(n => n.remove());
+  if (!A.clips.some(isImg)){
+    const hint = document.createElement('div');
+    hint.className = 'trkhint';
+    hint.textContent = '這一軌的圖片會蓋在影片上方 —— 按上面「＋ 圖片」';
+    imgTrack.appendChild(hint);
+  }
+
   const LZ = layerLabels();          // 這一輪重繪共用同一份 L 編號
   const L = layout();
   A.clips.forEach((c, i) => {
-    const tv = clipTrack(c) ? $('#videoUpper') : $('#videoLower');
+    const tv = isImg(c) ? imgTrack : clipTrack(c) === 1 ? $('#videoUpper') : $('#videoLower');
     const b = document.createElement('div');
     b.dataset.clipId=c.id;
-    b.style.top='16px';
+    b.style.top = isImg(c) ? '5px' : '16px';   // 圖片軌是獨立一條，不用讓出影片軌的上下留白
     b.className = 'blk' + (A.sel.type === 'clip' && A.sel.id === c.id ? ' sel' : '');
     b.style.left = (L[i].startAt * pps) + 'px';
     b.style.width = Math.max(14, L[i].span * pps) + 'px';
@@ -8773,7 +8837,7 @@ function renderTimeline(){
     const ow = outWindow(i, L);
     if (ow){
       const y = document.createElement('div');
-      y.className = 'trx out'; y.style.top='16px';
+      y.className = 'trx out'; y.style.top = isImg(c) ? '5px' : '16px';
       y.style.left = (ow.start * pps) + 'px';
       y.style.width = (ow.dur * pps) + 'px';
       const nm2 = (TRANSITIONS.find(t => t.id === ow.type) || {}).name || '';
@@ -8782,7 +8846,7 @@ function renderTimeline(){
     }
     if (L[i].tr > 0){
       const x = document.createElement('div');
-      x.className = 'trx'; x.style.top='16px';
+      x.className = 'trx'; x.style.top = isImg(c) ? '5px' : '16px';
       x.style.left = (L[i].trAt * pps) + 'px';
       x.style.width = (L[i].tr * pps) + 'px';
       const nm = (TRANSITIONS.find(t => t.id === c.trans.type) || {}).name || '';
@@ -8818,7 +8882,8 @@ function renderTimeline(){
     b.onmousedown = e => startOverlayDrag(e, o);
     to.appendChild(b);
   });
-  to.style.height = Math.max(ROW, olanes.length * ROW + 2) + 'px';
+  to.style.height = (A.overlays.length ? Math.max(ROW, olanes.length * ROW + 2) : ROW_EMPTY) + 'px';
+  imgTrack.style.height = (A.clips.some(isImg) ? ROW : ROW_EMPTY) + 'px';
 
   // 固定上下字幕軌；同軌重疊仍分列，便於選取。
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');
@@ -8875,7 +8940,7 @@ function renderTimeline(){
     b.onmousedown = e => startTitleDrag(e, t, b);
     tt.appendChild(b);
   }
-  tt.style.height = Math.max(ROW, lanes.length * ROW + 2) + 'px';
+  tt.style.height = (A.titles.length ? Math.max(ROW, lanes.length * ROW + 2) : ROW_EMPTY) + 'px';
 
   // 配樂軌：一條音軌一列，可以疊很多條
   const tm = $('#trkMusic');
@@ -8955,8 +9020,9 @@ function startClipReorder(e, c){
   const mv=ev=>{
     if (!moved && Math.hypot(ev.clientX-x0,ev.clientY-y0)<5) return;
     if (!moved){pushUndo();moved=true;}
+    // 圖片只能待在圖片軌，不要讓它掉進影片上下軌的命中判定裡
     let track=clipTrack(c);
-    for (const el of $$('.videoLane')){
+    if (!isImg(c)) for (const el of $$('.videoLane')){
       const r=el.getBoundingClientRect();
       if (ev.clientY>=r.top && ev.clientY<=r.bottom) track=+el.dataset.track;
     }
@@ -9633,7 +9699,7 @@ function refreshProp(){
         ${rowRange('tAnimOD','時長',0.1,5,0.05, t.animOutDur == null ? 0.4 : t.animOutDur,' 秒')}</div>
        ${kfGroup(t, 't', titleMotionProps,
          '這一段時間內從上面的起點平滑走到這裡的終點。進場與退場動畫照樣疊在上面，不衝突。')}
-       ${lzGroup(t, '標題與疊圖共用同一條，所以標題也可以拉到疊圖後面。')}`;
+       ${lzGroup(t)}`;
     // 改任何外觀設定時，如果播放頭不在這個標題的時間內就自動跳進去，
     // 不然使用者會以為「改了沒反應」
     // 改設定時跳到「進場動畫已經跑完」的時間點，才看得到最終樣子
@@ -9658,7 +9724,6 @@ function refreshProp(){
     bind('tEnd','input', v => { t.end = Math.max(t.start + 0.3, +v); renderTimeline(); });
     on('tStartNow', () => { const len = t.end - t.start; t.start = A.playhead; t.end = t.start + len; render(); refreshProp(); });
     on('tEndNow',   () => { t.end = Math.max(t.start + 0.3, A.playhead); render(); refreshProp(); });
-    lzWire(t);
     bind('tAnim','change', v => { t.animIn = v; seekTo(t.start); });
     bind('tAnimD','input', v => { t.animDur = +v; setVal('tAnimD', (+v).toFixed(2) + ' 秒'); seekTo(t.start); });
     on('tAnimPick', () => openPicker('anim', t.animIn, id => {
@@ -9843,9 +9908,7 @@ function refreshProp(){
       kfAlign(o, 'x', x); kfAlign(o, 'y', y);
       show(); markDirty(); refreshProp();
     });
-    p.insertAdjacentHTML('beforeend',
-      lzGroup(o, '疊圖與標題共用同一條，所以疊圖也可以拉到標題前面。'));
-    lzWire(o);
+    p.insertAdjacentHTML('beforeend', lzGroup(o));
     on('oDel', () => { A.sel = { type:'overlay', id:o.id }; delSelected(); });
 
   } else if (s.type === 'music'){
@@ -9966,33 +10029,26 @@ function refreshProp(){
 }
 function bind(id, ev, fn){ const el = $('#' + id); if (el) el.addEventListener(ev, e => fn(el.value, el)); }
 
-/** 疊圖／標題共用的「圖層順序」區塊內容。
-    疊圖與標題共用同一條 z 軸，所以疊圖可以拉到標題前面，反過來也行。
-    影片與字幕【沒有】這一區，而且是刻意的：字幕綁在自己的影片軌上，
+/** 疊圖／標題的「目前在第幾層」說明。
+
+    v10.2 起層級是【整軌】的，不是單一物件的：所有疊圖都是同一號、
+    所有標題都是同一號。所以這裡只報告現況，改順序要用時間軸左側的 ▲▼。
+    原本那兩顆「往上一層／往下一層」已經拿掉 —— 它靠每個物件各自的 z，
+    正是「每加一個疊圖就多一號」的成因。
+
+    影片與字幕沒有這一區，而且是刻意的：字幕綁在自己的影片軌上，
     要跟著那一軌一起上下，單獨拉層級會讓字幕跑到別軌影片後面。 */
 function lzGroup(obj, extra){
   const LZ = layerLabels();
-  const n = LZ.item[obj.id], ord = layerOrder().length;
-  return `<div class="grp" style="margin-top:12px"><h4>圖層順序（誰蓋在誰上面）</h4>
-    <div class="row"><div class="f" style="gap:6px">
-      <button id="lzUp" style="flex:1">往上一層</button>
-      <button id="lzDown" style="flex:1">往下一層</button></div></div>
-    <div class="hint">目前 L${n}，可調的共 ${ord} 層，數字越大越顯示在前方。${extra || ''}</div></div>`;
+  const n = LZ.item[obj.id];
+  // 說明文字要是【一個完整的文字節點】才翻得動：中間夾 <b>${n}</b> 會被切成三段，
+  // 第二層的片語比對就會產出「Timeline上起始Timing較後的」這種半中半英的東西。
+  // 所以會變動的號碼另外放一個 span，說明本身維持一整句。
+  return `<div class="grp" style="margin-top:12px"><h4>圖層（誰蓋在誰上面）</h4>
+    <div class="row"><label>目前</label><div class="f"><b>L${n}</b></div></div>
+    <div class="hint">數字越大越顯示在前方；同一層之內，時間軸上起始時間較後的蓋住較前的。要換層請用時間軸左側軌道名稱旁的 ▲▼，整軌一起換。</div>${extra || ''}</div>`;
 }
-/** 把上面那兩顆按鈕接起來。呼叫端在 innerHTML 之後叫一次。 */
-function lzWire(obj){
-  const go = dir => () => {
-    // 先確認邊界再動手：layerMove 會直接改 z，不能拿它當「試試看」用。
-    const ord = layerOrder(), i = ord.findIndex(it => it.obj === obj);
-    if (i < 0 || i + dir < 0 || i + dir >= ord.length)
-      return toast(dir > 0 ? '已經在最前面了' : '已經在最後面了');
-    pushUndo();
-    layerMove(obj, dir);
-    render(); refreshProp();
-  };
-  on('lzUp', go(1));
-  on('lzDown', go(-1));
-}
+function lzWire(){}          // 已經沒有按鈕要接，留著讓呼叫端不用改
 
 function on(id, fn){ const el = $('#' + id); if (el) el.addEventListener('click', fn); }
 function setVal(id, v){ const el = $('#' + id + '_v'); if (el) el.textContent = v; }
@@ -10702,7 +10758,7 @@ function serialize(){
       pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
       { mediaKey: reg(m.file, m) })),
     overlays: A.overlays.map(o => Object.assign(
-      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT','z']),
+      pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT']),   // v10.2 起沒有 per-object z 了
       { mediaKey: reg(o.file, o) })),
     titles: A.titles.map(t => ({ ...t })),
     subs: A.subs.map(c => ({ ...c })),
@@ -10758,6 +10814,7 @@ async function deserialize(st, blobs){
     });
     A.clips.push(nc); regMedia(nc);
   }
+  pinLegacyClipTimes(A.clips);
 
   A.musics = [];
   for (const m of st.musics){
@@ -10787,6 +10844,9 @@ async function deserialize(st, blobs){
   A.subStyleUpper=st.subStyleUpper ? subStyleMigrate({...st.subStyleUpper}) : null;
   if (st.subStyle) subStyleAssign(A.subStyle, st.subStyle);
   Object.assign(A.proj, st.proj || {});
+  // 舊專案的軌道順序沒有 img、也可能把 video 排在別的位置。
+  // 這裡先正規化一次，A.proj.tracks 才不會在下一次重繪之前處於舊格式。
+  if (typeof trackOrder === 'function') trackOrder();
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;
   A.playhead = clamp(st.playhead || 0, 0, totalDur());

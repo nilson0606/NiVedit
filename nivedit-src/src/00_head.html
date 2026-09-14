@@ -146,8 +146,9 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
   pointer-events:auto;cursor:ew-resize;z-index:7}
 .kfm:hover{background:#fff}
 .trklb .ord[disabled]{opacity:.28;cursor:default;border-color:var(--line);color:var(--fg3)}
-.trkhint{position:absolute;left:78px;top:14px;font-size:11px;color:#5a6270;pointer-events:none;
-  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:3px 10px}
+/* 空軌只有 26px 高（ROW_EMPTY），提示要往上收才不會滿出來 */
+.trkhint{position:absolute;left:78px;top:4px;font-size:11px;color:#5a6270;pointer-events:none;
+  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:2px 10px}
 .blk{position:absolute;top:8px;height:34px;border-radius:5px;overflow:hidden;cursor:pointer;
   border:1px solid #3a4150;background:linear-gradient(180deg,#2c3442,#232a35);display:flex;align-items:center}
 .videoLane .blk,.videoLane .trx{height:28px}
