@@ -108,12 +108,14 @@ aside{background:var(--bg2);display:flex;flex-direction:column;min-height:0}
 #tlbar{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--fg2)}
 #tlwrap{flex:1;overflow:auto;position:relative;scrollbar-gutter:stable}
 #tlinner{position:relative;min-height:100%;min-width:100%;padding-bottom:4px}
-#ruler{height:22px;position:relative;border-bottom:1px solid var(--line);background:var(--bg3)}
+#ruler{height:18px;position:relative;border-bottom:1px solid var(--line);background:var(--bg3)}
 .tick{position:absolute;top:0;height:100%;border-left:1px solid #333a46;font-size:10px;
-  color:var(--fg3);padding-left:4px;line-height:22px;white-space:nowrap}
-.trk{position:relative;margin-top:6px;height:42px}
+  color:var(--fg3);padding-left:4px;line-height:18px;white-space:nowrap}
+/* v10.6：每一軌都收薄一點，1366×768 這種常見筆電畫面上 L1~L5 加音軌要能一次看完。
+   仍然留著捲軸（#tlwrap overflow:auto），字幕分很多列時照樣捲得到。 */
+.trk{position:relative;margin-top:4px;height:34px}
 /* 標籤壓在軌道上緣的留白裡，盡量不要蓋到方塊 */
-.trklb{position:absolute;left:5px;top:-4px;font-size:10px;color:var(--fg3);z-index:6;pointer-events:none;
+.trklb{position:absolute;left:5px;top:-5px;font-size:10px;color:var(--fg3);z-index:6;pointer-events:none;
   background:rgba(23,26,32,.9);padding:0 3px;border-radius:3px;display:flex;align-items:center;gap:1px;
   line-height:12px;height:12px}
 /* 只有上下箭頭吃得到滑鼠，標籤本身不擋下面的方塊 */
@@ -147,16 +149,16 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .kfm:hover{background:#fff}
 .trklb .ord[disabled]{opacity:.28;cursor:default;border-color:var(--line);color:var(--fg3)}
 /* 空軌只有 26px 高（ROW_EMPTY），提示要往上收才不會滿出來 */
-.trkhint{position:absolute;left:78px;top:4px;font-size:11px;color:#5a6270;pointer-events:none;
-  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:2px 10px}
-.blk{position:absolute;top:8px;height:34px;border-radius:5px;overflow:hidden;cursor:pointer;
+.trkhint{position:absolute;left:78px;top:3px;font-size:11px;color:#5a6270;pointer-events:none;
+  white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:1px 9px}
+.blk{position:absolute;top:5px;height:28px;border-radius:5px;overflow:hidden;cursor:pointer;
   border:1px solid #3a4150;background:linear-gradient(180deg,#2c3442,#232a35);display:flex;align-items:center}
-.videoLane .blk,.videoLane .trx{height:28px}
+.videoLane .blk,.videoLane .trx{height:22px}
 .blk.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .blk .tn{width:44px;height:100%;object-fit:cover;flex:none;opacity:.85}
 .blk .nm{font-size:11px;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .blk .mu{position:absolute;right:4px;top:3px;font-size:10px;color:var(--warn)}
-.tblk{position:absolute;top:9px;height:32px;border-radius:5px;background:linear-gradient(180deg,#4a3a6b,#382c52);
+.tblk{position:absolute;top:6px;height:28px;border-radius:5px;background:linear-gradient(180deg,#4a3a6b,#382c52);
   border:1px solid #5b4a80;cursor:move;display:flex;align-items:center;padding:0 8px;overflow:hidden}
 .tblk.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .tblk .nm{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
@@ -173,7 +175,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .mblk .rep{position:absolute;top:0;height:100%;width:0;border-left:1px dashed rgba(255,255,255,.35)}
 .mblk .empty{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,
   rgba(0,0,0,.35) 0 6px,rgba(0,0,0,.15) 6px 12px)}
-.sblk{position:absolute;top:9px;height:32px;border-radius:5px;overflow:hidden;cursor:move;
+.sblk{position:absolute;top:6px;height:28px;border-radius:5px;overflow:hidden;cursor:move;
   border:1px solid #2f6f5e;background:linear-gradient(180deg,#1f5a4a,#173f34);display:flex;align-items:center;padding:0 8px}
 .sblk.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .sblk .nm{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
@@ -181,7 +183,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .sblk .hd.l{left:0}.sblk .hd.r{right:0}
 .sblk:hover .hd.l{background:linear-gradient(90deg,rgba(62,207,142,.9),rgba(62,207,142,0))}
 .sblk:hover .hd.r{background:linear-gradient(270deg,rgba(62,207,142,.9),rgba(62,207,142,0))}
-.oblk{position:absolute;top:9px;height:32px;border-radius:5px;overflow:hidden;cursor:move;
+.oblk{position:absolute;top:6px;height:28px;border-radius:5px;overflow:hidden;cursor:move;
   border:1px solid #7a5a2e;background:linear-gradient(180deg,#5a4526,#3d2f19);display:flex;align-items:center}
 .oblk.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
 .oblk .tn{width:40px;height:100%;object-fit:cover;flex:none;opacity:.9}
@@ -194,10 +196,10 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 .mblk .hd.l{left:0}.mblk .hd.r{right:0}
 .mblk:hover .hd.l{background:linear-gradient(90deg,rgba(62,207,142,.85),rgba(62,207,142,0))}
 .mblk:hover .hd.r{background:linear-gradient(270deg,rgba(62,207,142,.85),rgba(62,207,142,0))}
-.mblk{position:absolute;top:9px;height:32px;border-radius:5px;background:linear-gradient(180deg,#2b5346,#1f3f36);
+.mblk{position:absolute;top:6px;height:28px;border-radius:5px;background:linear-gradient(180deg,#2b5346,#1f3f36);
   border:1px solid #37705d;display:flex;align-items:center;padding:0 8px;cursor:pointer;overflow:hidden}
 .mblk.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
-.trx{position:absolute;top:8px;height:34px;background:rgba(76,141,255,.22);
+.trx{position:absolute;top:5px;height:28px;background:rgba(76,141,255,.22);
   border-left:1px dashed var(--acc);border-right:1px dashed var(--acc);pointer-events:none;z-index:2}
 #head{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);z-index:5;pointer-events:none}
 #head::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top-color:var(--danger)}

@@ -913,7 +913,7 @@ function renderSubEditor(keepScroll){
   $('#eCount').textContent = cues.length + ' 句';
   box.innerHTML = cues.map((c, i) => `
     <div class="scue${_seSel === c.id ? ' sel' : ''}" data-id="${c.id}">
-      <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕上軌</option><option value="0"${subTrack(c)===0?' selected':''}>字幕下軌</option></select></div>
+      <div class="n">${i + 1}<select class="subTrackSelect" title="字幕軌道"><option value="1"${subTrack(c)===1?' selected':''}>字幕頂層</option><option value="0"${subTrack(c)===0?' selected':''}>字幕底層</option></select></div>
       <div class="tm">
         <input class="ts" data-k="start" value="${srtTime(c.start)}" title="開始時間">
         <input class="ts" data-k="end"   value="${srtTime(c.end)}"   title="結束時間">

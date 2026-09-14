@@ -1,6 +1,6 @@
 {
-  "version": "10.5",
-  "html_sha256": "53522c1b9e514faa5bda9cad649e260bce9ea2d3f280c2bf7d5b679d0c10d23c",
-  "html_bytes": 987219,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 625 checks passed across sixteen suites, plus the GIF suite. Moving a clip to the other video track now takes its subtitles along, and opening a project repairs that pairing if an older version left subtitles behind their own clip."
+  "version": "10.6",
+  "html_sha256": "7b4e5aba78d1781c9d11da8730ac79a351750b2be12c11f29b9691bb286549e4",
+  "html_bytes": 989637,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 626 checks passed across sixteen suites, plus the GIF suite. The two video tracks and their subtitles are renamed top and bottom layers, and the timeline rows are short enough for L1-L5 plus audio to fit on a 1366x768 screen without scrolling."
 }

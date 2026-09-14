@@ -981,15 +981,15 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 裁切直徑	Crop diameter
 裁切保留框內畫面；寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。	Keep the area inside the crop. Width and height 1.00 cover the visible frame; circle diameter 1.00 matches its shorter side. Scale, position, opacity and rotation still apply.
 啟用下方動態後，可設定裁切大小與中心的終點；形狀整段固定。	Enable motion below to animate crop size and center. The shape stays the same throughout the clip.
-影片上軌（優先顯示）	Upper video (front)
-影片下軌	Lower video
+影片頂層	Top video
+影片底層	Bottom video
 影片軌道	Video track
 放在哪一軌	Track
-上軌（優先顯示）	Upper (front)
-下軌	Lower
+頂層	Top
+底層	Bottom
 時間軸起點	Timeline start
 接在同軌上一段後面	Follow previous clip on this track
-上軌蓋住下軌，裁切外與透明區域會露出下軌。可把影片方塊拖到另一軌，或左右移動安排時間。	The upper track covers the lower track. Cropped and transparent areas reveal the lower track. Drag clips between tracks or horizontally to set their timing.
+頂層蓋住底層，裁切外與透明區域會露出底層。可把影片方塊拖到另一軌，或左右移動安排時間。	The top layer covers the bottom layer. Cropped and transparent areas reveal the bottom layer. Drag clips between tracks or horizontally to set their timing.
 兩軌原聲一起混音；只要一軌的聲音時，將另一段原聲靜音。	Both tracks mix their original audio. Mute a clip to keep only the other track audible.
 影片位置已更新	Video position updated
 播放頭不在目前選取的影片片段上	The playhead is outside the selected video clip
@@ -1014,8 +1014,8 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 外加：開頭重複第一幀、結尾重複最後一幀，額外增加轉場時間；定格區間沒有原聲。	Outside: repeat the first or last frame, adding transition time. Held frames have no source audio.
 外加或延長轉場若碰到同軌下一段，會將下一段向後排開；另一軌不動。	If an extended transition reaches the next clip on this track, that clip moves back; the other track stays in place.
 字幕軌道	Subtitle track
-字幕上軌	Upper subtitles
-字幕下軌	Lower subtitles
+字幕頂層	Top subtitles
+字幕底層	Bottom subtitles
 兩軌字幕可同時顯示，樣式與位置各自設定；也可拖曳字幕方塊換軌。	Both subtitle tracks can appear together, with separate styles and positions. Drag a subtitle block to change tracks.
 樣式（套用到這一軌字幕）	Style (all subtitles on this track)
 收尾轉場使用這一軌的內扣或外加方式。內扣時原聲同步淡出；外加定格區間沒有原聲。	The ending uses Inside or Outside timing for this track. Inside fades source audio out; Outside holds are silent.

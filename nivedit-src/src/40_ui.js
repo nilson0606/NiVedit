@@ -5,10 +5,12 @@
 
 const pcv  = $('#preview');
 const pctx = pcv.getContext('2d');
-const ROW  = 42;                    // 時間軸每一列的高度
+const ROW  = 34;                    // 時間軸每一列的高度（v10.6 由 42 收薄）
 // 空的圖片／疊圖／標題軌只佔一半高度。v10.2 多了一條圖片軌，
 // 四條都用滿高的話 1366×768 這種常見筆電畫面會把音軌擠到看不到。
-const ROW_EMPTY = 26;
+// v10.6 再收一次：影片軌 38、字幕列 26、其餘 ROW 36，
+// 目標是 1366×768 不用捲就看得到 L1~L5 加音軌（捲軸本身保留）。
+const ROW_EMPTY = 20;
 let _last = performance.now();
 
 /* ── 預覽解析度 ────────────────────────────────────────────────
@@ -482,15 +484,15 @@ function renderTimeline(){
 
   // 影片軌
   const videoGroup = $('#trkVideo');
-  videoGroup.style.height='116px';
+  videoGroup.style.height='92px';
   if (!$('#videoUpper')){
-    for (const [id,track,top] of [['videoLower',0,18],['videoUpper',1,64]]){
+    for (const [id,track,top] of [['videoLower',0,12],['videoUpper',1,46]]){
       const row=document.createElement('div');row.id=id;row.className='videoLane';
       row.dataset.track=track;
-      row.style.cssText='position:absolute;left:0;right:0;height:46px;top:'+top+'px;border-top:1px solid var(--line)';
+      row.style.cssText='position:absolute;left:0;right:0;height:34px;top:'+top+'px;border-top:1px solid var(--line)';
       const label=document.createElement('span');label.className='videoLaneLabel';
-      label.style.cssText='position:absolute;left:8px;top:0;font-size:11px;pointer-events:none;color:var(--fg3)';
-      label.textContent=track ? '影片上軌（優先顯示）' : '影片下軌';
+      label.style.cssText='position:absolute;left:8px;top:0;font-size:10px;line-height:11px;pointer-events:none;color:var(--fg3)';
+      label.textContent=track ? '影片頂層' : '影片底層';
       row.appendChild(label);videoGroup.appendChild(row);
     }
   }
@@ -512,7 +514,7 @@ function renderTimeline(){
     const tv = isImg(c) ? imgTrack : clipTrack(c) === 1 ? $('#videoUpper') : $('#videoLower');
     const b = document.createElement('div');
     b.dataset.clipId=c.id;
-    b.style.top = isImg(c) ? '5px' : '16px';   // 圖片軌是獨立一條，不用讓出影片軌的上下留白
+    b.style.top = isImg(c) ? '5px' : '11px';   // 圖片軌是獨立一條，不用讓出影片軌的上下留白
     b.className = 'blk' + (A.sel.type === 'clip' && A.sel.id === c.id ? ' sel' : '');
     b.style.left = (L[i].startAt * pps) + 'px';
     b.style.width = Math.max(14, L[i].span * pps) + 'px';
@@ -530,7 +532,7 @@ function renderTimeline(){
     const ow = outWindow(i, L);
     if (ow){
       const y = document.createElement('div');
-      y.className = 'trx out'; y.style.top = isImg(c) ? '5px' : '16px';
+      y.className = 'trx out'; y.style.top = isImg(c) ? '5px' : '11px';
       y.style.left = (ow.start * pps) + 'px';
       y.style.width = (ow.dur * pps) + 'px';
       const nm2 = (TRANSITIONS.find(t => t.id === ow.type) || {}).name || '';
@@ -539,7 +541,7 @@ function renderTimeline(){
     }
     if (L[i].tr > 0){
       const x = document.createElement('div');
-      x.className = 'trx'; x.style.top = isImg(c) ? '5px' : '16px';
+      x.className = 'trx'; x.style.top = isImg(c) ? '5px' : '11px';
       x.style.left = (L[i].trAt * pps) + 'px';
       x.style.width = (L[i].tr * pps) + 'px';
       const nm = (TRANSITIONS.find(t => t.id === c.trans.type) || {}).name || '';
@@ -566,7 +568,7 @@ function renderTimeline(){
     b.className = 'oblk' + (A.sel.type === 'overlay' && A.sel.id === o.id ? ' sel' : '');
     b.style.left = (o.start * pps) + 'px';
     b.style.width = Math.max(28, (o.end - o.start) * pps) + 'px';
-    b.style.top = (ln * ROW + 5) + 'px';
+    b.style.top = (ln * ROW + 3) + 'px';
     b.innerHTML = `<div class="hd l"></div>` +
       `${o.thumb ? `<img class="tn" src="${o.thumb}">` : ''}<div class="nm" data-nt>${esc(o.name)}</div>` +
       kfMarks(o, Math.max(28, (o.end - o.start) * pps)) +
@@ -581,16 +583,16 @@ function renderTimeline(){
   // 固定上下字幕軌；同軌重疊仍分列，便於選取。
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');
   videoGroup.querySelectorAll('.subtitleLane').forEach(n=>n.remove());
-  // v10.3：下軌那一組排在上面，整條時間軸的 L 編號才會由上往下遞增
-  // （L1 影片下軌／字幕下軌 → L2 影片上軌／字幕上軌 → L3 圖片 → L4 疊圖 → L5 標題）。
-  let subTop=64;
+  // v10.3：底層那一組排在上面，整條時間軸的 L 編號才會由上往下遞增
+  // （L1 影片底層／字幕底層 → L2 影片頂層／字幕頂層 → L3 圖片 → L4 疊圖 → L5 標題）。
+  let subTop=46;
   for(const track of [0,1]){
     const lane=document.createElement('div');lane.className='subtitleLane';
     lane.id=track?'subUpper':'subLower';lane.dataset.track=track;
     lane.style.cssText='position:absolute;left:0;right:0;top:'+subTop+'px;border-top:1px solid var(--line)';
     const label=document.createElement('span');label.className='subtitleLaneLabel';
-    label.style.cssText='position:absolute;left:8px;top:0;font-size:11px;pointer-events:none;color:var(--fg3)';
-    label.textContent=track?'字幕上軌':'字幕下軌';lane.appendChild(label);
+    label.style.cssText='position:absolute;left:8px;top:0;font-size:10px;line-height:11px;pointer-events:none;color:var(--fg3)';
+    label.textContent=track?'字幕頂層':'字幕底層';lane.appendChild(label);
     const ends=[];
     [...A.subs].filter(c=>subTrack(c)===track).sort((a,b)=>a.start-b.start).forEach(c=>{
       let ln=ends.findIndex(end=>c.start>=end-1e-6);
@@ -598,13 +600,13 @@ function renderTimeline(){
       const b=document.createElement('div');b.dataset.subId=c.id;
       b.className='sblk'+(A.sel.type==='sub'&&A.sel.id===c.id?' sel':'');
       b.style.left=(c.start*pps)+'px';b.style.width=Math.max(22,(c.end-c.start)*pps)+'px';
-      b.style.top=(16+ln*30)+'px';b.style.height='26px';
+      b.style.top=(11+ln*24)+'px';b.style.height='22px';
       b.innerHTML=`<div class="hd l"></div><div class="nm" data-nt>${esc(String(c.text).split('\n')[0].slice(0,18))}</div>`
         +lzTag(LZ.sub[track],Math.max(22,(c.end-c.start)*pps))+`<div class="hd r"></div>`;
       b.onmousedown=e=>startSubDrag(e,c);lane.appendChild(b);
     });
-    const h=18+Math.max(1,ends.length)*30;lane.style.height=h+'px';subTop+=h;videoGroup.appendChild(lane);
-    if(track===0){$('#videoUpper').style.top=subTop+'px';subTop+=46;}
+    const h=12+Math.max(1,ends.length)*24;lane.style.height=h+'px';subTop+=h;videoGroup.appendChild(lane);
+    if(track===0){$('#videoUpper').style.top=subTop+'px';subTop+=34;}
   }
   videoGroup.style.height=subTop+'px';
   for(const id of ['videoLower','subLower','videoUpper','subUpper'])videoGroup.appendChild($('#'+id));
@@ -628,7 +630,7 @@ function renderTimeline(){
     b.className = 'tblk' + (A.sel.type === 'title' && A.sel.id === t.id ? ' sel' : '');
     b.style.left = (t.start * pps) + 'px';
     b.style.width = Math.max(28, (t.end - t.start) * pps) + 'px';
-    b.style.top = (ln * ROW + 5) + 'px';
+    b.style.top = (ln * ROW + 3) + 'px';
     b.innerHTML = `<div class="hd l"></div><div class="nm" data-nt>T ${esc(t.text.split('\n')[0].slice(0,14))}</div>`
                 + kfMarks(t, Math.max(28, (t.end - t.start) * pps))
                 + lzTag(LZ.item[t.id], Math.max(28, (t.end - t.start) * pps)) + `<div class="hd r"></div>`;
@@ -656,7 +658,7 @@ function renderTimeline(){
     b.className = 'mblk' + (A.sel.type === 'music' && A.sel.id === m.id ? ' sel' : '');
     b.style.left = (m.startAt * pps) + 'px';
     b.style.width = Math.max(28, len * pps) + 'px';
-    b.style.top = (ln * ROW + 5) + 'px';
+    b.style.top = (ln * ROW + 3) + 'px';
     const step = Math.max(0.2, seg - m.xfade);
     const reps = m.loop ? Math.max(1, Math.ceil((len - m.xfade) / step)) : 1;
     let marks = '';
@@ -671,6 +673,31 @@ function renderTimeline(){
     tm.appendChild(b);
   });
   tm.style.height = Math.max(ROW, mlanes.length * ROW + 2) + 'px';
+
+  autoFitTimeline();
+}
+
+/* ── 時間軸高度自動貼合內容（v10.6）──────────────────────────
+   目標：L1~L5 加音軌一次看完，不用捲。軌道本身已經收薄過一輪，
+   但字幕分成好幾列時還是會滿出來 —— 這裡讓整個時間軸區塊跟著長高，
+   上限跟手動拖 #tlgrip 的上限一樣（innerHeight - 260），不會把預覽吃光。
+   使用者只要自己拖過一次把手，就換他說了算，之後不再自動調。
+   捲軸【保留】：撐到上限還是放不下時照樣捲得到。 */
+let _tlManual = false, _tlBusy = false;
+function autoFitTimeline(){
+  if (_tlManual || _tlBusy) return;   // 拖曳進行中改高度＝軌道在游標底下位移
+  const tl = $('#tl'), wrap = $('#tlwrap'), inner = $('#tlinner');
+  if (!tl || !wrap || !inner) return;
+  // #tlinner 有 min-height:100%,量之前要先拿掉,否則量到的是容器自己的高度。
+  const keep = inner.style.minHeight;
+  inner.style.minHeight = '0';
+  const need = inner.scrollHeight + (tl.clientHeight - wrap.clientHeight) + 2;
+  inner.style.minHeight = keep;
+  const h = clamp(need, 200, Math.max(200, window.innerHeight - 260));
+  if (Math.abs(tl.getBoundingClientRect().height - h) > 1){
+    tl.style.height = h + 'px';
+    if (typeof sizePreview === 'function') sizePreview();
+  }
 }
 
 /** 在時間軸上直接拖曳片段兩端做裁切 */
@@ -1170,10 +1197,10 @@ function refreshProp(){
     $('#propTitle').textContent = `片段 ${i+1}`;
     p.innerHTML =
       `<div class="grp"><h4>影片軌道</h4>
-        ${rowSel('cTrack','放在哪一軌',[['1','上軌（優先顯示）'],['0','下軌']],String(clipTrack(c)))}
+        ${rowSel('cTrack','放在哪一軌',[['1','頂層'],['0','底層']],String(clipTrack(c)))}
         ${rowNum('cAt','時間軸起點',layout()[i].startAt,0.1,'<button class="gh" id="cAtNow">現在</button>')}
         ${rowBtn('cAtAuto','接在同軌上一段後面')}
-        <div class="hint">上軌蓋住下軌，裁切外與透明區域會露出下軌。可把影片方塊拖到另一軌，或左右移動安排時間。</div>
+        <div class="hint">頂層蓋住底層，裁切外與透明區域會露出底層。可把影片方塊拖到另一軌，或左右移動安排時間。</div>
         <div class="hint">兩軌都可以拖開留白；內扣與外加只決定開頭、結尾轉場如何取畫面。</div>
         <div class="hint">兩軌原聲一起混音；只要一軌的聲音時，將另一段原聲靜音。</div></div>
        <div class="grp"><h4 data-nt>${esc(c.name)}</h4>
@@ -1455,7 +1482,7 @@ function refreshProp(){
     const show = () => { if (A.playhead < c.start || A.playhead > c.end) seekTo(c.start + Math.min(0.3, (c.end-c.start)/2)); };
     p.innerHTML =
       `<div class="grp"><h4>這一句</h4>
-        ${rowSel('sTrack','字幕軌道',[['1','字幕上軌'],['0','字幕下軌']],String(subTrack(c)))}
+        ${rowSel('sTrack','字幕軌道',[['1','字幕頂層'],['0','字幕底層']],String(subTrack(c)))}
         <div class="hint">兩軌字幕可同時顯示，樣式與位置各自設定；也可拖曳字幕方塊換軌。</div>
         ${A.subs.some(x => x.id !== c.id && subTrack(x) === subTrack(c) && x.start < c.end && x.end > c.start)
           ? '<div class="hint" style="color:var(--warn)" id="subOverlapHint">這一句與同軌字幕重疊，預覽可能顯示另一句；請調整時間或改到另一字幕軌。</div>' : ''}
@@ -1762,10 +1789,17 @@ function initUI(){
     e.target.value = '';
   };
 
+  /* 只要在時間軸上按著滑鼠（拖片段、拖字幕、拉把手），就先停掉自動貼合。
+     v10.6 第一版沒擋，結果拖曳途中 renderTimeline 把整塊調高，
+     軌道在游標底下往下跑，放開時掉到隔壁軌 —— 三支雙軌測試同時紅。 */
+  $('#tl').addEventListener('mousedown', () => { _tlBusy = true; }, true);
+  document.addEventListener('mouseup', () => { if (_tlBusy){ _tlBusy = false; autoFitTimeline(); } });
+
   // 時間軸區塊可以上下拉高，放得下更多軌道
   $('#tlgrip').addEventListener('mousedown', e => {
     e.preventDefault();
     const y0 = e.clientY, h0 = $('#tl').offsetHeight;
+    _tlManual = true;                          // 使用者自己調過就不再自動貼合
     const mv = ev => {
       $('#tl').style.height = clamp(h0 - (ev.clientY - y0), 140, window.innerHeight - 260) + 'px';
       renderTimeline(); sizePreview();          // 預覽區高度變了，畫布也要重配

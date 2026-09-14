@@ -1,7 +1,7 @@
 # NiVedit 回歸測試
 
 測試以 Playwright 開啟單檔 HTML，使用本機 HTTP 或 file://。
-十六支計數式測試共 625 項（含終點對位 90 項、motion 67 項、圖層 51 項、旋轉／儲存 46 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
+十六支計數式測試共 626 項（含終點對位 90 項、motion 67 項、圖層 51 項、旋轉／儲存 46 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
 
 ## 跑之前
 
@@ -31,7 +31,7 @@ NIVEDIT_HTML=/tmp/NiVedit.html node tests/i18n.e2e.cjs
 版號只出現在比較值那一邊，一次 sed 就能改完：
 
 ```bash
-sed -i "s/v10\.0'/v10.1'/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
+sed -i "s/v10\.5/v10.6/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
 ```
 
 日期顯示在 `#verDate`，是另一個元素，不影響這些斷言 —— 但**改版號時記得一起更新
@@ -49,14 +49,14 @@ sed -i "s/v10\.0'/v10.1'/g" tests/*.cjs   # 改版號時（把舊版號換成新
 | `i18n.e2e.cjs` | 預設英文、EN／繁中切換、日夜模式四種組合、tooltip、夾變數的訊息、檔名不被翻、影片構圖介面、重新整理記憶 | 41 |
 | `i18n-scan.cjs` | 掃所有面板與對話框有沒有殘留中文（**不是斷言式**，會把找到的印出來） | — |
 | `i18n-roundtrip.cjs` | 語言切 10 次來回文字要一致 + 整頁掃描效能 | — |
-| `tracks.e2e.cjs` | 軌道拖曳換順序、即時讓位、▲▼ 仍可用、不影響片段選取 | 18 |
+| `tracks.e2e.cjs` | 軌道拖曳換順序、即時讓位、▲▼ 仍可用、不影響片段選取、拖放區只收影片與聲音 | 23 |
 | `volume-curve.e2e.cjs` | 配樂音量曲線：插值、**預覽與匯出一致**、分割、UI、真的匯出一次 | 20 |
 | `motion.e2e.cjs` | 影片／疊圖／標題動態：插值與緩動、時間視窗、**畫面真的有動**、動畫不衝突、九宮格、分割、專案資料、匯出 | 67 |
 | `crop.e2e.cjs` | 矩形／圓形、尺寸與中心、組合變形、圖片／轉場、復原／專案重開、MP4 解碼像素比對 | 36 |
 | `dual-track.e2e.cjs` | 雙軌合成、透明轉場、音訊、拖曳分割、MP4 | 45 |
 | `track-modes.e2e.cjs` | 四種內扣／外加組合、首尾定格、原片動態、留白、MP4 及聲音時間 | 29 |
-| `subtitles.e2e.cjs` | 交錯四列、雙字幕獨立樣式、拖曳、同軌合併、存讀、MP4 | 27 |
-| `clip-options.e2e.cjs` | 每段內扣／外加、獨立淡化、即時更新、換軌／復原／分割、遷移／存讀、MP4 及原聲／配樂頻率分量、雙軌字幕連動亮度 | 36 |
+| `subtitles.e2e.cjs` | 交錯四列、雙字幕獨立樣式、自由 X／Y、拖曳、同軌合併、跟著影片換軌、時間軸高度自動貼合、存讀、MP4 | 56 |
+| `clip-options.e2e.cjs` | 每段內扣／外加、獨立淡化、即時更新、換軌／復原／分割、遷移／存讀、MP4 及原聲／配樂頻率分量、雙軌字幕連動亮度 | 37 |
 | `title-rotation.e2e.cjs` | 標題大小同組、五項底色、旋轉像素及動畫合成、MP4 角度、存讀分割與復原 | 15 |
 | `gif.e2e.cjs` | 現行版 GIF 動畫疊圖；NIVEDIT_HTML 指定成品，輸出至成品旁 gif-qa | — |
 
@@ -82,7 +82,7 @@ sed -i "s/v10\.0'/v10.1'/g" tests/*.cjs   # 改版號時（把舊版號換成新
   TypeError 會**中斷整支**——一條紅變成整支沒數字，看起來像功能全壞。
   正確寫法：`mouse.down()` 後短暫等待、步數給多一點、用 `waitForFunction`
   等狀態到位，再把 `find()` 的結果接成 null 才判斷
-  （見 `subtitles.e2e.cjs` 的上軌拖到下軌）。
+  （見 `subtitles.e2e.cjs` 的頂層拖到底層）。
 
 ## 容器裡的坑
 
@@ -180,3 +180,18 @@ WebM 一樣過，不需要動。
 
 
 v9.5：既有下載／匯出回歸腳本停用 showSaveFilePicker，測試下載備援；原生另存分支由 rotation-save 專項覆蓋。原生 OS 視窗本身不由 Playwright 操控。
+
+## v10.6 新增的兩條（時間軸高度）
+
+`subtitles.e2e.cjs` 多了：
+
+- `timeline auto-fits its content (no scrolling needed)` —— `#tlinner.scrollHeight`
+  不可以超過 `#tlwrap.clientHeight`，而且整塊高度不得超過手動拖曳的上限
+  （`innerHeight - 260`）。這是「L1~L5 加音軌不用捲就看得完」的實測。
+- `timeline can still scroll when it has to` —— `#tlwrap` 的 `overflow-y` 仍是 `auto`。
+  收薄軌道不等於把捲軸拿掉；字幕分很多列時照樣要捲得到。
+
+**改軌道高度時會連帶咬到的地方**：`dual-track.e2e.cjs` 的滑鼠座標。
+v10.6 之前那支有兩處寫死的像素（`dest.y+35`、`box.y+22`），方塊一變薄就落到框外，
+看起來像「拖曳功能壞了」其實是測試自己指錯位置。已經改成用 `boundingBox()` 的
+`height*.5`。以後再調高度不必再改這支。

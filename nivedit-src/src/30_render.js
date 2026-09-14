@@ -1459,9 +1459,9 @@ function wrapText(ctx, text, maxW){
 function drawSubs(ctx, T, W, H){
   for(const track of [0,1]) drawSubTrack(ctx, track, T, W, H);
 }
-/** 單一字幕軌。字幕與同編號的影片軌【連動】：上軌字幕貼著上軌影片，
-    下軌字幕貼著下軌影片，由 renderFrame 畫完那一軌之後立刻呼叫。
-    所以上軌整組（影片＋字幕）會蓋住下軌整組，那是刻意的。
+/** 單一字幕軌。字幕與同編號的影片軌【連動】：頂層字幕貼著頂層影片，
+    底層字幕貼著底層影片，由 renderFrame 畫完那一軌之後立刻呼叫。
+    所以頂層整組（影片＋字幕）會蓋住底層整組，那是刻意的。
     那一軌當下沒有片段（留白）時字幕照畫，與 v9.8 以前一致。 */
 function drawSubTrack(ctx, track, T, W, H){
   if (!A.subs.length) return;
