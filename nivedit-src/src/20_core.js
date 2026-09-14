@@ -3,8 +3,8 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.0';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/13';
+const VER = 'v10.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -311,25 +311,25 @@ const FONTS = [
 const SUB_PRESETS = [
   { id:'classic', name:'經典白字黑邊',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:5, bold:true, shadow:true,
-        box:false, size:52, pos:'bottom' } },
+        box:false, size:52, y:0.925 } },
   { id:'box',     name:'黑底白字條',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:0, bold:false, shadow:false,
-        box:true, boxColor:'#000000', boxOpacity:0.62, size:50, pos:'bottom' } },
+        box:true, boxColor:'#000000', boxOpacity:0.62, size:50, y:0.925 } },
   { id:'soft',    name:'柔和陰影（Netflix 風）',
     s:{ color:'#f2f2f2', stroke:'#000000', strokeW:2, bold:false, shadow:true,
-        box:false, size:52, pos:'bottom' } },
+        box:false, size:52, y:0.925 } },
   { id:'rounded', name:'半透明圓角底',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:0, bold:true, shadow:false,
-        box:true, boxColor:'#101216', boxOpacity:0.72, size:48, pos:'bottom' } },
+        box:true, boxColor:'#101216', boxOpacity:0.72, size:48, y:0.925 } },
   { id:'variety', name:'綜藝黃字粗黑邊',
     s:{ color:'#ffd93d', stroke:'#1a1a1a', strokeW:8, bold:true, shadow:true,
-        box:false, size:60, pos:'bottom' } },
+        box:false, size:60, y:0.925 } },
   { id:'minimal', name:'極簡細字',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:1, bold:false, shadow:true,
-        box:false, size:44, pos:'bottom' } },
+        box:false, size:44, y:0.925 } },
   { id:'top',     name:'置頂白字黑邊',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:5, bold:true, shadow:true,
-        box:false, size:50, pos:'top' } }
+        box:false, size:50, y:0.155 } }
 ];
 
 const A = {
@@ -337,7 +337,8 @@ const A = {
   subStyle: { preset:'classic', font: FONTS[0].id, size:52, color:'#ffffff',
               stroke:'#000000', strokeW:5, bold:true, shadow:true,
               box:false, boxColor:'#000000', boxOpacity:0.62,
-              pos:'bottom', marginY:0.075, maxW:0.86 },
+              // x＝水平中心、y＝字幕框底緣（0~1）。.925 就是舊的「下方、邊距 .075」。
+              x:0.5, y:0.925, maxW:0.86 },
   sel: { type: 'proj', id: null },
   proj: { aspect:'16:9', w:1920, h:1080, fps:30, bitrate:8, fit:'contain',
           tracks: ['video','over','sub','title','music'] },   // 軌道上下順序，可自己換
@@ -390,8 +391,8 @@ function applySnapshot(json){
   A.musics = hydrate(s.musics);
   A.overlays = hydrate(s.overlays);
   A.subs = (s.subs || []).map(o => ({ ...o }));
-  if (s.subStyle) Object.assign(A.subStyle, s.subStyle);
-  A.subStyleUpper=s.subStyleUpper ? {...s.subStyleUpper} : null;
+  if (s.subStyle) subStyleAssign(A.subStyle, s.subStyle);
+  A.subStyleUpper=s.subStyleUpper ? subStyleMigrate({...s.subStyleUpper}) : null;
   Object.assign(A.proj, s.proj);
   upgradeClipSettings(s.proj || {});
   A.sel = s.sel;
@@ -548,10 +549,40 @@ function trimClip(c,from,to){
    ─────────────────────────────────────────────────────────── */
 /** 記住某一句字幕現在對到哪一段素材的哪一秒 */
 const subTrack=c=>c && c.track===1 ? 1 : 0;
+
+/* ── 字幕位置：x／y 自由定位 ─────────────────────────────────
+   v10.1 以前只有「畫面上方／下方」＋邊距，橫向寫死置中。現在改成
+   x＝字幕框的水平中心、y＝字幕框的【底緣】，都是 0~1 的畫面比例。
+
+   y 取底緣而不是中心，是為了保住換行的行為：字幕變成兩行時要往上長，
+   最後一行留在原來的高度。取中心的話兩行會往下擠 33px（1080p、52px 字），
+   一路頂到安全區外 —— 那是所有剪輯軟體都不會做的事。   */
+const SUB_NOMINAL_BOX = st => 1.66 * (st.size || 52) / 1080;   // 單行字幕框佔畫面高度的比例
+
+/** 舊專案只有 pos／marginY，這裡一次換算成 x／y。
+    pos='bottom' 換得精準（y = 1 − 邊距，與字級無關）；
+    pos='top' 得用單行的標準框高回推底緣，會有一點點誤差，拉一下滑桿就好。 */
+function subStyleMigrate(st){
+  if(!st || Number.isFinite(st.y)) return st;
+  const m = Number.isFinite(st.marginY) ? st.marginY : .075;
+  st.x = .5;
+  st.y = st.pos === 'top' ? m + SUB_NOMINAL_BOX(st) : 1 - m;
+  return st;
+}
+/** 把外面讀進來的字幕樣式併進現有的那一份。
+    舊檔沒有 y，而現有這份【一定】有（預設值就帶著）—— 直接 Object.assign 的話
+    舊檔的 pos／marginY 會被無聲吃掉，字幕全部跑到預設高度。所以先把 y 拿掉，
+    讓 subStyleMigrate 依舊檔自己的 pos／marginY 重算。 */
+function subStyleAssign(target, incoming){
+  if(!incoming) return target;
+  if(!Number.isFinite(incoming.y)){ delete target.y; delete target.x; }
+  Object.assign(target, incoming);
+  return subStyleMigrate(target);
+}
 function subStyleFor(track){
-  if(track!==1)return A.subStyle;
-  if(!A.subStyleUpper)A.subStyleUpper={...A.subStyle,marginY:.2};
-  return A.subStyleUpper;
+  if(track!==1)return subStyleMigrate(A.subStyle);
+  if(!A.subStyleUpper)A.subStyleUpper={...subStyleMigrate(A.subStyle),y:.80};
+  return subStyleMigrate(A.subStyleUpper);
 }
 function subtitleTargetTrack(){
   if(A.sel.type==='sub')return subTrack(A.subs.find(c=>c.id===A.sel.id));
@@ -743,7 +774,9 @@ async function addAnyFiles(files){
   const im = fs.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name));
   const vi = fs.filter(f => !au.includes(f) && !im.includes(f) && !sr.includes(f) && !pj.includes(f));
   if (vi.length) await addVideoFiles(vi);
-  if (im.length) await addImageFiles(im);          // 圖片預設插進影片軌
+  // 拖放這條路只收影片與聲音。圖片仍然要先挑出來（不然 .png 會落進 vi 被當成影片去解碼，
+  // 得到的是「瀏覽器無法解碼這個檔案」這種看不懂的錯），挑出來之後明說要走哪個按鈕。
+  if (im.length) toast('圖片請用「＋ 圖片」或「＋ 疊圖」加入', true);
   for (const f of au) await addMusicFile(f);
   for (const f of sr) await importSRT(f);
   if (pj.length && typeof projImportFile === 'function') await projImportFile(pj[0]);

@@ -1480,8 +1480,10 @@ function drawSubCue(ctx,cue,st,W,H){
   const lines = wrapText(ctx, cue.text, maxW);
   const boxW = Math.min(maxW, Math.max(...lines.map(l => ctx.measureText(l).width))) + fs * 0.7;
   const boxH = lines.length * lh + fs * 0.36;
-  const cx = W / 2;
-  const top = st.pos === 'top' ? H * st.marginY : H - H * st.marginY - boxH;
+  // st.x＝字幕框的水平中心、st.y＝字幕框的底緣，都是 0~1 的畫面比例。
+  // 取底緣是為了讓兩行以上的字幕往【上】長，最後一行維持在同一個高度。
+  const cx = W * (Number.isFinite(st.x) ? st.x : 0.5);
+  const top = H * st.y - boxH;
 
   if (st.box){
     ctx.globalAlpha = clamp(st.boxOpacity, 0, 1);

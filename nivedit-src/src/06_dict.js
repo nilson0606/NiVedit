@@ -14,7 +14,7 @@ const I18N_EN = `NiVedit — 網頁版影音編輯器	NiVedit — Web Video Edit
 另存成新的專案	Save as a new project
 另存	Save As
 片段	Clips
-拖放影片 / 圖片 / 音樂到這裡	Drop video / image / audio here
+拖放影片 / 聲音到這裡	Drop video / audio here
 或點擊選擇檔案	or click to choose files
 音檔會自動放到音軌，SRT 會變成字幕	Audio goes to a music track, SRT becomes subtitles
 點一下可以收起來	Click to collapse
@@ -331,6 +331,7 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 拖曳裁切結尾	Drag to trim the end
 收尾	Out
 這一軌的圖片會疊在影片上方 —— 按上面「＋ 疊圖」	Images on this track sit on top of the video — use "+ Overlay" above
+圖片請用「＋ 圖片」或「＋ 疊圖」加入	Use "+ Image" or "+ Overlay" to add pictures
 字幕軌 —— 按上面「＋ 字幕」匯入 SRT，或在這裡雙擊新增一句	Subtitle track — use "+ Subtitle" above to import an SRT, or double-click here to add a line
 這一軌放標題 —— 按上面「＋ 標題」，或在這裡雙擊空白處新增	Titles go on this track — use "+ Title" above, or double-click an empty spot here
 這一軌放聲音 —— 按「＋ 音軌」，或直接把音檔拖進視窗（可以放很多條）	Audio goes on this track — use "+ Audio", or drop audio files into the window (as many tracks as you like)
@@ -395,6 +396,8 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 陰影	Shadow
 位置	Position
 快速對位	Quick align
+位置（套用到這一軌字幕）	Position (applies to this subtitle track)
+水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。	Horizontal is the centre of the subtitle box, vertical is its bottom edge: a second line grows upward, so the last line stays at the same height. Each track keeps its own position; applying a style preset above also brings that preset's position.
 水平	Horizontal
 垂直	Vertical
 對齊	Align

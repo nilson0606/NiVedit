@@ -141,8 +141,8 @@ async function deserialize(st, blobs){
 
   A.titles = (st.titles || []).map(t => ({ ...t }));
   A.subs   = (st.subs   || []).map(c => ({track:0, ...c }));
-  A.subStyleUpper=st.subStyleUpper ? {...st.subStyleUpper} : null;
-  if (st.subStyle) Object.assign(A.subStyle, st.subStyle);
+  A.subStyleUpper=st.subStyleUpper ? subStyleMigrate({...st.subStyleUpper}) : null;
+  if (st.subStyle) subStyleAssign(A.subStyle, st.subStyle);
   Object.assign(A.proj, st.proj || {});
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;

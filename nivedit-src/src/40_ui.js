@@ -1442,9 +1442,16 @@ function refreshProp(){
           <input type="color" id="sBoxColor" value="${st.boxColor}" style="max-width:60px">
           <input type="range" id="sBoxOpa" min="0" max="1" step="0.02" value="${st.boxOpacity}">
           <span class="val" id="sBoxOpa_v">${(+st.boxOpacity).toFixed(2)}</span></div></div>` : ''}
-        ${rowSel('sPos','位置', [['bottom','畫面下方'],['top','畫面上方']], st.pos)}
-        ${rowRange('sMargin','邊距',0.02,0.3,0.005,st.marginY,'')}
         ${rowRange('sMaxW','單行寬度',0.4,0.98,0.02,st.maxW,'')}</div>
+       <div class="grp"><h4>位置（套用到這一軌字幕）</h4>
+        <div class="row"><label>快速對位</label><div class="f"><div class="nine" id="snine">
+          <button data-p="0.15,0.155">↖</button><button data-p="0.5,0.155">↑</button><button data-p="0.85,0.155">↗</button>
+          <button data-p="0.15,0.55">←</button><button data-p="0.5,0.55">●</button><button data-p="0.85,0.55">→</button>
+          <button data-p="0.15,0.925">↙</button><button data-p="0.5,0.925">↓</button><button data-p="0.85,0.925">↘</button>
+        </div></div></div>
+        ${rowRange('sX','水平',0,1,0.005,st.x,'')}
+        ${rowRange('sY','垂直',0,1,0.005,st.y,'')}
+        <div class="hint">水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。</div></div>
        <div class="grp"><h4>整批處理</h4>
         <div class="row"><div class="f" style="gap:6px">
           <button id="sShiftM" style="flex:1">−0.5 秒</button>
@@ -1476,9 +1483,17 @@ function refreshProp(){
     bind('sBox','change', (_, el) => { st.box = el.checked; styleChanged(); refreshProp(); });
     bind('sBoxColor','input', v => { st.boxColor = v; show(); });
     bind('sBoxOpa','input', v => { st.boxOpacity = +v; setVal('sBoxOpa', (+v).toFixed(2)); show(); });
-    bind('sPos','change', v => { st.pos = v; show(); });
-    bind('sMargin','input', v => { st.marginY = +v; setVal('sMargin', (+v).toFixed(3)); show(); });
     bind('sMaxW','input', v => { st.maxW = +v; setVal('sMaxW', (+v).toFixed(2)); show(); });
+    // 位置現在也是「預設樣式」的一部分（置頂那個預設整個意義就是位置），
+    // 所以手動挪過就不再算是套著哪一個預設 —— 跟改顏色、改字級一樣走 styleChanged。
+    bind('sX','input', v => { st.x = +v; setVal('sX', (+v).toFixed(3)); styleChanged(); });
+    bind('sY','input', v => { st.y = +v; setVal('sY', (+v).toFixed(3)); styleChanged(); });
+    $$('#snine button').forEach(b => b.onclick = () => {
+      const [x, y] = b.dataset.p.split(',').map(Number);
+      pushUndo();
+      st.x = x; st.y = y; st.preset = 'custom';
+      show(); render(); markDirty(); refreshProp();
+    });
     on('sShiftM', () => shiftSubs(-0.5));
     on('sShiftP', () => shiftSubs(+0.5));
     on('sImport', () => $('#fileSub').click());

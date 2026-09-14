@@ -1,6 +1,6 @@
 {
-  "version": "10.0",
-  "html_sha256": "9d2433c707502e52812117c6771d86c4cf140477e9da7efdb5418301f0f5a443",
-  "html_bytes": 973474,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 579 checks passed across sixteen suites, including the layers suite (39). Marked by the author as a milestone release. Same behaviour as v9.9; only the version string and the release date shown beside it changed."
+  "version": "10.1",
+  "html_sha256": "5b856f5de4263628962a8ff6b8d4d99ba43eb0ff756f7fb93ef4ffbe9a507264",
+  "html_bytes": 977729,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 596 checks passed across sixteen suites, plus the GIF suite (16 assertions), which now runs on plain Chromium as well. Subtitle placement moved to free x/y positioning; the drop zone accepts video and audio only."
 }

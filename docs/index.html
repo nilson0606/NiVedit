@@ -392,7 +392,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
       </div>
       <div class="ph">片段 <span class="spacer"></span><span id="clipCount" style="font-weight:400">0</span></div>
       <div class="pb">
-        <div class="drop" id="drop">拖放影片 / 圖片 / 音樂到這裡<br>或點擊選擇檔案
+        <div class="drop" id="drop">拖放影片 / 聲音到這裡<br>或點擊選擇檔案
           <div class="hint" style="margin-top:5px">音檔會自動放到音軌，SRT 會變成字幕</div></div>
         <div id="clipList" style="margin-top:10px"></div>
       </div>
@@ -545,7 +545,7 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 
 <div id="toast"></div>
 <input type="file" id="fileAny" multiple class="hide"
-       accept="video/*,audio/*,image/*,.srt,.vtt,.mp4,.mov,.webm,.mkv,.m4v,.mp3,.wav,.m4a,.aac,.ogg,.flac">
+       accept="video/*,audio/*,.srt,.vtt,.mp4,.mov,.webm,.mkv,.m4v,.mp3,.wav,.m4a,.aac,.ogg,.flac">
 <input type="file" id="fileVideo" accept="video/*" multiple class="hide">
 <input type="file" id="fileAudio" accept="audio/*" multiple class="hide">
 <input type="file" id="fileImage" accept="image/*" multiple class="hide">
@@ -3978,7 +3978,7 @@ const I18N_EN = `NiVedit — 網頁版影音編輯器	NiVedit — Web Video Edit
 另存成新的專案	Save as a new project
 另存	Save As
 片段	Clips
-拖放影片 / 圖片 / 音樂到這裡	Drop video / image / audio here
+拖放影片 / 聲音到這裡	Drop video / audio here
 或點擊選擇檔案	or click to choose files
 音檔會自動放到音軌，SRT 會變成字幕	Audio goes to a music track, SRT becomes subtitles
 點一下可以收起來	Click to collapse
@@ -4295,6 +4295,7 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 拖曳裁切結尾	Drag to trim the end
 收尾	Out
 這一軌的圖片會疊在影片上方 —— 按上面「＋ 疊圖」	Images on this track sit on top of the video — use "+ Overlay" above
+圖片請用「＋ 圖片」或「＋ 疊圖」加入	Use "+ Image" or "+ Overlay" to add pictures
 字幕軌 —— 按上面「＋ 字幕」匯入 SRT，或在這裡雙擊新增一句	Subtitle track — use "+ Subtitle" above to import an SRT, or double-click here to add a line
 這一軌放標題 —— 按上面「＋ 標題」，或在這裡雙擊空白處新增	Titles go on this track — use "+ Title" above, or double-click an empty spot here
 這一軌放聲音 —— 按「＋ 音軌」，或直接把音檔拖進視窗（可以放很多條）	Audio goes on this track — use "+ Audio", or drop audio files into the window (as many tracks as you like)
@@ -4359,6 +4360,8 @@ NiVedit字幕.srt	NiVedit_subtitles.srt
 陰影	Shadow
 位置	Position
 快速對位	Quick align
+位置（套用到這一軌字幕）	Position (applies to this subtitle track)
+水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。	Horizontal is the centre of the subtitle box, vertical is its bottom edge: a second line grows upward, so the last line stays at the same height. Each track keeps its own position; applying a style preset above also brings that preset's position.
 水平	Horizontal
 垂直	Vertical
 對齊	Align
@@ -5236,8 +5239,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.0';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/13';
+const VER = 'v10.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -5544,25 +5547,25 @@ const FONTS = [
 const SUB_PRESETS = [
   { id:'classic', name:'經典白字黑邊',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:5, bold:true, shadow:true,
-        box:false, size:52, pos:'bottom' } },
+        box:false, size:52, y:0.925 } },
   { id:'box',     name:'黑底白字條',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:0, bold:false, shadow:false,
-        box:true, boxColor:'#000000', boxOpacity:0.62, size:50, pos:'bottom' } },
+        box:true, boxColor:'#000000', boxOpacity:0.62, size:50, y:0.925 } },
   { id:'soft',    name:'柔和陰影（Netflix 風）',
     s:{ color:'#f2f2f2', stroke:'#000000', strokeW:2, bold:false, shadow:true,
-        box:false, size:52, pos:'bottom' } },
+        box:false, size:52, y:0.925 } },
   { id:'rounded', name:'半透明圓角底',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:0, bold:true, shadow:false,
-        box:true, boxColor:'#101216', boxOpacity:0.72, size:48, pos:'bottom' } },
+        box:true, boxColor:'#101216', boxOpacity:0.72, size:48, y:0.925 } },
   { id:'variety', name:'綜藝黃字粗黑邊',
     s:{ color:'#ffd93d', stroke:'#1a1a1a', strokeW:8, bold:true, shadow:true,
-        box:false, size:60, pos:'bottom' } },
+        box:false, size:60, y:0.925 } },
   { id:'minimal', name:'極簡細字',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:1, bold:false, shadow:true,
-        box:false, size:44, pos:'bottom' } },
+        box:false, size:44, y:0.925 } },
   { id:'top',     name:'置頂白字黑邊',
     s:{ color:'#ffffff', stroke:'#000000', strokeW:5, bold:true, shadow:true,
-        box:false, size:50, pos:'top' } }
+        box:false, size:50, y:0.155 } }
 ];
 
 const A = {
@@ -5570,7 +5573,8 @@ const A = {
   subStyle: { preset:'classic', font: FONTS[0].id, size:52, color:'#ffffff',
               stroke:'#000000', strokeW:5, bold:true, shadow:true,
               box:false, boxColor:'#000000', boxOpacity:0.62,
-              pos:'bottom', marginY:0.075, maxW:0.86 },
+              // x＝水平中心、y＝字幕框底緣（0~1）。.925 就是舊的「下方、邊距 .075」。
+              x:0.5, y:0.925, maxW:0.86 },
   sel: { type: 'proj', id: null },
   proj: { aspect:'16:9', w:1920, h:1080, fps:30, bitrate:8, fit:'contain',
           tracks: ['video','over','sub','title','music'] },   // 軌道上下順序，可自己換
@@ -5623,8 +5627,8 @@ function applySnapshot(json){
   A.musics = hydrate(s.musics);
   A.overlays = hydrate(s.overlays);
   A.subs = (s.subs || []).map(o => ({ ...o }));
-  if (s.subStyle) Object.assign(A.subStyle, s.subStyle);
-  A.subStyleUpper=s.subStyleUpper ? {...s.subStyleUpper} : null;
+  if (s.subStyle) subStyleAssign(A.subStyle, s.subStyle);
+  A.subStyleUpper=s.subStyleUpper ? subStyleMigrate({...s.subStyleUpper}) : null;
   Object.assign(A.proj, s.proj);
   upgradeClipSettings(s.proj || {});
   A.sel = s.sel;
@@ -5781,10 +5785,40 @@ function trimClip(c,from,to){
    ─────────────────────────────────────────────────────────── */
 /** 記住某一句字幕現在對到哪一段素材的哪一秒 */
 const subTrack=c=>c && c.track===1 ? 1 : 0;
+
+/* ── 字幕位置：x／y 自由定位 ─────────────────────────────────
+   v10.1 以前只有「畫面上方／下方」＋邊距，橫向寫死置中。現在改成
+   x＝字幕框的水平中心、y＝字幕框的【底緣】，都是 0~1 的畫面比例。
+
+   y 取底緣而不是中心，是為了保住換行的行為：字幕變成兩行時要往上長，
+   最後一行留在原來的高度。取中心的話兩行會往下擠 33px（1080p、52px 字），
+   一路頂到安全區外 —— 那是所有剪輯軟體都不會做的事。   */
+const SUB_NOMINAL_BOX = st => 1.66 * (st.size || 52) / 1080;   // 單行字幕框佔畫面高度的比例
+
+/** 舊專案只有 pos／marginY，這裡一次換算成 x／y。
+    pos='bottom' 換得精準（y = 1 − 邊距，與字級無關）；
+    pos='top' 得用單行的標準框高回推底緣，會有一點點誤差，拉一下滑桿就好。 */
+function subStyleMigrate(st){
+  if(!st || Number.isFinite(st.y)) return st;
+  const m = Number.isFinite(st.marginY) ? st.marginY : .075;
+  st.x = .5;
+  st.y = st.pos === 'top' ? m + SUB_NOMINAL_BOX(st) : 1 - m;
+  return st;
+}
+/** 把外面讀進來的字幕樣式併進現有的那一份。
+    舊檔沒有 y，而現有這份【一定】有（預設值就帶著）—— 直接 Object.assign 的話
+    舊檔的 pos／marginY 會被無聲吃掉，字幕全部跑到預設高度。所以先把 y 拿掉，
+    讓 subStyleMigrate 依舊檔自己的 pos／marginY 重算。 */
+function subStyleAssign(target, incoming){
+  if(!incoming) return target;
+  if(!Number.isFinite(incoming.y)){ delete target.y; delete target.x; }
+  Object.assign(target, incoming);
+  return subStyleMigrate(target);
+}
 function subStyleFor(track){
-  if(track!==1)return A.subStyle;
-  if(!A.subStyleUpper)A.subStyleUpper={...A.subStyle,marginY:.2};
-  return A.subStyleUpper;
+  if(track!==1)return subStyleMigrate(A.subStyle);
+  if(!A.subStyleUpper)A.subStyleUpper={...subStyleMigrate(A.subStyle),y:.80};
+  return subStyleMigrate(A.subStyleUpper);
 }
 function subtitleTargetTrack(){
   if(A.sel.type==='sub')return subTrack(A.subs.find(c=>c.id===A.sel.id));
@@ -5976,7 +6010,9 @@ async function addAnyFiles(files){
   const im = fs.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name));
   const vi = fs.filter(f => !au.includes(f) && !im.includes(f) && !sr.includes(f) && !pj.includes(f));
   if (vi.length) await addVideoFiles(vi);
-  if (im.length) await addImageFiles(im);          // 圖片預設插進影片軌
+  // 拖放這條路只收影片與聲音。圖片仍然要先挑出來（不然 .png 會落進 vi 被當成影片去解碼，
+  // 得到的是「瀏覽器無法解碼這個檔案」這種看不懂的錯），挑出來之後明說要走哪個按鈕。
+  if (im.length) toast('圖片請用「＋ 圖片」或「＋ 疊圖」加入', true);
   for (const f of au) await addMusicFile(f);
   for (const f of sr) await importSRT(f);
   if (pj.length && typeof projImportFile === 'function') await projImportFile(pj[0]);
@@ -8173,8 +8209,10 @@ function drawSubCue(ctx,cue,st,W,H){
   const lines = wrapText(ctx, cue.text, maxW);
   const boxW = Math.min(maxW, Math.max(...lines.map(l => ctx.measureText(l).width))) + fs * 0.7;
   const boxH = lines.length * lh + fs * 0.36;
-  const cx = W / 2;
-  const top = st.pos === 'top' ? H * st.marginY : H - H * st.marginY - boxH;
+  // st.x＝字幕框的水平中心、st.y＝字幕框的底緣，都是 0~1 的畫面比例。
+  // 取底緣是為了讓兩行以上的字幕往【上】長，最後一行維持在同一個高度。
+  const cx = W * (Number.isFinite(st.x) ? st.x : 0.5);
+  const top = H * st.y - boxH;
 
   if (st.box){
     ctx.globalAlpha = clamp(st.boxOpacity, 0, 1);
@@ -9685,9 +9723,16 @@ function refreshProp(){
           <input type="color" id="sBoxColor" value="${st.boxColor}" style="max-width:60px">
           <input type="range" id="sBoxOpa" min="0" max="1" step="0.02" value="${st.boxOpacity}">
           <span class="val" id="sBoxOpa_v">${(+st.boxOpacity).toFixed(2)}</span></div></div>` : ''}
-        ${rowSel('sPos','位置', [['bottom','畫面下方'],['top','畫面上方']], st.pos)}
-        ${rowRange('sMargin','邊距',0.02,0.3,0.005,st.marginY,'')}
         ${rowRange('sMaxW','單行寬度',0.4,0.98,0.02,st.maxW,'')}</div>
+       <div class="grp"><h4>位置（套用到這一軌字幕）</h4>
+        <div class="row"><label>快速對位</label><div class="f"><div class="nine" id="snine">
+          <button data-p="0.15,0.155">↖</button><button data-p="0.5,0.155">↑</button><button data-p="0.85,0.155">↗</button>
+          <button data-p="0.15,0.55">←</button><button data-p="0.5,0.55">●</button><button data-p="0.85,0.55">→</button>
+          <button data-p="0.15,0.925">↙</button><button data-p="0.5,0.925">↓</button><button data-p="0.85,0.925">↘</button>
+        </div></div></div>
+        ${rowRange('sX','水平',0,1,0.005,st.x,'')}
+        ${rowRange('sY','垂直',0,1,0.005,st.y,'')}
+        <div class="hint">水平是字幕框的中心，垂直是字幕框的底緣：換成兩行時往上長，最後一行留在原來的高度。上下兩軌各有自己的位置；套用上面的樣式預設會連位置一起帶過來。</div></div>
        <div class="grp"><h4>整批處理</h4>
         <div class="row"><div class="f" style="gap:6px">
           <button id="sShiftM" style="flex:1">−0.5 秒</button>
@@ -9719,9 +9764,17 @@ function refreshProp(){
     bind('sBox','change', (_, el) => { st.box = el.checked; styleChanged(); refreshProp(); });
     bind('sBoxColor','input', v => { st.boxColor = v; show(); });
     bind('sBoxOpa','input', v => { st.boxOpacity = +v; setVal('sBoxOpa', (+v).toFixed(2)); show(); });
-    bind('sPos','change', v => { st.pos = v; show(); });
-    bind('sMargin','input', v => { st.marginY = +v; setVal('sMargin', (+v).toFixed(3)); show(); });
     bind('sMaxW','input', v => { st.maxW = +v; setVal('sMaxW', (+v).toFixed(2)); show(); });
+    // 位置現在也是「預設樣式」的一部分（置頂那個預設整個意義就是位置），
+    // 所以手動挪過就不再算是套著哪一個預設 —— 跟改顏色、改字級一樣走 styleChanged。
+    bind('sX','input', v => { st.x = +v; setVal('sX', (+v).toFixed(3)); styleChanged(); });
+    bind('sY','input', v => { st.y = +v; setVal('sY', (+v).toFixed(3)); styleChanged(); });
+    $$('#snine button').forEach(b => b.onclick = () => {
+      const [x, y] = b.dataset.p.split(',').map(Number);
+      pushUndo();
+      st.x = x; st.y = y; st.preset = 'custom';
+      show(); render(); markDirty(); refreshProp();
+    });
     on('sShiftM', () => shiftSubs(-0.5));
     on('sShiftP', () => shiftSubs(+0.5));
     on('sImport', () => $('#fileSub').click());
@@ -10731,8 +10784,8 @@ async function deserialize(st, blobs){
 
   A.titles = (st.titles || []).map(t => ({ ...t }));
   A.subs   = (st.subs   || []).map(c => ({track:0, ...c }));
-  A.subStyleUpper=st.subStyleUpper ? {...st.subStyleUpper} : null;
-  if (st.subStyle) Object.assign(A.subStyle, st.subStyle);
+  A.subStyleUpper=st.subStyleUpper ? subStyleMigrate({...st.subStyleUpper}) : null;
+  if (st.subStyle) subStyleAssign(A.subStyle, st.subStyle);
   Object.assign(A.proj, st.proj || {});
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;

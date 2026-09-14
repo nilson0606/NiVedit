@@ -1,4 +1,4 @@
-# NiVedit v10.0
+# NiVedit v10.1
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,11 +12,13 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-The Subtitle Editor now has an explicit upper/lower track selector. Its cue list, Add cue, batch edits, Clear this track and Save as SRT apply only to the selected track. You can start with an empty upper track while keeping lower-track AI subtitles intact.
+Subtitles can now be placed anywhere on the frame. Each subtitle track has its own horizontal and vertical position, set with two sliders and a quick-align grid. Horizontal is the centre of the subtitle box; vertical is its bottom edge, so a second line grows upward and the last line stays at the same height. Projects saved with the older top/bottom-plus-margin setting are converted on open.
+
+The drop zone on the left now accepts video and audio only. Images still go in through the "+ Image" and "+ Overlay" buttons, which are unchanged.
 
 ## Features
 
-- Two video tracks and two subtitle tracks, with independent placement and gaps.
+- Two video tracks and two subtitle tracks, with independent placement, styling and on-screen position.
 - Two-point keyframes for size, position, opacity and rotation.
 - Rectangle and circle cropping, including animated crop settings.
 - Per-clip transitions, fades and original-audio controls.
@@ -32,7 +34,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v10.0 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v10.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -44,6 +46,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v10.0 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v10.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
