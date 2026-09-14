@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -659,6 +659,11 @@ function syncSubsToClips(){
     const want = L[i].start + (c.cs - A.clips[i].inP);
     const d = want - c.start;
     if (Math.abs(d) > 1e-4){ c.start += d; c.end += d; moved++; }
+    // 片段換軌時字幕要一起換軌。字幕跟自己那一軌的影片是同一層（L1／L2），
+    // 只搬時間不搬軌道的話會變成「字幕在 L1、它綁的影片在 L2」——
+    // 字幕反而被自己那段影片蓋住。圖片軌沒有對應的字幕軌，不動。
+    const ct = clipTrack(A.clips[i]);
+    if (ct !== IMG_TRACK && subTrack(c) !== ct){ c.track = ct; moved++; }
     // 只有還落在自己那一段裡面才重新記位置。
     // 被裁到段外的（那句話已經被剪掉了）維持原本的對應關係，
     // 之後把裁切拉回來，字幕就會自己回到原位。

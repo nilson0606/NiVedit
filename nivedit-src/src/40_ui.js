@@ -484,7 +484,7 @@ function renderTimeline(){
   const videoGroup = $('#trkVideo');
   videoGroup.style.height='116px';
   if (!$('#videoUpper')){
-    for (const [id,track,top] of [['videoUpper',1,18],['videoLower',0,64]]){
+    for (const [id,track,top] of [['videoLower',0,18],['videoUpper',1,64]]){
       const row=document.createElement('div');row.id=id;row.className='videoLane';
       row.dataset.track=track;
       row.style.cssText='position:absolute;left:0;right:0;height:46px;top:'+top+'px;border-top:1px solid var(--line)';
@@ -581,8 +581,10 @@ function renderTimeline(){
   // 固定上下字幕軌；同軌重疊仍分列，便於選取。
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');
   videoGroup.querySelectorAll('.subtitleLane').forEach(n=>n.remove());
+  // v10.3：下軌那一組排在上面，整條時間軸的 L 編號才會由上往下遞增
+  // （L1 影片下軌／字幕下軌 → L2 影片上軌／字幕上軌 → L3 圖片 → L4 疊圖 → L5 標題）。
   let subTop=64;
-  for(const track of [1,0]){
+  for(const track of [0,1]){
     const lane=document.createElement('div');lane.className='subtitleLane';
     lane.id=track?'subUpper':'subLower';lane.dataset.track=track;
     lane.style.cssText='position:absolute;left:0;right:0;top:'+subTop+'px;border-top:1px solid var(--line)';
@@ -602,10 +604,10 @@ function renderTimeline(){
       b.onmousedown=e=>startSubDrag(e,c);lane.appendChild(b);
     });
     const h=18+Math.max(1,ends.length)*30;lane.style.height=h+'px';subTop+=h;videoGroup.appendChild(lane);
-    if(track===1){$('#videoLower').style.top=subTop+'px';subTop+=46;}
+    if(track===0){$('#videoUpper').style.top=subTop+'px';subTop+=46;}
   }
   videoGroup.style.height=subTop+'px';
-  for(const id of ['videoUpper','subUpper','videoLower','subLower'])videoGroup.appendChild($('#'+id));
+  for(const id of ['videoLower','subLower','videoUpper','subUpper'])videoGroup.appendChild($('#'+id));
 
   // 標題軌：重疊的標題自動排到不同列，等於自動長出更多軌道
   const tt = $('#trkTitle');

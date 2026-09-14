@@ -5248,7 +5248,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -5904,6 +5904,11 @@ function syncSubsToClips(){
     const want = L[i].start + (c.cs - A.clips[i].inP);
     const d = want - c.start;
     if (Math.abs(d) > 1e-4){ c.start += d; c.end += d; moved++; }
+    // 片段換軌時字幕要一起換軌。字幕跟自己那一軌的影片是同一層（L1／L2），
+    // 只搬時間不搬軌道的話會變成「字幕在 L1、它綁的影片在 L2」——
+    // 字幕反而被自己那段影片蓋住。圖片軌沒有對應的字幕軌，不動。
+    const ct = clipTrack(A.clips[i]);
+    if (ct !== IMG_TRACK && subTrack(c) !== ct){ c.track = ct; moved++; }
     // 只有還落在自己那一段裡面才重新記位置。
     // 被裁到段外的（那句話已經被剪掉了）維持原本的對應關係，
     // 之後把裁切拉回來，字幕就會自己回到原位。
@@ -8791,7 +8796,7 @@ function renderTimeline(){
   const videoGroup = $('#trkVideo');
   videoGroup.style.height='116px';
   if (!$('#videoUpper')){
-    for (const [id,track,top] of [['videoUpper',1,18],['videoLower',0,64]]){
+    for (const [id,track,top] of [['videoLower',0,18],['videoUpper',1,64]]){
       const row=document.createElement('div');row.id=id;row.className='videoLane';
       row.dataset.track=track;
       row.style.cssText='position:absolute;left:0;right:0;height:46px;top:'+top+'px;border-top:1px solid var(--line)';
@@ -8888,8 +8893,10 @@ function renderTimeline(){
   // 固定上下字幕軌；同軌重疊仍分列，便於選取。
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');
   videoGroup.querySelectorAll('.subtitleLane').forEach(n=>n.remove());
+  // v10.3：下軌那一組排在上面，整條時間軸的 L 編號才會由上往下遞增
+  // （L1 影片下軌／字幕下軌 → L2 影片上軌／字幕上軌 → L3 圖片 → L4 疊圖 → L5 標題）。
   let subTop=64;
-  for(const track of [1,0]){
+  for(const track of [0,1]){
     const lane=document.createElement('div');lane.className='subtitleLane';
     lane.id=track?'subUpper':'subLower';lane.dataset.track=track;
     lane.style.cssText='position:absolute;left:0;right:0;top:'+subTop+'px;border-top:1px solid var(--line)';
@@ -8909,10 +8916,10 @@ function renderTimeline(){
       b.onmousedown=e=>startSubDrag(e,c);lane.appendChild(b);
     });
     const h=18+Math.max(1,ends.length)*30;lane.style.height=h+'px';subTop+=h;videoGroup.appendChild(lane);
-    if(track===1){$('#videoLower').style.top=subTop+'px';subTop+=46;}
+    if(track===0){$('#videoUpper').style.top=subTop+'px';subTop+=46;}
   }
   videoGroup.style.height=subTop+'px';
-  for(const id of ['videoUpper','subUpper','videoLower','subLower'])videoGroup.appendChild($('#'+id));
+  for(const id of ['videoLower','subLower','videoUpper','subUpper'])videoGroup.appendChild($('#'+id));
 
   // 標題軌：重疊的標題自動排到不同列，等於自動長出更多軌道
   const tt = $('#trkTitle');

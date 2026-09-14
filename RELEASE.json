@@ -1,6 +1,6 @@
 {
-  "version": "10.2",
-  "html_sha256": "c620dc9a254757418fea7df1b4128ccadf00a15a3139322f5bad1ef676ed9137",
-  "html_bytes": 983157,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 610 checks passed across sixteen suites, plus the GIF suite. Layer numbers are now fixed per track instead of per object, and images have their own track drawn above the video while keeping transitions, cropping, colour grading and keyframes."
+  "version": "10.3",
+  "html_sha256": "39c7e2e9116e30a6d0c358154644eaa60000eb7062e356b301bb453a624eda46",
+  "html_bytes": 983784,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 614 checks passed across sixteen suites, plus the GIF suite. Subtitles now follow their clip across video tracks, and the timeline lists tracks so layer numbers increase downward."
 }
