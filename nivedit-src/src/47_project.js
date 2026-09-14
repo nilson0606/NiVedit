@@ -148,6 +148,9 @@ async function deserialize(st, blobs){
   // 舊專案的軌道順序沒有 img、也可能把 video 排在別的位置。
   // 這裡先正規化一次，A.proj.tracks 才不會在下一次重繪之前處於舊格式。
   if (typeof trackOrder === 'function') trackOrder();
+  // 開檔時把字幕拉回它綁的那一段所在的影片軌（修 v10.3 以前留下的錯位）。
+  // 先 tagSubs() 補齊沒有 cid 的句子，再對齊。
+  tagSubs(); alignSubTracksToClips();
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;
   A.playhead = clamp(st.playhead || 0, 0, totalDur());

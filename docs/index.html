@@ -5248,7 +5248,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v10.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/14';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -5864,7 +5864,12 @@ function subtitleTargetTrack(){
 function tagSub(c, L, preferred){
   L = L || layout();
   c.cid = null; c.cs = 0;
-  const indices=L.map((_,i)=>i).reverse();
+  // 字幕跟它那一軌的影片是一組，所以【優先】綁在自己這一軌上的片段。
+  // 少了這一步，把字幕拖到另一條字幕軌之後它還是綁著原本那一軌的影片，
+  // 下一次同步就會被拉回去 —— 看起來像「拖不動」。
+  const st=subTrack(c);
+  const indices=L.map((_,i)=>i).reverse()
+    .sort((a,b)=>(clipTrack(A.clips[b])===st)-(clipTrack(A.clips[a])===st));
   const pi=A.clips.findIndex(x=>x.id===preferred);
   if(pi>=0){indices.splice(indices.indexOf(pi),1);indices.unshift(pi);}
   for (const i of indices){
@@ -5892,28 +5897,69 @@ function layoutSig(L){
 /** 排版變了就把字幕搬回原來對到的畫面上。
     自己會分辨「使用者手動拖過的字幕」（start 跟上次記的不一樣），那種就重新記位置，
     所以不用在每個會動到字幕的地方都補一行呼叫。 */
+/** 開檔專用：把字幕拉回它綁的那一段所在的影片軌。
+
+    只在載入專案時跑一次。平常的重繪【不能】做這件事 —— 試過，
+    那會把使用者手動選的字幕軌在下一次重繪硬扳回去，等於廢掉分軌功能。
+
+    存在的理由：v10.3 以前搬過軌的專案會留下「影片在上軌、字幕在下軌」，
+    那種狀態下字幕會被它自己綁的那段影片蓋住。開檔時一次修好，
+    不必要求使用者手動再搬一次片段。圖片軌沒有對應的字幕軌，不動。 */
+function alignSubTracksToClips(){
+  let n = 0;
+  for (const c of A.subs){
+    if (!c.cid) continue;
+    const i = A.clips.findIndex(x => x.id === c.cid);
+    // 連動的那一段不在了就先跳過。這裡【不要】順手 tagSub 重綁 ——
+    // 試過，會連帶把匯入、分割、存讀那幾條路的字幕歸屬打亂（三支測試同時紅）。
+    // 殘留一個用不到的 id 是內部細節，使用者看不到。
+    if (i < 0) continue;
+    const ct = clipTrack(A.clips[i]);
+    // 只修【一個方向】：字幕比它綁的影片還低，會被自己那段影片蓋住 —— 那是壞掉。
+    // 反過來（字幕在上軌、影片在下軌）照樣看得見，是使用者刻意的擺法，不要動它。
+    if (ct !== IMG_TRACK && subTrack(c) < ct){ c.track = ct; n++; }
+  }
+  return n;
+}
+
 function syncSubsToClips(){
   const L = layout();
   const sig = layoutSig(L);
   const changed = sig !== A._laySig;
   A._laySig = sig;
   let moved = 0;
+  // 這一輪有哪些片段「自己換了軌」。字幕只在這種時候跟著換軌，
+  // 其他情況（例如同軌左右拖）一律不碰字幕的軌道。
+  // _tr 只活在記憶體裡，serialize 的欄位白名單沒有它，不會進 .nvproj。
+  const trackMoved = new Map();
+  for (const cl of A.clips){
+    const t = clipTrack(cl);
+    if (cl._tr !== undefined && cl._tr !== t) trackMoved.set(cl.id, t);
+    cl._tr = t;
+  }
   for (const c of A.subs){
     if (c.cid === undefined || c._at === undefined || Math.abs(c.start - c._at) > 1e-4){
       tagSub(c, L);                     // 新加的、匯入的、剛被拖過的 —— 以現在的位置為準
       continue;
     }
-    if (!changed || !c.cid) continue;
+    if (!c.cid) continue;
     const i = A.clips.findIndex(x => x.id === c.cid);
     if (i < 0) continue;
+
+    /* 搬動某一段影片時，連動它的字幕一定要跟著搬 —— 包含換軌。
+
+       但【只有那一段自己換軌】才動字幕。不能寫成「字幕永遠跟它綁的影片同軌」：
+       只有一條影片軌、卻用了兩條字幕軌（下軌 AI 字幕、上軌自己加的）是既有用法，
+       那些上軌字幕會依時間綁到下軌的影片，寫成永遠同軌就會把它們整批拖下來，
+       等於廢掉分軌字幕。試過，subtitle-scope 與 subtitle-edit 當場紅。
+       圖片軌沒有對應的字幕軌，不動。 */
+    const nt = trackMoved.get(c.cid);
+    if (nt !== undefined && nt !== IMG_TRACK && subTrack(c) !== nt){ c.track = nt; moved++; }
+
+    if (!changed) continue;
     const want = L[i].start + (c.cs - A.clips[i].inP);
     const d = want - c.start;
     if (Math.abs(d) > 1e-4){ c.start += d; c.end += d; moved++; }
-    // 片段換軌時字幕要一起換軌。字幕跟自己那一軌的影片是同一層（L1／L2），
-    // 只搬時間不搬軌道的話會變成「字幕在 L1、它綁的影片在 L2」——
-    // 字幕反而被自己那段影片蓋住。圖片軌沒有對應的字幕軌，不動。
-    const ct = clipTrack(A.clips[i]);
-    if (ct !== IMG_TRACK && subTrack(c) !== ct){ c.track = ct; moved++; }
     // 只有還落在自己那一段裡面才重新記位置。
     // 被裁到段外的（那句話已經被剪掉了）維持原本的對應關係，
     // 之後把裁切拉回來，字幕就會自己回到原位。
@@ -9060,10 +9106,14 @@ function startSubDrag(e, c){
     const d = (ev.clientX - x0) / A.pps;
     if (mode === 'M'){
       const len=e0-s0;c.start=Math.max(0,s0+d);c.end=c.start+len;
+      const t0=c.track;
       for(const lane of $$('.subtitleLane')){
         const r=lane.getBoundingClientRect();
         if(ev.clientY>=r.top&&ev.clientY<r.bottom){c.track=+lane.dataset.track;break;}
       }
+      // 換了字幕軌就立刻重綁：字幕跟影片同軌，不重綁的話它還掛在原本那一軌的
+      // 影片上，下一次同步就被拉回去 —— 看起來像「拖不動」。
+      if(c.track!==t0)tagSub(c);
     }
     else if (mode === 'L') c.start = clamp(s0 + d, 0, e0 - 0.2);
     else c.end = Math.max(c.start + 0.2, e0 + d);
@@ -9819,7 +9869,7 @@ function refreshProp(){
           <button id="sExport" style="flex:1">匯出 SRT</button></div></div>
         <button id="sClear" style="width:100%;margin-top:6px">清空全部字幕</button></div>
        <button id="sDel" style="width:100%">刪除這一句</button>`;
-    bind('sTrack','change',v=>{pushUndo();c.track=+v;render();refreshProp();markDirty(400);});
+    bind('sTrack','change',v=>{pushUndo();c.track=+v;tagSub(c);render();refreshProp();markDirty(400);});
     bind('sText','input', v => { c.text = v; renderTimeline(); show(); markDirty(); });
     bind('sStart','input', v => { c.start = clamp(+v, 0, c.end - 0.2); renderTimeline(); });
     bind('sEnd','input',   v => { c.end = Math.max(c.start + 0.2, +v); renderTimeline(); });
@@ -10859,6 +10909,9 @@ async function deserialize(st, blobs){
   // 舊專案的軌道順序沒有 img、也可能把 video 排在別的位置。
   // 這裡先正規化一次，A.proj.tracks 才不會在下一次重繪之前處於舊格式。
   if (typeof trackOrder === 'function') trackOrder();
+  // 開檔時把字幕拉回它綁的那一段所在的影片軌（修 v10.3 以前留下的錯位）。
+  // 先 tagSubs() 補齊沒有 cid 的句子，再對齊。
+  tagSubs(); alignSubTracksToClips();
   upgradeClipSettings(st.proj || {});
   A.pps = st.pps || A.pps;
   A.playhead = clamp(st.playhead || 0, 0, totalDur());

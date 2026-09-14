@@ -1,6 +1,6 @@
 {
-  "version": "10.4",
-  "html_sha256": "855a7504e0d63c5bf42033a2f0de0cfd68d2523591aed1e19c503320eddd59ca",
-  "html_bytes": 984190,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 618 checks passed across sixteen suites, plus the GIF suite. Fixes subtitles not following their clip when the clip changes video track without changing its time."
+  "version": "10.5",
+  "html_sha256": "53522c1b9e514faa5bda9cad649e260bce9ea2d3f280c2bf7d5b679d0c10d23c",
+  "html_bytes": 987219,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 625 checks passed across sixteen suites, plus the GIF suite. Moving a clip to the other video track now takes its subtitles along, and opening a project repairs that pairing if an older version left subtitles behind their own clip."
 }

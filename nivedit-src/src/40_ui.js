@@ -743,10 +743,14 @@ function startSubDrag(e, c){
     const d = (ev.clientX - x0) / A.pps;
     if (mode === 'M'){
       const len=e0-s0;c.start=Math.max(0,s0+d);c.end=c.start+len;
+      const t0=c.track;
       for(const lane of $$('.subtitleLane')){
         const r=lane.getBoundingClientRect();
         if(ev.clientY>=r.top&&ev.clientY<r.bottom){c.track=+lane.dataset.track;break;}
       }
+      // 換了字幕軌就立刻重綁：字幕跟影片同軌，不重綁的話它還掛在原本那一軌的
+      // 影片上，下一次同步就被拉回去 —— 看起來像「拖不動」。
+      if(c.track!==t0)tagSub(c);
     }
     else if (mode === 'L') c.start = clamp(s0 + d, 0, e0 - 0.2);
     else c.end = Math.max(c.start + 0.2, e0 + d);
@@ -1502,7 +1506,7 @@ function refreshProp(){
           <button id="sExport" style="flex:1">匯出 SRT</button></div></div>
         <button id="sClear" style="width:100%;margin-top:6px">清空全部字幕</button></div>
        <button id="sDel" style="width:100%">刪除這一句</button>`;
-    bind('sTrack','change',v=>{pushUndo();c.track=+v;render();refreshProp();markDirty(400);});
+    bind('sTrack','change',v=>{pushUndo();c.track=+v;tagSub(c);render();refreshProp();markDirty(400);});
     bind('sText','input', v => { c.text = v; renderTimeline(); show(); markDirty(); });
     bind('sStart','input', v => { c.start = clamp(+v, 0, c.end - 0.2); renderTimeline(); });
     bind('sEnd','input',   v => { c.end = Math.max(c.start + 0.2, +v); renderTimeline(); });
