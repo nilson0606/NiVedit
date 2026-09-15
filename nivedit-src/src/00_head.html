@@ -151,6 +151,8 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 /* 空軌只有 26px 高（ROW_EMPTY），提示要往上收才不會滿出來 */
 .trkhint{position:absolute;left:78px;top:3px;font-size:11px;color:#5a6270;pointer-events:none;
   white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:1px 9px}
+/* 這台電腦沒裝的字體：選得到，但灰掉並標「（未安裝）」 */
+select option.miss{color:var(--fg3)}
 .blk{position:absolute;top:5px;height:28px;border-radius:5px;overflow:hidden;cursor:pointer;
   border:1px solid #3a4150;background:linear-gradient(180deg,#2c3442,#232a35);display:flex;align-items:center}
 .videoLane .blk,.videoLane .trx{height:22px}

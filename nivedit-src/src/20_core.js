@@ -3,8 +3,8 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/14';
+const VER = 'v10.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/15';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -291,18 +291,48 @@ function copyGradeToAll(c){
   for (const x of A.clips) if (x !== c) x.grade = Object.assign({}, GRADE0, c.grade);
 }
 
-/* 每個項目都是不同的字體，不再有「預設」和「微軟正黑體」其實是同一個字體的重複項 */
+/* 每個項目都是不同的字體，不再有「預設」和「微軟正黑體」其實是同一個字體的重複項。
+
+   v10.7 加到 30 種。全部都是【系統既有】的字體 —— NiVedit 是單檔離線，
+   不下載也不內嵌字型檔（一套中文字型 5～20MB，內嵌會讓單檔膨脹十幾倍）。
+   所以這裡列的東西「這台電腦有沒有」因機器而異：Office 會帶一批花俏的英文字，
+   簡體中文補充字型包會帶黑體／楷體／仿宋／隸書／幼圓。沒裝的瀏覽器會默默換成
+   預設字，看起來像選了沒反應 —— 所以下拉選單會用 fontAvailable() 標「（未安裝）」。
+
+   後面那串備援是【同一種風格】的替代品（Windows→macOS→Noto），
+   刻意不要拿 Impact 之類「一定有」的字當花俏字體的備援：
+   那樣 fontAvailable() 永遠回 true，就再也標不出未安裝了。 */
 const FONTS = [
-  { id:'"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif', name:'微軟正黑體（預設）' },
-  { id:'"Microsoft YaHei","Heiti TC","Noto Sans SC",sans-serif',       name:'微軟雅黑' },
-  { id:'"PMingLiU","Noto Serif TC","Songti TC",serif',                 name:'新細明體' },
-  { id:'"DFKai-SB","BiauKai","Kaiti TC",serif',                        name:'標楷體' },
-  { id:'Arial,Helvetica,sans-serif',                                   name:'Arial' },
-  { id:'"Arial Black","Arial",sans-serif',                             name:'Arial Black' },
-  { id:'Impact,sans-serif',                                            name:'Impact' },
-  { id:'Georgia,serif',                                                name:'Georgia' },
-  { id:'"Times New Roman",Times,serif',                                name:'Times New Roman' },
-  { id:'"Courier New",monospace',                                      name:'Courier New' }
+  { g:'中文字體', id:'"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif', name:'微軟正黑體（預設）' },
+  { g:'中文字體', id:'"Microsoft JhengHei Light","Microsoft JhengHei UI Light",sans-serif', name:'微軟正黑體 Light' },
+  { g:'中文字體', id:'"Microsoft YaHei","Heiti TC","Noto Sans SC",sans-serif',       name:'微軟雅黑' },
+  { g:'中文字體', id:'DengXian,"Microsoft YaHei",sans-serif',                        name:'等線' },
+  { g:'中文字體', id:'"PMingLiU","Noto Serif TC","Songti TC",serif',                 name:'新細明體' },
+  { g:'中文字體', id:'MingLiU,"MingLiU_HKSCS",serif',                                name:'細明體（等寬）' },
+  { g:'中文字體', id:'SimSun,"Songti TC",serif',                                     name:'宋體' },
+  { g:'中文字體', id:'SimHei,"Heiti TC",sans-serif',                                 name:'黑體' },
+  { g:'中文字體', id:'"DFKai-SB","BiauKai","Kaiti TC",serif',                        name:'標楷體' },
+  { g:'中文字體', id:'KaiTi,"Kaiti SC",serif',                                       name:'楷體' },
+  { g:'中文字體', id:'FangSong,"STFangsong",serif',                                  name:'仿宋' },
+  { g:'中文字體', id:'LiSu,"Baoli TC","Baoli SC",serif',                             name:'隸書' },
+  { g:'中文字體', id:'YouYuan,"Yuanti TC","Yuanti SC",sans-serif',                   name:'幼圓（圓體）' },
+  { g:'中文字體', id:'"Noto Sans TC","Source Han Sans TC","Noto Sans CJK TC",sans-serif', name:'思源黑體' },
+  { g:'中文字體', id:'"Noto Serif TC","Source Han Serif TC","Noto Serif CJK TC",serif',   name:'思源宋體' },
+  { g:'中文字體', id:'"PingFang TC","PingFang SC",sans-serif',                       name:'蘋方' },
+  { g:'英文字體', id:'Arial,Helvetica,sans-serif',                                   name:'Arial' },
+  { g:'英文字體', id:'"Arial Black","Arial",sans-serif',                             name:'Arial Black' },
+  { g:'英文字體', id:'Impact,sans-serif',                                            name:'Impact' },
+  { g:'英文字體', id:'Georgia,serif',                                                name:'Georgia' },
+  { g:'英文字體', id:'"Times New Roman",Times,serif',                                name:'Times New Roman' },
+  { g:'英文字體', id:'"Courier New",monospace',                                      name:'Courier New' },
+  { g:'英文字體', id:'Bahnschrift,"DIN Alternate",sans-serif',                       name:'Bahnschrift' },
+  { g:'英文字體', id:'Haettenschweiler,sans-serif',                                  name:'Haettenschweiler' },
+  { g:'英文字體', id:'"Cooper Black",serif',                                         name:'Cooper Black' },
+  { g:'英文字體', id:'"Bauhaus 93",sans-serif',                                      name:'Bauhaus 93' },
+  { g:'英文字體', id:'Stencil,fantasy',                                              name:'Stencil' },
+  { g:'英文字體', id:'"Old English Text MT","UnifrakturMaguntia",serif',             name:'Old English Text MT' },
+  { g:'英文字體', id:'"Brush Script MT","Brush Script Std",cursive',                 name:'Brush Script MT' },
+  { g:'英文字體', id:'"Segoe Script","Bradley Hand",cursive',                        name:'Segoe Script' }
 ];
 
 /* ── 全域狀態 ──────────────────────────────────────────────── */

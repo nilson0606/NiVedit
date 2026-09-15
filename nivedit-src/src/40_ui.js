@@ -1154,10 +1154,16 @@ const rowSelG = (id, label, items, cur) => {
   });
   const body = gs.map(([g, list]) =>
     (g ? `<optgroup label="${esc(g)}">` : '') +
-    list.map(o => `<option value="${esc(o.id)}"${o.id == cur ? ' selected' : ''}>${esc(o.name)}</option>`).join('') +
+    list.map(o => `<option value="${esc(o.id)}"${o.id == cur ? ' selected' : ''}${o.cls ? ` class="${o.cls}"` : ''}>${esc(o.name)}</option>`).join('') +
     (g ? '</optgroup>' : '')).join('');
   return `<div class="row"><label>${label}</label><div class="f"><select id="${id}">${body}</select></div></div>`;
 };
+/* 字體下拉。這台電腦沒裝的標「（未安裝）」並置灰 —— 選了還是選得進去：
+   同一個專案換另一台電腦開，字體設定不該被偷偷換掉。 */
+const fontItems = () => FONTS.map(f => {
+  const ok = typeof fontOK === 'function' ? fontOK(f.id) : true;
+  return { id:f.id, g:f.g, name: f.name + (ok ? '' : '（未安裝）'), cls: ok ? '' : 'miss' };
+});
 const rowBtn = (id, text) =>
   `<div class="row"><div class="f"><button class="gh" id="${id}" style="flex:1">${text}</button></div></div>`;
 const rowNum = (id, label, val, stepv, extra) =>
@@ -1385,7 +1391,7 @@ function refreshProp(){
         <textarea id="tText" rows="3">${esc(t.text)}</textarea>
         <div class="hint" style="margin-top:5px">按 Enter 可換行</div></div>
        <div class="grp"><h4>字型</h4>
-        ${rowSel('tFont','字體', FONTS.map(f => [f.id, f.name]), t.font)}
+        ${rowSelG('tFont','字體', fontItems(), t.font)}
         <div class="row"><label>文字顏色</label><div class="f">
           <input type="color" id="tColor" value="${t.color}"></div></div>
         <div class="row"><label>描邊</label><div class="f">
@@ -1499,7 +1505,7 @@ function refreshProp(){
           ${SUB_PRESETS.map(x => `<div class="chip${x.id === st.preset ? ' on' : ''}" data-p="${x.id}">${x.name}</div>`).join('')}
         </div></div>
        <div class="grp"><h4>微調</h4>
-        ${rowSel('sFont','字體', FONTS.map(f => [f.id, f.name]), st.font)}
+        ${rowSelG('sFont','字體', fontItems(), st.font)}
         ${rowRange('sSize','大小',20,140,2,st.size,' px')}
         <div class="row"><label>文字顏色</label><div class="f"><input type="color" id="sColor" value="${st.color}"></div></div>
         <div class="row"><label>描邊</label><div class="f">

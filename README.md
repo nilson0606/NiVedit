@@ -1,4 +1,4 @@
-# NiVedit v10.6
+# NiVedit v10.7
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,15 +12,14 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-The two video tracks and their subtitles are now called top and bottom layers instead of upper and lower tracks, so the names describe what covers what rather than where the row sits. Nothing about stacking or saved projects changed — only the wording.
+Titles and subtitles can now use 30 typefaces instead of 10 — 16 Chinese and 14 Latin, grouped in the picker. They are all faces your operating system already has: NiVedit is a single offline file and embeds no font data, so nothing is downloaded. Which ones exist varies by machine, so any typeface this computer lacks is greyed out and marked "(not installed)" — you can still pick it, because a project opened on another computer should keep the setting.
 
-Timeline rows are also shorter. On a 1366×768 laptop the whole stack — L1 to L5 plus the audio track — fits without scrolling, and the timeline panel sizes itself to its contents until you drag the handle yourself. The scrollbar is still there for projects with many subtitle lanes.
-
-Layer numbers increase downward: bottom video and its subtitles (L1), top video and its subtitles (L2), then images (L3), overlays (L4) and titles (L5).
+The previous release renamed the two video tracks and their subtitles to top and bottom layers, and made timeline rows short enough that L1 to L5 plus the audio track fit on a 1366×768 laptop without scrolling.
 
 ## Features
 
 - Two video tracks and two subtitle tracks, with independent placement, styling and on-screen position.
+- 30 system typefaces for titles and subtitles, with unavailable ones marked.
 - Two-point keyframes for size, position, opacity and rotation.
 - Rectangle and circle cropping, including animated crop settings.
 - Per-clip transitions, fades and original-audio controls.
@@ -36,7 +35,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v10.6 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v10.7 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -48,6 +47,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v10.6 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v10.7 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

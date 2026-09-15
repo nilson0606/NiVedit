@@ -151,6 +151,8 @@ body.tkdragging .oblk,body.tkdragging .mblk{pointer-events:none}
 /* 空軌只有 26px 高（ROW_EMPTY），提示要往上收才不會滿出來 */
 .trkhint{position:absolute;left:78px;top:3px;font-size:11px;color:#5a6270;pointer-events:none;
   white-space:nowrap;border:1px dashed #2f353f;border-radius:5px;padding:1px 9px}
+/* 這台電腦沒裝的字體：選得到，但灰掉並標「（未安裝）」 */
+select option.miss{color:var(--fg3)}
 .blk{position:absolute;top:5px;height:28px;border-radius:5px;overflow:hidden;cursor:pointer;
   border:1px solid #3a4150;background:linear-gradient(180deg,#2c3442,#232a35);display:flex;align-items:center}
 .videoLane .blk,.videoLane .trx{height:22px}
@@ -4224,6 +4226,21 @@ AI 字幕	AI Subtitles
 微軟雅黑	Microsoft YaHei
 新細明體	PMingLiU
 標楷體	DFKai-SB
+微軟正黑體 Light	Microsoft JhengHei Light
+等線	DengXian
+細明體（等寬）	MingLiU (monospaced)
+宋體	SimSun
+黑體	SimHei
+楷體	KaiTi
+仿宋	FangSong
+隸書	LiSu
+幼圓（圓體）	YouYuan (rounded)
+思源黑體	Noto Sans TC
+思源宋體	Noto Serif TC
+蘋方	PingFang TC
+中文字體	Chinese
+英文字體	Latin
+（未安裝）	 (not installed)
 經典白字黑邊	Classic white with outline
 黑底白字條	White on black bar
 柔和陰影（Netflix 風）	Soft shadow (Netflix style)
@@ -5112,7 +5129,9 @@ function _frag(s){
    —— 少了這一段，每秒重寫的時間碼會被舊字蓋回去。 */
 const _oT = new WeakMap();    // 文字節點
 const _oA = new WeakMap();    // 元素的 title / placeholder / aria-label
-const _ATTRS = ['title', 'placeholder', 'aria-label'];
+/* label 是 <optgroup> 的群組標題。v10.7 以前漏掉，轉場、標題動畫、風格那幾個
+   分組下拉在英文介面下群組名還是中文。 */
+const _ATTRS = ['title', 'placeholder', 'aria-label', 'label'];
 const _SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CANVAS: 1, NOSCRIPT: 1 };
 
 function _skip(el){
@@ -5250,8 +5269,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v10.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/14';
+const VER = 'v10.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/15';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -5538,18 +5557,48 @@ function copyGradeToAll(c){
   for (const x of A.clips) if (x !== c) x.grade = Object.assign({}, GRADE0, c.grade);
 }
 
-/* 每個項目都是不同的字體，不再有「預設」和「微軟正黑體」其實是同一個字體的重複項 */
+/* 每個項目都是不同的字體，不再有「預設」和「微軟正黑體」其實是同一個字體的重複項。
+
+   v10.7 加到 30 種。全部都是【系統既有】的字體 —— NiVedit 是單檔離線，
+   不下載也不內嵌字型檔（一套中文字型 5～20MB，內嵌會讓單檔膨脹十幾倍）。
+   所以這裡列的東西「這台電腦有沒有」因機器而異：Office 會帶一批花俏的英文字，
+   簡體中文補充字型包會帶黑體／楷體／仿宋／隸書／幼圓。沒裝的瀏覽器會默默換成
+   預設字，看起來像選了沒反應 —— 所以下拉選單會用 fontAvailable() 標「（未安裝）」。
+
+   後面那串備援是【同一種風格】的替代品（Windows→macOS→Noto），
+   刻意不要拿 Impact 之類「一定有」的字當花俏字體的備援：
+   那樣 fontAvailable() 永遠回 true，就再也標不出未安裝了。 */
 const FONTS = [
-  { id:'"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif', name:'微軟正黑體（預設）' },
-  { id:'"Microsoft YaHei","Heiti TC","Noto Sans SC",sans-serif',       name:'微軟雅黑' },
-  { id:'"PMingLiU","Noto Serif TC","Songti TC",serif',                 name:'新細明體' },
-  { id:'"DFKai-SB","BiauKai","Kaiti TC",serif',                        name:'標楷體' },
-  { id:'Arial,Helvetica,sans-serif',                                   name:'Arial' },
-  { id:'"Arial Black","Arial",sans-serif',                             name:'Arial Black' },
-  { id:'Impact,sans-serif',                                            name:'Impact' },
-  { id:'Georgia,serif',                                                name:'Georgia' },
-  { id:'"Times New Roman",Times,serif',                                name:'Times New Roman' },
-  { id:'"Courier New",monospace',                                      name:'Courier New' }
+  { g:'中文字體', id:'"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif', name:'微軟正黑體（預設）' },
+  { g:'中文字體', id:'"Microsoft JhengHei Light","Microsoft JhengHei UI Light",sans-serif', name:'微軟正黑體 Light' },
+  { g:'中文字體', id:'"Microsoft YaHei","Heiti TC","Noto Sans SC",sans-serif',       name:'微軟雅黑' },
+  { g:'中文字體', id:'DengXian,"Microsoft YaHei",sans-serif',                        name:'等線' },
+  { g:'中文字體', id:'"PMingLiU","Noto Serif TC","Songti TC",serif',                 name:'新細明體' },
+  { g:'中文字體', id:'MingLiU,"MingLiU_HKSCS",serif',                                name:'細明體（等寬）' },
+  { g:'中文字體', id:'SimSun,"Songti TC",serif',                                     name:'宋體' },
+  { g:'中文字體', id:'SimHei,"Heiti TC",sans-serif',                                 name:'黑體' },
+  { g:'中文字體', id:'"DFKai-SB","BiauKai","Kaiti TC",serif',                        name:'標楷體' },
+  { g:'中文字體', id:'KaiTi,"Kaiti SC",serif',                                       name:'楷體' },
+  { g:'中文字體', id:'FangSong,"STFangsong",serif',                                  name:'仿宋' },
+  { g:'中文字體', id:'LiSu,"Baoli TC","Baoli SC",serif',                             name:'隸書' },
+  { g:'中文字體', id:'YouYuan,"Yuanti TC","Yuanti SC",sans-serif',                   name:'幼圓（圓體）' },
+  { g:'中文字體', id:'"Noto Sans TC","Source Han Sans TC","Noto Sans CJK TC",sans-serif', name:'思源黑體' },
+  { g:'中文字體', id:'"Noto Serif TC","Source Han Serif TC","Noto Serif CJK TC",serif',   name:'思源宋體' },
+  { g:'中文字體', id:'"PingFang TC","PingFang SC",sans-serif',                       name:'蘋方' },
+  { g:'英文字體', id:'Arial,Helvetica,sans-serif',                                   name:'Arial' },
+  { g:'英文字體', id:'"Arial Black","Arial",sans-serif',                             name:'Arial Black' },
+  { g:'英文字體', id:'Impact,sans-serif',                                            name:'Impact' },
+  { g:'英文字體', id:'Georgia,serif',                                                name:'Georgia' },
+  { g:'英文字體', id:'"Times New Roman",Times,serif',                                name:'Times New Roman' },
+  { g:'英文字體', id:'"Courier New",monospace',                                      name:'Courier New' },
+  { g:'英文字體', id:'Bahnschrift,"DIN Alternate",sans-serif',                       name:'Bahnschrift' },
+  { g:'英文字體', id:'Haettenschweiler,sans-serif',                                  name:'Haettenschweiler' },
+  { g:'英文字體', id:'"Cooper Black",serif',                                         name:'Cooper Black' },
+  { g:'英文字體', id:'"Bauhaus 93",sans-serif',                                      name:'Bauhaus 93' },
+  { g:'英文字體', id:'Stencil,fantasy',                                              name:'Stencil' },
+  { g:'英文字體', id:'"Old English Text MT","UnifrakturMaguntia",serif',             name:'Old English Text MT' },
+  { g:'英文字體', id:'"Brush Script MT","Brush Script Std",cursive',                 name:'Brush Script MT' },
+  { g:'英文字體', id:'"Segoe Script","Bradley Hand",cursive',                        name:'Segoe Script' }
 ];
 
 /* ── 全域狀態 ──────────────────────────────────────────────── */
@@ -6894,6 +6943,14 @@ function fontAvailable(family){
   const w = fam => { _meas.font = `100px ${fam}`; return _meas.measureText(probe).width; };
   return names.some(n =>
     ['monospace', 'sans-serif', 'serif'].some(g => Math.abs(w(`"${n}",${g}`) - w(g)) > 0.5));
+}
+
+/** fontAvailable() 要量文字寬度，30 種字體 × 兩個面板 × 每次 refreshProp 會很吃。
+    結果在同一次開啟期間不會變（使用者不會邊剪片邊裝字體），量過就記起來。 */
+const _availCache = new Map();
+function fontOK(family){
+  if (!_availCache.has(family)) _availCache.set(family, fontAvailable(family));
+  return _availCache.get(family);
 }
 
 const ease = p => 1 - Math.pow(1 - p, 3);                     // easeOutCubic
@@ -9520,10 +9577,16 @@ const rowSelG = (id, label, items, cur) => {
   });
   const body = gs.map(([g, list]) =>
     (g ? `<optgroup label="${esc(g)}">` : '') +
-    list.map(o => `<option value="${esc(o.id)}"${o.id == cur ? ' selected' : ''}>${esc(o.name)}</option>`).join('') +
+    list.map(o => `<option value="${esc(o.id)}"${o.id == cur ? ' selected' : ''}${o.cls ? ` class="${o.cls}"` : ''}>${esc(o.name)}</option>`).join('') +
     (g ? '</optgroup>' : '')).join('');
   return `<div class="row"><label>${label}</label><div class="f"><select id="${id}">${body}</select></div></div>`;
 };
+/* 字體下拉。這台電腦沒裝的標「（未安裝）」並置灰 —— 選了還是選得進去：
+   同一個專案換另一台電腦開，字體設定不該被偷偷換掉。 */
+const fontItems = () => FONTS.map(f => {
+  const ok = typeof fontOK === 'function' ? fontOK(f.id) : true;
+  return { id:f.id, g:f.g, name: f.name + (ok ? '' : '（未安裝）'), cls: ok ? '' : 'miss' };
+});
 const rowBtn = (id, text) =>
   `<div class="row"><div class="f"><button class="gh" id="${id}" style="flex:1">${text}</button></div></div>`;
 const rowNum = (id, label, val, stepv, extra) =>
@@ -9751,7 +9814,7 @@ function refreshProp(){
         <textarea id="tText" rows="3">${esc(t.text)}</textarea>
         <div class="hint" style="margin-top:5px">按 Enter 可換行</div></div>
        <div class="grp"><h4>字型</h4>
-        ${rowSel('tFont','字體', FONTS.map(f => [f.id, f.name]), t.font)}
+        ${rowSelG('tFont','字體', fontItems(), t.font)}
         <div class="row"><label>文字顏色</label><div class="f">
           <input type="color" id="tColor" value="${t.color}"></div></div>
         <div class="row"><label>描邊</label><div class="f">
@@ -9865,7 +9928,7 @@ function refreshProp(){
           ${SUB_PRESETS.map(x => `<div class="chip${x.id === st.preset ? ' on' : ''}" data-p="${x.id}">${x.name}</div>`).join('')}
         </div></div>
        <div class="grp"><h4>微調</h4>
-        ${rowSel('sFont','字體', FONTS.map(f => [f.id, f.name]), st.font)}
+        ${rowSelG('sFont','字體', fontItems(), st.font)}
         ${rowRange('sSize','大小',20,140,2,st.size,' px')}
         <div class="row"><label>文字顏色</label><div class="f"><input type="color" id="sColor" value="${st.color}"></div></div>
         <div class="row"><label>描邊</label><div class="f">

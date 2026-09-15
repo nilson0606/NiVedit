@@ -1,7 +1,7 @@
 # NiVedit 回歸測試
 
 測試以 Playwright 開啟單檔 HTML，使用本機 HTTP 或 file://。
-十六支計數式測試共 626 項（含終點對位 90 項、motion 67 項、圖層 51 項、旋轉／儲存 46 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
+十六支計數式測試共 631 項（含終點對位 90 項、motion 67 項、字幕 56 項、圖層 51 項、旋轉／儲存 46 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
 
 ## 跑之前
 
@@ -31,7 +31,7 @@ NIVEDIT_HTML=/tmp/NiVedit.html node tests/i18n.e2e.cjs
 版號只出現在比較值那一邊，一次 sed 就能改完：
 
 ```bash
-sed -i "s/v10\.5/v10.6/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
+sed -i "s/v10\.6/v10.7/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
 ```
 
 日期顯示在 `#verDate`，是另一個元素，不影響這些斷言 —— 但**改版號時記得一起更新
@@ -57,7 +57,7 @@ sed -i "s/v10\.5/v10.6/g" tests/*.cjs   # 改版號時（把舊版號換成新�
 | `track-modes.e2e.cjs` | 四種內扣／外加組合、首尾定格、原片動態、留白、MP4 及聲音時間 | 29 |
 | `subtitles.e2e.cjs` | 交錯四列、雙字幕獨立樣式、自由 X／Y、拖曳、同軌合併、跟著影片換軌、時間軸高度自動貼合、存讀、MP4 | 56 |
 | `clip-options.e2e.cjs` | 每段內扣／外加、獨立淡化、即時更新、換軌／復原／分割、遷移／存讀、MP4 及原聲／配樂頻率分量、雙軌字幕連動亮度 | 37 |
-| `title-rotation.e2e.cjs` | 標題大小同組、五項底色、旋轉像素及動畫合成、MP4 角度、存讀分割與復原 | 15 |
+| `title-rotation.e2e.cjs` | 標題大小同組、五項底色、旋轉像素及動畫合成、MP4 角度、存讀分割與復原、**字體清單 30 種／未安裝標記／群組翻譯** | 20 |
 | `gif.e2e.cjs` | 現行版 GIF 動畫疊圖；NIVEDIT_HTML 指定成品，輸出至成品旁 gif-qa | — |
 
 `i18n-scan.cjs` 固定會印出兩條中文，**那是對的，不用修**：
@@ -195,3 +195,24 @@ v9.5：既有下載／匯出回歸腳本停用 showSaveFilePicker，測試下載
 v10.6 之前那支有兩處寫死的像素（`dest.y+35`、`box.y+22`），方塊一變薄就落到框外，
 看起來像「拖曳功能壞了」其實是測試自己指錯位置。已經改成用 `boundingBox()` 的
 `height*.5`。以後再調高度不必再改這支。
+
+## v10.7 新增的五項（字體清單）
+
+都在 `title-rotation.e2e.cjs`：
+
+- `30 typefaces in two groups` —— `FONTS` 有 30 筆，下拉分成「中文字體／英文字體」兩個 optgroup。
+- `missing typefaces are labelled and greyed` —— 至少有一個被標成未安裝，
+  而且「有 `.miss` class」跟「名稱結尾是（未安裝）」必須完全對得起來。
+  容器裡幾乎沒裝任何字，所以這條一定有東西可以驗。
+- `typeface groups translated` —— 英文介面下群組名要變成 `Chinese／Latin`。
+  這條在釘 `05_i18n.js` 的 `_ATTRS` 有沒有收 `label`；v10.7 以前沒收，
+  所有 optgroup 的群組名在英文下都是中文。
+- `missing note translated and no Chinese left in the list` —— 「（未安裝）」要翻成
+  `(not installed)`，而且整個清單不准殘留中文。
+- `quoted family survives the select and keeps sane size correction` ——
+  字體字串本身含雙引號（`"Noto Sans TC",...`），選進去要存得住
+  （沒跳脫的話 value 會變空，`ctx.font` 整行失效退回 10px，這是 v2.1 的老 bug），
+  而且 `sizeCorrection()` 要落在 0.8～1.25。
+
+**加字體時要注意的一條**：花俏字體的備援鏈**不要**接 Impact／Arial 這種「一定有」的字。
+`fontAvailable()` 是「這串裡面有沒有任何一個存在」，接了就永遠回 true，未安裝標記直接失效。

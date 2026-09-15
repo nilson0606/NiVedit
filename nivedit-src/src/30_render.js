@@ -87,6 +87,14 @@ function fontAvailable(family){
     ['monospace', 'sans-serif', 'serif'].some(g => Math.abs(w(`"${n}",${g}`) - w(g)) > 0.5));
 }
 
+/** fontAvailable() 要量文字寬度，30 種字體 × 兩個面板 × 每次 refreshProp 會很吃。
+    結果在同一次開啟期間不會變（使用者不會邊剪片邊裝字體），量過就記起來。 */
+const _availCache = new Map();
+function fontOK(family){
+  if (!_availCache.has(family)) _availCache.set(family, fontAvailable(family));
+  return _availCache.get(family);
+}
+
 const ease = p => 1 - Math.pow(1 - p, 3);                     // easeOutCubic
 const easeBack = p => { const s = 1.70158 + 1; return 1 + (s+1)*Math.pow(p-1,3) + s*Math.pow(p-1,2); };
 

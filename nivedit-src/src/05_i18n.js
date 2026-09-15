@@ -77,7 +77,9 @@ function _frag(s){
    —— 少了這一段，每秒重寫的時間碼會被舊字蓋回去。 */
 const _oT = new WeakMap();    // 文字節點
 const _oA = new WeakMap();    // 元素的 title / placeholder / aria-label
-const _ATTRS = ['title', 'placeholder', 'aria-label'];
+/* label 是 <optgroup> 的群組標題。v10.7 以前漏掉，轉場、標題動畫、風格那幾個
+   分組下拉在英文介面下群組名還是中文。 */
+const _ATTRS = ['title', 'placeholder', 'aria-label', 'label'];
 const _SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CANVAS: 1, NOSCRIPT: 1 };
 
 function _skip(el){

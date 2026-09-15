@@ -1,6 +1,6 @@
 {
-  "version": "10.6",
-  "html_sha256": "7b4e5aba78d1781c9d11da8730ac79a351750b2be12c11f29b9691bb286549e4",
-  "html_bytes": 989637,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 626 checks passed across sixteen suites, plus the GIF suite. The two video tracks and their subtitles are renamed top and bottom layers, and the timeline rows are short enough for L1-L5 plus audio to fit on a 1366x768 screen without scrolling."
+  "version": "10.7",
+  "html_sha256": "f7324686c623011fe3e8ccda8b4229b22e9ffe8c3b0504fefdc90e4eb5592311",
+  "html_bytes": 994306,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 631 checks passed across sixteen suites, plus the GIF suite. Titles and subtitles now offer 30 system typefaces grouped as Chinese and Latin; faces this computer does not have are greyed out and marked as not installed."
 }
