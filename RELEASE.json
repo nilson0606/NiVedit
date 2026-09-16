@@ -1,6 +1,6 @@
 {
-  "version": "10.8",
-  "html_sha256": "ea25dc801832ee42e631059fc5153bd76981fbe985f3ab3bf28eeeb6e9222b8c",
-  "html_bytes": 998296,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 638 checks passed across sixteen suites, plus the GIF suite. Saving a project over itself now re-slices its embedded media first, so a single silent reconnection failure can no longer make every later save fail."
+  "version": "11.1",
+  "html_sha256": "8d615c5336c88ef7071ee443a4cf76c592e75a76422b83039bbb1c635649e054",
+  "html_bytes": 1005441,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 648 checks passed across sixteen suites, plus the GIF suite. Saving writes a temporary file beside the project and renames it into place, so the original is never read while it is being replaced."
 }

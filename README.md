@@ -1,4 +1,4 @@
-# NiVedit v10.8
+# NiVedit v11.1
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,7 +12,7 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Saving a project over itself is now reliable. A project file carries its media inside it, so every clip is a slice of that file; overwriting the file invalidated those slices, and when the automatic reconnection failed it did so silently — after which every later save failed, for good. Saving now re-slices from the project file before each overwrite, retries once if the references go stale mid-write, and says plainly what to do if it still cannot save.
+Saving a project is now atomic. A project file carries its media inside it, so overwriting that file while reading those same bytes was never safe. The editor now writes a temporary file beside the original and renames it into place, so the original is untouched until the moment the new file is complete — and a crash mid-save leaves the old file intact. Where the folder is not known to the editor it stages the content separately first, using browser storage that also exists for pages opened straight from disk.
 
 The release before this one grew the typeface list to 30 — 16 Chinese and 14 Latin, with the ones your computer does not have greyed out and marked.
 
@@ -35,7 +35,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v10.8 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v11.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -47,6 +47,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v10.8 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v11.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

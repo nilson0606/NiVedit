@@ -1,7 +1,7 @@
 # NiVedit 回歸測試
 
 測試以 Playwright 開啟單檔 HTML，使用本機 HTTP 或 file://。
-十六支計數式測試共 638 項（含終點對位 90 項、motion 67 項、字幕 56 項、圖層 51 項、旋轉／儲存 53 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
+十六支計數式測試共 648 項（含終點對位 90 項、motion 67 項、字幕 56 項、圖層 51 項、旋轉／儲存 63 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
 
 ## 跑之前
 
@@ -31,7 +31,7 @@ NIVEDIT_HTML=/tmp/NiVedit.html node tests/i18n.e2e.cjs
 版號只出現在比較值那一邊，一次 sed 就能改完：
 
 ```bash
-sed -i "s/v10\.7/v10.8/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
+sed -i "s/v11\.0/v11.1/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
 ```
 
 日期顯示在 `#verDate`，是另一個元素，不影響這些斷言 —— 但**改版號時記得一起更新
@@ -237,3 +237,54 @@ v10.6 之前那支有兩處寫死的像素（`dest.y+35`、`box.y+22`），方�
 **為什麼要測 File 物件的身分而不是「有沒有噴錯」**：這個 bug 的本質是
 「rebind 靜靜失敗，之後每次存都爆」。只驗第一次存有沒有成功是抓不到的 ——
 使用者的原話就是「好幾次儲存後偶爾發生，一發生就一直發生」。
+
+## v11.0 再補四項（存檔一定要讀一個檔、寫另一個檔）
+
+v10.8 以為病根是「上一次重接沒接乾淨」，錯了。使用者回報修完還是失敗，
+而且**「太快出現」** —— 是 `createWritable()` 當下就爆，不是寫到一半。
+也就是「一邊讀這個檔、一邊蓋掉它」本身就不合法，存檔前重切幾次都沒用。
+
+再加上他後來補的線索：**「時好時壞」「多等了幾分鐘又可存」**、
+專案放在同時有 Resolve 備份的資料夾裡 —— 外面有東西（Windows 索引、防毒）
+在掃剛寫出去的大檔，掃的期間快照一直失效。
+
+v11.0 兩件事一起做：
+
+- **蓋回同一個檔時先落地到 OPFS 暫存檔**，再從那裡搬進目標檔。
+  來源與目標永遠不是同一個檔。
+- **失敗就重切、隔 1.5／3／4.5 秒再試**，最多四次。把使用者要等的幾分鐘變成幾秒。
+
+新增的四項：
+
+- `overwrite save succeeds with the scratch route`
+- `scratch file is cleaned up afterwards` —— 暫存檔不能留在 OPFS 裡養肥。
+- `target file is written, and only after the content left the source` ——
+  包住 `createWritable` 記下呼叫順序，目標檔必須是**最後**被寫的那個。
+- `save as a new file still works` —— 另存新檔不必繞暫存，不能被這個改動拖累。
+
+**這一串的教訓**：使用者說「太快出現」「等幾分鐘就好」這種話是**時序證據**，
+比任何猜測都準。v10.8 沒問清楚就改，白做一版。
+
+## v11.1 再補六項（同資料夾改名，以及 file:// 沒有 OPFS）
+
+v11.0 的暫存路徑**在使用者的環境從來沒被執行過** —— 他用 `file://` 開，
+`navigator.storage.getDirectory()` 直接丟例外，程式把它當成「OPFS 不能用」
+安靜退回舊路。**而測試在 http 下跑，OPFS 有，所以全綠。**
+
+所以現在有一項測試專門把 OPFS 拔掉再跑一次：
+
+- `save works without OPFS (file:// falls back to IndexedDB)`
+- `IndexedDB scratch record is cleaned up`
+
+以及走「同資料夾暫存檔＋改名」那條（把 `_dir` 指到 OPFS 根目錄，
+它本身就是一個 `FileSystemDirectoryHandle`）：
+
+- `sibling temp file plus rename is used when the folder is known`
+- `no .nvtmp left behind`
+- `renamed file is a real project file` —— 改名後的檔案要有 `NVPROJ1` 磁頭，
+  不是半截或空的。
+- `handle is re-acquired after the rename` —— 改名之後舊的 handle 指向的項目
+  已經被換掉，`_fh` 必須換成新的，否則下一次存又會踩到。
+
+**這一串留下的規矩**：測試環境與使用者環境的**能力差異本身就要有一項測試**。
+只要程式碼裡出現「某個 API 不在就退回舊路」，就要有一支測試把那個 API 拔掉跑一次。

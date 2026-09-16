@@ -601,10 +601,12 @@ WebCodecs 就緒 · 影片不會離開這台電腦	WebCodecs ready · your video
 個，	 new, 
 同一個檔案跨專案只會存一份，下次儲存會更快。	The same file is stored only once across projects, so the next save will be faster.
 儲存失敗	Save failed
+素材參照失效，重新接上再試一次…	Media references went stale. Reconnecting and trying again…
+寫入暫存…	Writing to a scratch file…
 存檔後重新接素材失敗，下次儲存可能會失敗，請改用另存：	Rebinding media after saving failed. The next save may fail too — use Save As instead: 
 素材參照失效，重新接上再存一次…	Media references went stale. Reconnecting and saving again…
 素材參照失效過一次，已自動重新接上並存好	Media references went stale once; they were reconnected automatically and the project is saved
-素材的檔案參照失效了 —— 專案檔被外面動過（雲端同步、防毒、改名、搬位置），或上一次存檔沒有接乾淨。	The media file references went stale. Something outside the editor touched the project file (cloud sync, antivirus, a rename or a move), or the previous save did not reconnect them cleanly.
+試了四次都失敗。多半是外面有程式正在掃這個專案檔 —— Windows 搜尋索引或防毒在掃剛寫出去的大檔，掃完之前一直存不進去。	Four attempts failed. Something outside the editor is most likely scanning this project file — Windows Search indexing or antivirus working through the large file that was just written. Saving keeps failing until that finishes.
 先用「另存」存成新檔名，一定存得進去，不會白做。	Use Save As with a new file name first — that always works, so no work is lost.
 存好之後從那個新檔繼續，就恢復正常了。	Carry on from that new file and saving behaves normally again.
 瀏覽器儲存空間可能不足。可以先刪掉用不到的專案再試。	The browser may be out of storage. Try deleting projects you no longer need.
@@ -652,7 +654,7 @@ NiVedit 專案	NiVedit project
 已儲存到電腦	Saved to your computer
 真實檔案，跟瀏覽器儲存無關。	A real file — nothing to do with browser storage.
 「開啟」列表讀的是你在專案視窗選的資料夾；如果剛才存到別的地方，用「換一個資料夾」指過去就看得到。	The Open list reads the folder you picked in the project window. If you just saved somewhere else, use "Change folder" to point at it.
-素材的檔案參照失效了 ——	The media file references have gone stale — 
+試了四次都失敗。多半是外面有程式正在掃這個專案檔 —— Windows 搜尋索引或防毒在掃剛寫出去的大檔，掃完之前一直存不進去。	Four attempts failed. Something outside the editor is most likely scanning this project file — Windows Search indexing or antivirus working through the large file that was just written. Saving keeps failing until that finishes.
 多半是素材檔在外面被移動、改名或改過內容。	usually the files were moved, renamed or edited outside the app.
 重新開啟這個專案（或把素材重新拖進來）就會好。	Reopening the project (or dropping the files in again) fixes it.
 開啟失敗：	Open failed: 

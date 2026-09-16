@@ -461,6 +461,122 @@ async function revalidateMedia(){
   return { ok: lost.length === 0, fixed: bad.length - lost.length, lost };
 }
 
+/* ── 存檔一定要「讀一個檔、寫另一個檔」（v10.9）────────────────────
+
+   v10.8 以為病根是「上一次重接沒接乾淨」，所以在存檔前先把素材重切一次。
+   錯了。使用者回報修完還是失敗，而且「太快出現」—— 是在開始寫的那一瞬間就爆，
+   不是寫到一半。也就是說：
+
+     blob 裡的素材是【目標檔自己的切片】，
+     一呼叫 createWritable(目標檔)，Edge 當場把那些切片全部判定失效。
+
+   重切幾次都沒用，重切完下一秒又被作廢。唯一的解是**別讀寫同一個檔**：
+   先把完整內容落到 OPFS 的暫存檔（讀舊檔／寫 OPFS，不同檔），
+   再從那個暫存檔搬進目標檔（讀 OPFS／寫舊檔，也是不同檔）。
+
+   代價是同樣的資料寫兩次。300MB 的專案大概多幾秒，換存得進去，划算。
+   只有「蓋回目前開著的那個檔」才需要繞這一圈；另存新檔、匯出都不必。
+   ─────────────────────────────────────────────────────────── */
+const SCRATCH = 'nvsave.tmp';
+const SCRATCH_KEY = '__nvsave_scratch__';
+
+async function writeBlobTo(fh, blob){
+  const w = await fh.createWritable();
+  await w.write(blob);
+  await w.close();
+}
+
+/** OPFS 在 file:// 底下【不存在】。
+    使用者是用 file:///D:/NiVedit/NiVedit.html 開的，而 file: 是獨立安全來源，
+    navigator.storage.getDirectory() 直接丟例外 —— v11.0 的暫存路徑在他那邊
+    從來沒跑到過，每次都安靜地退回「直接寫」，等於整版沒改到東西。
+    所以要先問清楚有沒有，不能 try 完就當作沒事。 */
+async function opfsRoot(){
+  if (!navigator.storage || !navigator.storage.getDirectory) return null;
+  try { return await navigator.storage.getDirectory(); } catch(e){ return null; }
+}
+
+/** 把整包內容先落地成「跟目標檔無關」的一份，再寫進目標檔。
+    第一段讀舊 .nvproj、寫暫存（不同檔，跟「另存」一樣的動作，一定過得了）；
+    第二段讀暫存、寫目標（也是不同檔）。兩段都沒有讀寫同一個檔。
+
+    暫存放哪裡：
+      OPFS —— http(s) 開的時候用這個，快。
+      IndexedDB —— file:// 開的時候只有這個可用（NiVedit 本來就用它存專案）。 */
+async function stageBlob(blob){
+  const root = await opfsRoot();
+  if (root){
+    const tmp = await root.getFileHandle(SCRATCH, { create:true });
+    await writeBlobTo(tmp, blob);
+    return { file: await tmp.getFile(),
+             drop: async () => { try { await root.removeEntry(SCRATCH); } catch(e){} } };
+  }
+  const db = await idb();
+  await req(tx(db, 'media', 'readwrite').put({ key: SCRATCH_KEY, blob }));
+  const rec = await req(tx(db, 'media', 'readonly').get(SCRATCH_KEY));
+  if (!rec || !rec.blob) throw new Error('暫存失敗');
+  return { file: rec.blob,
+           drop: async () => { try { await req(tx(db, 'media', 'readwrite').delete(SCRATCH_KEY)); } catch(e){} } };
+}
+
+/** 最好的一條路：在【目標檔所在的資料夾】寫一個暫存檔，寫完改名蓋過去。
+
+    優點：只寫一次（IDB／OPFS 那條要寫兩次）、不佔瀏覽器配額、
+    而且改名的過程完全不會去讀舊檔 —— 讀寫同檔的問題從根上消失。
+
+    前提是拿得到那個資料夾的 handle。使用者用「開啟」從資料夾叫出來的專案就有；
+    用瀏覽器原生另存挑到別處的就沒有，那時候才退回暫存區那條。
+    回傳新的檔案 handle（舊的那個 handle 指向的項目已經被換掉了）。 */
+async function writeViaSibling(fh, blob){
+  if (!_dir || typeof fh.move !== 'function') return null;
+  try { if (!await (await _dir.getFileHandle(fh.name)).isSameEntry(fh)) return null; }
+  catch(e){ return null; }
+  const tmpName = fh.name + '.nvtmp';
+  const tmp = await _dir.getFileHandle(tmpName, { create:true });
+  try {
+    mProg(60, '寫入暫存…');
+    await writeBlobTo(tmp, blob);           // 讀舊 .nvproj → 寫暫存檔（不同檔）
+    mProg(90, '寫入檔案…');
+    try { await tmp.move(fh.name); }        // 改名蓋過去
+    catch(e){                               // 有些版本不肯直接蓋，先刪再改名
+      await _dir.removeEntry(fh.name);
+      await tmp.move(fh.name);
+    }
+    return await _dir.getFileHandle(fh.name);
+  } catch(e){
+    try { await _dir.removeEntry(tmpName); } catch(_){}
+    throw e;
+  }
+}
+
+async function writeViaScratch(fh, blob){
+  mProg(55, '寫入暫存…');
+  const st = await stageBlob(blob);      // 讀舊 .nvproj → 寫暫存
+  try {
+    mProg(80, '寫入檔案…');
+    await writeBlobTo(fh, st.file);      // 讀暫存 → 寫目標檔
+  } finally {
+    await st.drop();
+  }
+}
+
+/** 存檔的實際寫入。
+    overwrite=true 代表要蓋回素材的來源檔，一定要繞路，順序：
+      1 同資料夾暫存檔＋改名（最好：只寫一次、不佔配額）
+      2 OPFS／IndexedDB 暫存區（拿不到資料夾時）
+    回傳 { how, handle }；handle 有值代表目標檔換了一個新的 handle。 */
+async function writeProjFile(fh, blob, overwrite){
+  if (overwrite){
+    const moved = await writeViaSibling(fh, blob);
+    if (moved) return { how:'sibling', handle: moved };
+    await writeViaScratch(fh, blob);
+    return { how:'scratch', handle: null };
+  }
+  mProg(80, '寫入檔案…');
+  await writeBlobTo(fh, blob);
+  return { how:'direct', handle: null };
+}
+
 /* 素材快照失效時瀏覽器丟的例外。Edge／Chromium 換過措辭：舊的是
    「The requested file could not be read…」（NotReadableError），
    新的是「An operation that depends on state cached in an interface object…」
@@ -557,27 +673,41 @@ async function dirSave(asNew){
       throw new Error('這些素材已經讀不到了：' + rv.lost.join('、') +
         '。請把它們重新拖進來（或重新開啟專案）再存，否則存出去的檔案會缺素材。');
     const info = {};
-    let blob = await buildProjBlob(info);
-    mProg(80, '寫入檔案…');
-    try {
-      const w = await fh.createWritable();
-      await w.write(blob);
-      await w.close();
-    } catch(err){
-      if (!isStaleErr(err)) throw err;
-      /* 寫到一半素材快照才失效。重新切一次再試【一次】——
-         不無限重試，真的救不回來要讓使用者看到訊息去用「另存」。 */
-      mProg(45, '素材參照失效，重新接上再存一次…');
-      await resliceFromProj();
-      const info2 = {};
-      blob = await buildProjBlob(info2);
-      info.base = info2.base; info.index = info2.index;
-      mProg(80, '寫入檔案…');
-      const w2 = await fh.createWritable();
-      await w2.write(blob);
-      await w2.close();
-      toast('素材參照失效過一次，已自動重新接上並存好');
+    const overwrite = !!(_fh && fh === _fh);     // 要蓋回素材的來源檔
+
+    /* 為什麼要重試好幾次，而不是失敗就放棄：
+
+       素材快照失效不一定是我們自己造成的。使用者的專案放在有 Resolve 備份的資料夾裡，
+       Windows 搜尋索引與防毒會去掃剛寫出去的那個 300MB 檔案，掃的期間檔案一直被碰，
+       快照就一直失效 —— 他的說法是「時好時壞」「多等了幾分鐘又可存」。
+       檔案越大掃越久，所以素材多的專案幾乎必中。
+
+       既然只是要等那個外部動作結束，就讓程式自己等：失敗就重切、隔一下再試。
+       間隔 1.5 / 3 / 4.5 秒，最多九秒，比使用者盯著螢幕等幾分鐘好得多。
+       四次都失敗才放棄，並且明白告訴他去用「另存」。 */
+    let wrote = false, lastErr = null, healed = 0, blob = null;
+    for (let attempt = 0; attempt < 4 && !wrote; attempt++){
+      if (attempt){
+        healed++;
+        mProg(35, '素材參照失效，重新接上再試一次…');
+        await new Promise(r => setTimeout(r, attempt * 1500));
+        await resliceFromProj();
+      }
+      const inf = {};
+      const b = await buildProjBlob(inf);
+      try {
+        // 重試時一律繞路，就算原本判定不需要
+        const r = await writeProjFile(fh, b, overwrite || attempt > 0);
+        if (r.handle) fh = r.handle;      // 改名蓋過去之後，舊 handle 已經失效
+        info.base = inf.base; info.index = inf.index;
+        blob = b; wrote = true;
+      } catch(err){
+        if (!isStaleErr(err)) throw err;
+        lastErr = err;
+      }
     }
+    if (!wrote) throw lastErr;
+    if (healed) toast('素材參照失效過一次，已自動重新接上並存好');
     _fh = fh;
     // 素材要改指向剛寫出去的這個檔，不然下一次存會讀不到（見 rebindMedia）
     await rebindMedia(fh, info.base, info.index);
@@ -589,8 +719,8 @@ async function dirSave(asNew){
   } catch(e){
     const msg = String(e && e.message || e);
     mDone('儲存失敗', '', `<span style="color:var(--danger)">${esc(msg)}</span>` +
-      (isStaleErr(e) ? `<br><br><span style="color:var(--fg3)">素材的檔案參照失效了 ——
-        專案檔被外面動過（雲端同步、防毒、改名、搬位置），或上一次存檔沒有接乾淨。<br>
+      (isStaleErr(e) ? `<br><br><span style="color:var(--fg3)">試了四次都失敗。多半是外面有程式正在掃這個專案檔 ——
+        Windows 搜尋索引或防毒在掃剛寫出去的大檔，掃完之前一直存不進去。<br>
         <b>先用「另存」存成新檔名，一定存得進去，不會白做。</b><br>
         存好之後從那個新檔繼續，就恢復正常了。</span>` : ''));
     return false;
