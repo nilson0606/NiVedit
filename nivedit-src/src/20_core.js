@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v11.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v11.7';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/16';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -404,7 +404,12 @@ function snapshot(){
   });
 }
 /** 動作發生「之前」呼叫。內容沒變就不會重複記。 */
+/* 有沒有「還沒存的改動」。任何一次 pushUndo 都代表使用者動了東西；
+   存檔成功時由 markSaved() 清掉。關分頁前用它決定要不要攔一下。 */
+let _unsaved = false;
+
 function pushUndo(){
+  _unsaved = true;
   const s = snapshot();
   if (_undo.length && _undo[_undo.length - 1] === s) return;
   _undo.push(s);
@@ -1128,6 +1133,11 @@ async function addMusicFile(file){
 
 /* ── 新增標題 ──────────────────────────────────────────────── */
 function addTitle(startAt){
+  /* v11.4：以前這裡沒有 pushUndo()，於是「＋ 標題」既不能 Ctrl+Z 復原、
+     也不算「未存的改動」（關分頁不會提醒）。其他每一種新增
+     ——影片、圖片、疊圖、音軌、字幕——都有，只有標題漏掉。
+     一定要在動 A.titles 之前呼叫，pushUndo 拍的是「動之前」的狀態。 */
+  pushUndo();
   const s = Math.max(0, startAt === undefined ? A.playhead : startAt);
   const t = {
     id: uid(), text: '在這裡輸入標題',

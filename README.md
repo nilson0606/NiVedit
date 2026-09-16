@@ -1,4 +1,4 @@
-# NiVedit v11.1
+# NiVedit v11.7
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Saving a project is now atomic. A project file carries its media inside it, so overwriting that file while reading those same bytes was never safe. The editor now writes a temporary file beside the original and renames it into place, so the original is untouched until the moment the new file is complete — and a crash mid-save leaves the old file intact. Where the folder is not known to the editor it stages the content separately first, using browser storage that also exists for pages opened straight from disk.
+Five rough edges found in a full manual pass over the editor: the timeline zoom slider scales the tracks and nothing else — neither the preview above it nor the panels beside it shift or resize while you drag, however far you zoom in, the "now" button beside a clip's start point turns the frame you are looking at into the clip's first frame without shifting the picture, and leaves the clip alone when the playhead is elsewhere, the button for changing the project folder actually opens the folder picker again, adding a title can be undone like every other kind of addition, and closing the tab with unsaved changes warns you first, and cleaning up unused media explains that it only touches browser storage.
 
-The release before this one grew the typeface list to 30 — 16 Chinese and 14 Latin, with the ones your computer does not have greyed out and marked.
+The release before this one made saving atomic: the editor writes a temporary file beside the project and renames it into place, so the original is untouched until the new file is complete.
 
 ## Features
 
@@ -35,7 +35,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v11.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v11.7 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -47,6 +47,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v11.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v11.7 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

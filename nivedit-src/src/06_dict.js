@@ -625,6 +625,7 @@ n（素材本體會保留給其他專案使用）	n(the media files stay, for ot
 清掉	Removed 
 個沒人用的素材，釋放	 unused file(s), freeing 
 沒有可以清的素材	There is nothing to clean up
+沒有可以清的素材（這個按鈕只清瀏覽器儲存的舊素材，不影響資料夾裡的 .nvproj）	Nothing to clean up. This only removes unused media from browser storage; .nvproj files in your folder are untouched.
 要開新專案嗎？目前沒存的修改會不見。	Start a new project? Unsaved changes will be lost.
 存放資料夾	Folder
 尚未選擇	Not chosen yet

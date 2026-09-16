@@ -1,6 +1,6 @@
 {
-  "version": "11.1",
-  "html_sha256": "8d615c5336c88ef7071ee443a4cf76c592e75a76422b83039bbb1c635649e054",
-  "html_bytes": 1005441,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 648 checks passed across sixteen suites, plus the GIF suite. Saving writes a temporary file beside the project and renames it into place, so the original is never read while it is being replaced."
+  "version": "11.7",
+  "html_sha256": "72ef159ec0502b26741c91903c75aa4808b0483827cf57175abef70d2ea2d158",
+  "html_bytes": 1011914,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 669 checks passed across sixteen suites, plus the GIF suite. Twenty-one of those come from a manual pass over the editor and cover behaviour that was wrong without being broken."
 }

@@ -187,6 +187,7 @@ async function projSave(asNew){
     const rec = { id, name, updated: Date.now(), ver: VER, state: st, keys: [...files.keys()] };
     await req(tx(db, 'projects', 'readwrite').put(rec));
     _curProj = { id, name };
+    markSaved();
     updateProjBar();
     mDone('已儲存', name,
       `素材 ${files.size} 個（新增 ${saved} 個，${(bytes/1048576).toFixed(1)} MB）<br>` +
@@ -259,7 +260,11 @@ async function projGC(){
       n++; bytes += m.size || 0;
     }
   }
-  toast(n ? `清掉 ${n} 個沒人用的素材，釋放 ${(bytes/1048576).toFixed(1)} MB` : '沒有可以清的素材');
+  /* 這支只清「瀏覽器儲存」那一套裡沒人用的素材。
+     使用者是用資料夾模式（.nvproj 實體檔）的話，本來就一個都不會有，
+     只回「沒有可以清的素材」會讓人以為壞了。 */
+  toast(n ? `清掉 ${n} 個沒人用的素材，釋放 ${(bytes/1048576).toFixed(1)} MB`
+          : '沒有可以清的素材（這個按鈕只清瀏覽器儲存的舊素材，不影響資料夾裡的 .nvproj）');
   showProjDialog();
 }
 
@@ -299,7 +304,7 @@ async function showNewDialog(){
       `<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:14px">
          <button id="npSkip">先不指定，直接開始</button>
          <button class="pri" id="npCreate">建立</button></div>`;
-    $('#npPick').onclick = async () => { if (await ensureDir(true)) draw(); };
+    $('#npPick').onclick = async () => { if (await ensureDir(true, !!_dir)) draw(); };
     $('#npSkip').onclick = () => { $('#pmask').classList.remove('on'); $('#pfoot').classList.remove('hide');
                                    resetProject(); toast('已建立新專案（尚未指定存放位置）'); };
     $('#npCreate').onclick = async () => {
@@ -596,9 +601,13 @@ async function loadDirHandle(){
   try { const db = await idb(); const r = await req(tx(db,'handles','readonly').get('projDir'));
         return r ? r.h : null; } catch(e){ return null; }
 }
-/** 拿到可讀寫的資料夾。沒有就請使用者選一個（必須由點擊觸發） */
-async function ensureDir(ask){
-  if (_dir){
+/** 拿到可讀寫的資料夾。沒有就請使用者選一個（必須由點擊觸發）。
+
+    force=true 代表「我就是要換一個」—— 一定打開挑選視窗。
+    沒有這個參數時，只要目前這個資料夾還有權限就直接回傳它，
+    於是「換資料夾」那顆按鈕按下去毫無反應（v11.1 以前就是這樣）。 */
+async function ensureDir(ask, force){
+  if (_dir && !force){
     let st = 'denied';
     try { st = await _dir.queryPermission({ mode:'readwrite' }); } catch(e){}
     if (st === 'granted') return _dir;
@@ -709,6 +718,7 @@ async function dirSave(asNew){
     if (!wrote) throw lastErr;
     if (healed) toast('素材參照失效過一次，已自動重新接上並存好');
     _fh = fh;
+    markSaved();
     // 素材要改指向剛寫出去的這個檔，不然下一次存會讀不到（見 rebindMedia）
     await rebindMedia(fh, info.base, info.index);
     updateProjBar();
@@ -726,6 +736,9 @@ async function dirSave(asNew){
     return false;
   }
 }
+
+/* 存成功就不算「有未存的改動」了。三條存檔路徑都要清掉這個旗標。 */
+function markSaved(){ if (typeof _unsaved !== 'undefined') _unsaved = false; }
 
 async function dirOpen(entry){
   try {
@@ -869,7 +882,7 @@ async function showProjDialog(){
        <button class="pri" id="pPickDir" style="width:100%">選擇專案資料夾</button>
        <div class="hint" style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">
          也可以用下面的「匯入專案檔」直接開啟單一 .nvproj 檔案。</div>`;
-    $('#pPickDir').onclick = async () => { if (await ensureDir(true)) showProjDialog(); };
+    $('#pPickDir').onclick = async () => { if (await ensureDir(true, !!_dir)) showProjDialog(); };
     return;
   }
 

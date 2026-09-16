@@ -465,9 +465,17 @@ function moveTrack(k, dir){
            : `${nm}軌移到第 ${j + 1} 條`);
 }
 
-function renderTimeline(){
-  markDirty(250);                    // 時間軸有動 → 畫面通常也要跟著變
-  applyTrackOrder();                 // 復原／開專案換了順序時也會跟著對回來
+/** zoomOnly=true：只是換縮放倍率，別碰時間軸以外的東西。
+
+    使用者的要求是「應該只要軌道縮放」—— 拖縮放的時候預覽不該重畫、
+    高度不該跟著調、軌道順序也不用重套。這些在換倍率時全部是多餘的：
+    畫面內容跟 pps 無關，分列是依【時間】算的所以高度也不會變。
+    留著只會讓上面的預覽跟著閃，而且每個事件多兩次強制重排。 */
+function renderTimeline(zoomOnly){
+  if (!zoomOnly){
+    markDirty(250);                  // 時間軸有動 → 畫面通常也要跟著變
+    applyTrackOrder();               // 復原／開專案換了順序時也會跟著對回來
+  }
   fixInnerWidth();
   const tot = totalDur(), pps = A.pps;
   const inner = $('#tlinner');
@@ -674,7 +682,7 @@ function renderTimeline(){
   });
   tm.style.height = Math.max(ROW, mlanes.length * ROW + 2) + 'px';
 
-  autoFitTimeline();
+  if (!zoomOnly) autoFitTimeline();   // 縮放不會改高度（分列依時間算），不必貼合
 }
 
 /* ── 時間軸高度自動貼合內容（v10.6）──────────────────────────
@@ -1290,8 +1298,27 @@ function refreshProp(){
     });
     bind('cIn','input', v => { trimClip(c,+v,c.outP); render(); });
     bind('cOut','input', v => { trimClip(c,c.inP,+v); render(); });
-    on('cInNow', () => { const L = layout(); trimClip(c,c.inP+(A.playhead-L[i].start),c.outP); render(); refreshProp(); });
-    on('cOutNow',() => { const L = layout(); trimClip(c,c.inP,c.inP+(A.playhead-L[i].start)); render(); refreshProp(); });
+    /* 播放頭不在這一段上就不要照做。
+       以前不管在哪裡都硬算，播放頭在片段之外時會把它砍到只剩 0.1 秒 ——
+       看起來像「按一下片段就不見了」。 */
+    const phInClip = () => {
+      const q = layout()[i];
+      if (A.playhead >= q.startAt - 1e-6 && A.playhead <= q.end + 1e-6) return q;
+      toast('播放頭不在目前選取的影片片段上', true);
+      return null;
+    };
+    /* 裁頭之後要把片段往右移同樣的量，讓播放頭底下那一格【留在原地】——
+       使用者按「現在」的意思是「把我正在看的這一格設成起點」。
+       拖左邊緣（startClipTrim 的 'L'）本來就有做這件事，按鈕以前沒有：
+       同一個功能兩條路，只有一條是對的。結果是按下去畫面整個換掉，
+       看起來像亂跳。（裁尾不必動 at，前面的內容本來就不會位移。） */
+    on('cInNow', () => { const q = phInClip(); if (!q) return;
+      const in0 = c.inP;
+      trimClip(c, c.inP + (A.playhead - q.start), c.outP);
+      if (Number.isFinite(c.at)) c.at = Math.max(0, c.at + (c.inP - in0));
+      render(); refreshProp(); });
+    on('cOutNow',() => { const q = phInClip(); if (!q) return;
+      trimClip(c, c.inP, c.inP + (A.playhead - q.start)); render(); refreshProp(); });
     bind('cMute','change', (_, el) => { c.muted = el.checked; render(); });
     bind('cVol','input', v => { c.vol = +v; setVal('cVol', (+v).toFixed(2)); });
     const showClip = () => {
@@ -1853,7 +1880,53 @@ function initUI(){
   // 屬性面板上任何一個控制項動了都重畫，免得漏掉某個沒呼叫 render() 的路徑
   $('#prop').addEventListener('input',  () => markDirty(300), true);
   $('#prop').addEventListener('change', () => markDirty(300), true);
-  $('#zoom').oninput = e => { A.pps = +e.target.value; renderTimeline(); followPlayhead(true); };
+  /* 縮放滑桿：以「畫面上的某個時間點」當錨點，縮放前後讓它停在同一個位置。
+
+     以前是每次 input 都 followPlayhead(true)，等於強制把捲軸拉到
+     播放頭前面 35% 的地方。往左拖（縮小）時播放頭的 x 一直在變，
+     捲軸就一直被重設 —— 使用者說「畫面抖動嚴重，尤其是拖到左邊」。
+     Ctrl＋滾輪那條本來就是錨點式的，所以順。這裡改成同一套做法。 */
+  /* 每個 input 事件都做一整套很貴的事：重畫時間軸上所有方塊、markDirty 逼預覽
+     重繪、再加上高度自動貼合那段【強制同步重排兩次】（拿掉 min-height、
+     讀 scrollHeight、再放回去）。拖曳一秒會發幾十個事件，大專案一次就要幾十毫秒，
+     拉桿就卡成一格一格 —— 使用者說「拉伸 bar 自己都在跳動，用左右鍵不會」
+     （方向鍵事件少，所以順）。
+
+     兩件事一起處理：
+       1 用 requestAnimationFrame 節流，一個畫格最多重畫一次
+       2 拖曳期間把 _tlBusy 打開，高度不必跟著變（縮放本來就不該改高度），
+         省掉那兩次強制重排；放開時再貼合一次 */
+  let _zoomRaf = 0, _zoomTo = 0;
+  const zoomApply = () => {
+    _zoomRaf = 0;
+    const wrap = $('#tlwrap'), before = A.pps;
+    if (_zoomTo === before) return;
+    const phx = A.playhead * before;
+    const visible = phx >= wrap.scrollLeft && phx <= wrap.scrollLeft + wrap.clientWidth;
+    const anchorX = visible ? phx - wrap.scrollLeft : wrap.clientWidth / 2;
+    const tAt = (wrap.scrollLeft + anchorX) / before;      // 錨在哪一秒
+    A.pps = _zoomTo;
+    renderTimeline(true);              // 只換軌道的縮放，其他都不要動
+    wrap.scrollLeft = Math.max(0, tAt * A.pps - anchorX);
+  };
+  $('#zoom').oninput = e => {
+    _zoomTo = +e.target.value;
+    if (!_zoomRaf) _zoomRaf = requestAnimationFrame(zoomApply);
+  };
+  $('#zoom').addEventListener('pointerdown', () => { _tlBusy = true; });
+  ['pointerup','pointercancel','blur'].forEach(ev =>
+    $('#zoom').addEventListener(ev, () => {
+      if (!_tlBusy) return;
+      _tlBusy = false;
+      if (_zoomRaf){ cancelAnimationFrame(_zoomRaf); zoomApply(); }
+      /* 這裡刻意【不】呼叫 autoFitTimeline()：縮放不會改內容高度，
+         放開時再貼合一次只會讓預覽在最後多跳一下。 */
+    }));
+
+  /* 關掉分頁前，還有沒存的改動就攔一下。瀏覽器只允許制式的提示文字。 */
+  window.addEventListener('beforeunload', e => {
+    if (typeof _unsaved !== 'undefined' && _unsaved){ e.preventDefault(); e.returnValue = ''; }
+  });
 
   // 預覽下方的總進度條：不管時間軸縮放多少，都能直接跳到結尾
   const sb = $('#seekBar');
@@ -1870,7 +1943,7 @@ function initUI(){
       const tAt = (e.clientX - r.left) / A.pps;
       A.pps = clamp(A.pps * (e.deltaY < 0 ? 1.18 : 1 / 1.18), 2, 400);
       $('#zoom').value = A.pps;
-      renderTimeline();
+      renderTimeline(true);            // 同上：只換軌道的縮放
       wrap.scrollLeft = Math.max(0, tAt * A.pps - (e.clientX - wrap.getBoundingClientRect().left));
     } else {
       const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
