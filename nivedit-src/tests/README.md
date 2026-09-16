@@ -1,7 +1,7 @@
 # NiVedit 回歸測試
 
 測試以 Playwright 開啟單檔 HTML，使用本機 HTTP 或 file://。
-十六支計數式測試共 631 項（含終點對位 90 項、motion 67 項、字幕 56 項、圖層 51 項、旋轉／儲存 46 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
+十六支計數式測試共 638 項（含終點對位 90 項、motion 67 項、字幕 56 項、圖層 51 項、旋轉／儲存 53 項、雙軌 45 項）；另有 GIF 斷言式專項，以及兩支 i18n 診斷腳本。
 
 ## 跑之前
 
@@ -31,7 +31,7 @@ NIVEDIT_HTML=/tmp/NiVedit.html node tests/i18n.e2e.cjs
 版號只出現在比較值那一邊，一次 sed 就能改完：
 
 ```bash
-sed -i "s/v10\.6/v10.7/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
+sed -i "s/v10\.7/v10.8/g" tests/*.cjs   # 改版號時（把舊版號換成新的）
 ```
 
 日期顯示在 `#verDate`，是另一個元素，不影響這些斷言 —— 但**改版號時記得一起更新
@@ -216,3 +216,24 @@ v10.6 之前那支有兩處寫死的像素（`dest.y+35`、`box.y+22`），方�
 
 **加字體時要注意的一條**：花俏字體的備援鏈**不要**接 Impact／Arial 這種「一定有」的字。
 `fontAvailable()` 是「這串裡面有沒有任何一個存在」，接了就永遠回 true，未安裝標記直接失效。
+
+## v10.8 新增的七項（存檔不再一壞就永遠壞）
+
+都在 `rotation-save.e2e.cjs`，用 OPFS 的真實 `FileSystemFileHandle`：
+
+- `same project saves three times in a row` —— 同一個專案連存三次都要成功。
+- `every save rebinds media to the file just written` —— 每存一次，素材的 `File`
+  物件都必須換成新的。這是「重接真的有發生」的證據，不是看有沒有報錯。
+- `media still readable after each save` —— 每次存完素材都還讀得到。
+- `save still succeeds after the project file was touched from outside` ——
+  把 .nvproj 用一模一樣的內容重寫一次（只動到修改時間），存檔仍然要成功。
+  v10.7 在這一步就卡死了。
+- `touched project file forces a full reslice` —— 而且要整批重切，不是只重切驗不過的那幾個。
+- `both stale-snapshot wordings are recognised` —— `isStaleErr()` 要同時認得
+  舊版 `NotReadableError`（The requested file could not be read…）與
+  新版 `InvalidStateError`（An operation that depends on state cached in an
+  interface object…），而且不能把 quota 之類的其他錯誤誤判成失效。
+
+**為什麼要測 File 物件的身分而不是「有沒有噴錯」**：這個 bug 的本質是
+「rebind 靜靜失敗，之後每次存都爆」。只驗第一次存有沒有成功是抓不到的 ——
+使用者的原話就是「好幾次儲存後偶爾發生，一發生就一直發生」。

@@ -387,9 +387,16 @@ async function reattach(o, nf){
 }
 
 async function rebindMedia(fh, base, index){
-  if (!fh || !index || !index.length) return;
+  if (!fh || !index || !index.length) return 0;
   let f;
-  try { f = await fh.getFile(); } catch(e){ return; }
+  /* 這裡以前是 catch(e){ return; } —— 無聲。rebind 一失敗，素材就永遠指著舊檔，
+     之後【每一次】儲存都會失敗（使用者的說法：「一發生就一直發生」）。
+     現在至少要讓人知道，並且提示可以用「另存」繞過去。 */
+  try { f = await fh.getFile(); }
+  catch(e){
+    toast('存檔後重新接素材失敗，下次儲存可能會失敗，請改用另存：' + (e.message || e), true);
+    return 0;
+  }
   const byKey = new Map();
   for (const it of index){
     const part = f.slice(base + it.off, base + it.off + it.len);
@@ -421,25 +428,46 @@ async function fileAlive(f){
     搬位置、雲端同步回寫）全部切片同時失效，而且不會有任何提示 ——
     症狀就是聲音不見、存檔失敗、匯出失敗。
     所以在「要用到素材之前」先驗一次，壞了就自己接回去。 */
+/** 把所有素材重新從「目前開著的那個 .nvproj」切一次。回傳重接了幾個。
+
+    v10.8 新增。為什麼要無條件做一次，而不是等驗不過才做：
+    素材是那個檔的切片，瀏覽器連同「檔案的修改時間」一起記著。那個檔一被動到
+    （自己上一次儲存、雲端同步回寫、防毒掃描碰到），切片就同時失效 ——
+    而失效是在【真的要讀內容】的那一刻才成立，fileAlive() 只讀 1 個 byte、
+    又發生在開始寫之前，驗不出來。所以蓋回同一個檔之前一律先重切，不問。
+    重切很便宜：只是重新算 offset，沒有複製任何資料。 */
+async function resliceFromProj(){
+  if (!_fh) return 0;
+  try {
+    const f = await _fh.getFile();
+    const ml = NV_MAGIC.length;
+    const h0 = await f.slice(0, ml + 4).arrayBuffer();
+    if (new TextDecoder().decode(h0.slice(0, ml)) !== NV_MAGIC) return 0;
+    const hlen = new DataView(h0).getUint32(ml, true);
+    const head = JSON.parse(new TextDecoder().decode(await f.slice(ml + 4, ml + 4 + hlen).arrayBuffer()));
+    return (await rebindMedia(_fh, ml + 4 + hlen, head.index)) || 0;
+  } catch(e){ return 0; }
+}
+
 async function revalidateMedia(){
   const all = [].concat(A.clips, A.musics, A.overlays).filter(o => o.file);
   const bad = [];
   for (const o of all) if (!await fileAlive(o.file)) bad.push(o);
   if (!bad.length) return { ok:true, fixed:0, lost:[] };
   if (!_fh) return { ok:false, fixed:0, lost: bad.map(o => o.name) };
-  try {
-    const f = await _fh.getFile();
-    const ml = NV_MAGIC.length;
-    const h0 = await f.slice(0, ml + 4).arrayBuffer();
-    if (new TextDecoder().decode(h0.slice(0, ml)) !== NV_MAGIC) throw new Error('不是專案檔');
-    const hlen = new DataView(h0).getUint32(ml, true);
-    const head = JSON.parse(new TextDecoder().decode(await f.slice(ml + 4, ml + 4 + hlen).arrayBuffer()));
-    await rebindMedia(_fh, ml + 4 + hlen, head.index);
-  } catch(e){ return { ok:false, fixed:0, lost: bad.map(o => o.name), err: e.message }; }
+  if (!await resliceFromProj()) return { ok:false, fixed:0, lost: bad.map(o => o.name) };
   const lost = [];
   for (const o of bad) if (!await fileAlive(o.file)) lost.push(o.name);
   return { ok: lost.length === 0, fixed: bad.length - lost.length, lost };
 }
+
+/* 素材快照失效時瀏覽器丟的例外。Edge／Chromium 換過措辭：舊的是
+   「The requested file could not be read…」（NotReadableError），
+   新的是「An operation that depends on state cached in an interface object…」
+   （InvalidStateError）。v10.7 以前只比對舊的那句，於是新版 Edge 上
+   既擋不住也不會顯示說明，使用者只看到一行英文。 */
+const STALE_RE = /could not be read|not be read|NotReadableError|InvalidStateError|state cached in an interface object|state had changed/i;
+const isStaleErr = e => STALE_RE.test(String((e && (e.name + ' ' + e.message)) || e));
 
 /* ── 本機資料夾（File System Access API）────────────────────────
    跟尤書日誌一樣：選一次資料夾，之後專案就是那個資料夾裡的真實檔案，
@@ -520,17 +548,36 @@ async function dirSave(asNew){
   try {
     // 素材如果已經失效（檔案被搬走、被別的程式改過），先想辦法接回來再存，
     // 不然存出去的專案檔會缺素材
+    /* v10.8：蓋回「目前開著的那個檔」之前，一律先把素材重新切一次。
+       不這樣做的話，只要中間有任何一次 rebind 沒成功，之後每次儲存都會失敗。 */
+    if (!asNew && _fh && fh === _fh) await resliceFromProj();
     const rv = await revalidateMedia();
     if (rv.fixed) toast(`重新接上 ${rv.fixed} 個素材`);
     if (!rv.ok && rv.lost.length)
       throw new Error('這些素材已經讀不到了：' + rv.lost.join('、') +
         '。請把它們重新拖進來（或重新開啟專案）再存，否則存出去的檔案會缺素材。');
     const info = {};
-    const blob = await buildProjBlob(info);
+    let blob = await buildProjBlob(info);
     mProg(80, '寫入檔案…');
-    const w = await fh.createWritable();
-    await w.write(blob);
-    await w.close();
+    try {
+      const w = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+    } catch(err){
+      if (!isStaleErr(err)) throw err;
+      /* 寫到一半素材快照才失效。重新切一次再試【一次】——
+         不無限重試，真的救不回來要讓使用者看到訊息去用「另存」。 */
+      mProg(45, '素材參照失效，重新接上再存一次…');
+      await resliceFromProj();
+      const info2 = {};
+      blob = await buildProjBlob(info2);
+      info.base = info2.base; info.index = info2.index;
+      mProg(80, '寫入檔案…');
+      const w2 = await fh.createWritable();
+      await w2.write(blob);
+      await w2.close();
+      toast('素材參照失效過一次，已自動重新接上並存好');
+    }
     _fh = fh;
     // 素材要改指向剛寫出去的這個檔，不然下一次存會讀不到（見 rebindMedia）
     await rebindMedia(fh, info.base, info.index);
@@ -541,11 +588,11 @@ async function dirSave(asNew){
     return true;
   } catch(e){
     const msg = String(e && e.message || e);
-    const stale = /could not be read|NotReadableError|not be read/i.test(msg);
     mDone('儲存失敗', '', `<span style="color:var(--danger)">${esc(msg)}</span>` +
-      (stale ? `<br><br><span style="color:var(--fg3)">素材的檔案參照失效了 ——
-        多半是素材檔在外面被移動、改名或改過內容。<br>
-        重新開啟這個專案（或把素材重新拖進來）就會好。</span>` : ''));
+      (isStaleErr(e) ? `<br><br><span style="color:var(--fg3)">素材的檔案參照失效了 ——
+        專案檔被外面動過（雲端同步、防毒、改名、搬位置），或上一次存檔沒有接乾淨。<br>
+        <b>先用「另存」存成新檔名，一定存得進去，不會白做。</b><br>
+        存好之後從那個新檔繼續，就恢復正常了。</span>` : ''));
     return false;
   }
 }
@@ -604,6 +651,7 @@ async function projExportFile(){
   mShow('匯出專案檔', _curProj ? _curProj.name : '未命名專案');
   $('#mCancel').classList.add('hide');
   try {
+    await resliceFromProj();      // 這是救檔路徑，先確保素材切片是新的
     const blob = await buildProjBlob();
     mProg(90, '寫出檔案…');
     const a = document.createElement('a');

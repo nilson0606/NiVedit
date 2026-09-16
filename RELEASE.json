@@ -1,6 +1,6 @@
 {
-  "version": "10.7",
-  "html_sha256": "f7324686c623011fe3e8ccda8b4229b22e9ffe8c3b0504fefdc90e4eb5592311",
-  "html_bytes": 994306,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 631 checks passed across sixteen suites, plus the GIF suite. Titles and subtitles now offer 30 system typefaces grouped as Chinese and Latin; faces this computer does not have are greyed out and marked as not installed."
+  "version": "10.8",
+  "html_sha256": "ea25dc801832ee42e631059fc5153bd76981fbe985f3ab3bf28eeeb6e9222b8c",
+  "html_bytes": 998296,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 638 checks passed across sixteen suites, plus the GIF suite. Saving a project over itself now re-slices its embedded media first, so a single silent reconnection failure can no longer make every later save fail."
 }

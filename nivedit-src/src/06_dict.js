@@ -602,6 +602,12 @@ WebCodecs 就緒 · 影片不會離開這台電腦	WebCodecs ready · your video
 個，	 new, 
 同一個檔案跨專案只會存一份，下次儲存會更快。	The same file is stored only once across projects, so the next save will be faster.
 儲存失敗	Save failed
+存檔後重新接素材失敗，下次儲存可能會失敗，請改用另存：	Rebinding media after saving failed. The next save may fail too — use Save As instead: 
+素材參照失效，重新接上再存一次…	Media references went stale. Reconnecting and saving again…
+素材參照失效過一次，已自動重新接上並存好	Media references went stale once; they were reconnected automatically and the project is saved
+素材的檔案參照失效了 —— 專案檔被外面動過（雲端同步、防毒、改名、搬位置），或上一次存檔沒有接乾淨。	The media file references went stale. Something outside the editor touched the project file (cloud sync, antivirus, a rename or a move), or the previous save did not reconnect them cleanly.
+先用「另存」存成新檔名，一定存得進去，不會白做。	Use Save As with a new file name first — that always works, so no work is lost.
+存好之後從那個新檔繼續，就恢復正常了。	Carry on from that new file and saving behaves normally again.
 瀏覽器儲存空間可能不足。可以先刪掉用不到的專案再試。	The browser may be out of storage. Try deleting projects you no longer need.
 找不到這個專案	Project not found
 開啟專案	Open project
