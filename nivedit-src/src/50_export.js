@@ -185,14 +185,24 @@ async function probe(){
 
 /* ── 影片 seek ─────────────────────────────────────────────── */
 function seekVideo(v, t){
-  return new Promise(res => {
-    const target = clamp(t, 0, Math.max(0, (v.duration || 0) - 0.03));
-    if (!v.seeking && v.readyState >= 2 && Math.abs(v.currentTime - target) < 0.0015) return res();
-    let done = false;
-    const ok = () => { if (done) return; done = true; v.removeEventListener('seeked', ok); res(); };
-    v.addEventListener('seeked', ok, { once:true });
-    try { v.currentTime = target; } catch(e){ return ok(); }
-    setTimeout(ok, 800);
+  return new Promise((resolve,reject)=>{
+    const target=clamp(t,0,Math.max(0,(v.duration||0)-0.03));
+    let ended=false,timer;
+    const ready=()=>!v.error&&!v.seeking&&v.readyState>=2&&v.videoWidth>0&&v.videoHeight>0&&Math.abs(v.currentTime-target)<0.0015;
+    const finish=err=>{
+      if(ended)return;ended=true;clearTimeout(timer);
+      for(const name of ['seeked','loadeddata','error'])v.removeEventListener(name,check);
+      if(err)reject(err);else resolve();
+    };
+    const check=()=>{
+      if(v.error||(v.readyState>=1&&(!v.videoWidth||!v.videoHeight)))
+        finish(new Error('影片沒有可用的影像解碼器'));
+      else if(ready())finish();
+    };
+    for(const name of ['seeked','loadeddata','error'])v.addEventListener(name,check);
+    timer=setTimeout(()=>finish(new Error('等待影片影像逾時')),10000);
+    if(ready())return finish();
+    try{v.currentTime=target;check()}catch(e){finish(e)}
   });
 }
 
@@ -556,7 +566,10 @@ async function startExport(){
   const nFrames = Math.max(1, Math.round(total * fps));
   const t0 = performance.now();
 
+  let exportSources=new Map(),activeVideoEncoder=null,activeAudioEncoder=null;
   try {
+    const badVideo=A.clips.find(c=>c.video&&['decode','no-video'].includes(videoProblem(c)));
+    if(badVideo)throw videoCompatibilityError(badVideo);
     // 上一輪如果有畫布被汙染，這裡先全部換新的，才不會一路失敗到重新整理為止
     if (typeof resetBuffers === 'function') resetBuffers();
     // 先實測每個素材會不會弄髒畫布，髒的就當場換掉（見 healSources 的說明）
@@ -606,6 +619,7 @@ async function startExport(){
       output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
       error: e => { encErr = e; }
     });
+    activeVideoEncoder=vEnc;
     vEnc.configure(cap.video);
 
     const cv = document.createElement('canvas');
@@ -616,7 +630,7 @@ async function startExport(){
 
     /* 連續解碼：能拆解的片段走快路，拆不開的自動退回逐幀 seek */
     mProg(4, '準備解碼器…');
-    const srcs = new Map();
+    const srcs = exportSources;
     let vidN = 0;
     for (const c of A.clips){
       if (!c.video) continue;
@@ -652,7 +666,7 @@ async function startExport(){
         _healLog.push(`${c.name}：連續解碼取不到畫面，改用逐幀 seek（會比較慢）`);
       }
       c.exportSrc = null;
-      if (c.video) await seekVideo(c.video, ref.t);
+      if (c.video){try{await seekVideo(c.video, ref.t)}catch(e){throw videoCompatibilityError(c)}}
     };
     A.musics.forEach(m => m.el.pause());
 
@@ -719,6 +733,7 @@ async function startExport(){
         output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
         error: e => { aErr = e; }
       });
+      activeAudioEncoder=aEnc;
       aEnc.configure(cap.audio);
       const sr = pcm.sampleRate, len = pcm.length;
       const L0 = pcm.getChannelData(0);
@@ -777,7 +792,8 @@ async function startExport(){
       mDone('匯出失敗', '', `<span style="color:var(--danger)">${esc(err.message || err)}</span>`);
     }
   } finally {
-    try { for (const fsrc of (typeof srcs !== 'undefined' ? srcs.values() : [])) fsrc.close(); } catch(e){}
+    try { for (const fsrc of exportSources.values()) fsrc.close(); } catch(e){}
+    for(const enc of [activeVideoEncoder,activeAudioEncoder]){try{if(enc&&enc.state!=='closed')enc.close()}catch(e){}}
     A.clips.forEach(c => { c.exportSrc = null; });
     A.exporting = false;
     if (typeof markDirty === 'function') markDirty(700);   // 匯出時預覽被借去用了，回來要重畫

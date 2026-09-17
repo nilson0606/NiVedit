@@ -134,6 +134,7 @@ function loop(){
 
 function loopBody(){
   const now = performance.now();
+  updateVideoHealth(now);
   if (A.playing && !A.exporting){
     A.playhead += (now - _last) / 1000;
     const tot = totalDur();
@@ -1233,6 +1234,7 @@ function refreshPropRaw(){
         <div class="hint">${isImg(c) ? `圖片　${c.w}×${c.h}　長度可任意調整`
                                      : `原始長度 ${fmt(c.dur)}　解析度 ${c.w}×${c.h}`
                                        + (c.rot ? `　→ 轉 ${c.rot}° 後 ${clipSize(c).w}×${clipSize(c).h}` : '')}</div></div>` +
+      (!isImg(c) ? '<div class="grp"><button class="gh" id="cCompat">轉成相容格式</button></div>' : '') +
       (isImg(c)
        ? `<div class="grp"><h4>停留長度</h4>
             ${rowNum('cOut','秒數', c.outP, 0.5, '')}

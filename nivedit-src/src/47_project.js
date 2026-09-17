@@ -83,9 +83,10 @@ function elFor(kind, url){
     const el = document.createElement(kind === 'audio' ? 'audio' : 'video');
     el.src = url; el.preload = 'auto';
     if (kind !== 'audio'){ el.playsInline = true; el.muted = true; }
-    const clr = () => { el.onloadedmetadata = null; el.onerror = null; };
+    const timer=setTimeout(()=>{clr();if(kind==='audio')rej(new Error('媒體載入逾時'));else res(el)},15000);
+    const clr = () => { clearTimeout(timer); el.onloadedmetadata = null; el.onerror = null; };
     el.onloadedmetadata = () => { clr(); res(el); };
-    el.onerror = () => { clr(); rej(new Error('媒體載入失敗')); };
+    el.onerror = () => { clr(); if(kind==='audio')rej(new Error('媒體載入失敗'));else res(el); };
     $('#videoPool').appendChild(el);
   });
 }

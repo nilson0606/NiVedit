@@ -1,4 +1,19 @@
-# NiVedit v12.4 原始碼
+# NiVedit v12.5 原始碼
+
+## v12.5：影片相容提醒、轉碼工具與新版手冊（2026-09-17）
+
+- 原因確認：Chrome 關閉 GPU 時，HEVC 可能只讀到音訊，readyState=4 且 error=null，但 videoWidth/videoHeight 都為 0。不能只檢查 error 或 WebCodecs 就緒。
+- 24_compat.js 檢查實際影像尺寸與媒體錯誤，預覽下方顯示素材檔名。等待首幀超過 15 秒也會提示等待。loadeddata/seeked 到達時重畫，修正慢解碼超過原本 700ms 重畫窗口的情況。
+- 舊專案中解碼失敗的影片保留 File、元素及所有剪輯欄位，不再直接跳過。新匯入完全失敗時，開啟獨立工具供使用者處理原檔。
+- 獨立「轉成相容格式」：選專案片段或自己的影片，保留原尺寸或最高 1080p（直式依方向），使用 Worker 內的 @ffmpeg/core 0.12.10 軟體轉成 H.264/AAC。首次工具約 43 MB，按需載入；file:// 與 HTTPS 子路徑均可用，不用跨來源隔離、不上傳影片。
+- 轉碼可取消／失敗重試；先驗證輸出能解碼才顯示下載與套用。套用只替換選取片段，配置新 ID 保留 MEDIA 中原素材供復原／重做；不改原檔、不自動存檔，使用者仍需儲存或另存。下載得到獨立 MP4。
+- 限制：單檔 512 MiB，像素總數上限 4096×4096；4K CPU 轉碼可能數分鐘。保留第一條音訊並編為 AAC，其餘音軌／拍攝附加資料不帶入。HDR PQ/HLG 經 tonemap 轉 SDR BT.709；輸出會重新壓縮，不宣稱無損。
+- 匯出先攔下無影像／解碼錯誤素材；逐幀備援不再逾時後直接當成功，會檢查 readyState、尺寸及 seek 完成，10 秒無影像則中止並列出檔名。失敗時清理編碼器與解碼器。
+- 新增 video-compat/ 為第四個隨 HTML 配送的工具資料夾，包含核心與授權、對應版本來源碼及建置資訊。manifest.json 驗證核心 SHA256；核心 GPL-2.0-or-later，來源提供於同目錄 sources/。不要只拷貝主 HTML。一般 build.py 不需下載網路依賴。
+- HTML 操作手冊 16 章，左側章節導覽、單章顯示、搜尋、日夜與完整列印；主畫面「操作手冊」使用 target=_blank、rel=noopener 開新分頁。build.py 一併輸出 manual.html。本機另保留 NiVedit_操作手冊.html。手冊編輯來源 manual/，截圖已改用 manual/images/，不再依賴 QA 路徑。
+- Chrome 153 關閉 GPU：compat.e2e 52/52、compat-extras 18/18；真實 25 秒 4K HEVC 約 195 秒完成，輸出 3840×2160 H.264/AAC、預覽可用、復原／重做正常，剪輯設定只更新縮圖和素材識別。合成 HDR 直式／無聲片驗為 8-bit BT.709 SDR。
+- Edge 154 回歸：dual-track 45/45、rotation-save 71/71、music-example 68/68、i18n 41/41，共 225 項。本次共 295 項通過；未重跑無關全部套件。先前 layers 標題像素容差基線差異仍保留，不宣稱全套已清除。
+- QA 在 qa-chrome-compat/。私人專案、原影片、相容副本及截圖不發布；v12.2 重要還原點及所有舊封存保留。
 
 NiVedit 是瀏覽器端影音編輯器。主程式為 NiVedit.html，內建動畫素材位於旁邊的 animation-effects/；影片、音訊、字幕與專案都在使用者電腦處理，不上傳。
 

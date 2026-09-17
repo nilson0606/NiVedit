@@ -1,7 +1,7 @@
 {
-  "version": "12.4",
-  "html_sha256": "261f5a9af40df87dd54cdf381bf98bc2670e99e0024df88df24f456b43205e5f",
-  "html_bytes": 1178663,
+  "version": "12.5",
+  "html_sha256": "773d4c2de69800409fbcc729bcd0e21e46a95176b631a195526cbdcaaf8da594",
+  "html_bytes": 1202653,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -12,5 +12,28 @@
   "music_zip": "NiVedit_Music_41_40s_v2.zip",
   "music_verification": "68 music/example checks and 41 i18n checks passed; all 41 stereo tracks decode at 40 seconds; real MP4/AAC export completed. Existing example audio and all v1 MP3s unchanged. Unrelated editor regression suites not rerun for this asset refresh.",
   "previous_full_regression": "Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change.",
-  "example_start_seconds": 0
+  "example_start_seconds": 0,
+  "video_compatibility": {
+    "core": "@ffmpeg/core 0.12.10 (single-thread)",
+    "engine_license": "GPL-2.0-or-later",
+    "automatic": false,
+    "local_only": true,
+    "input_limit_mib": 512,
+    "output": "H.264/AAC MP4",
+    "hdr_output": "SDR BT.709",
+    "tests": 70,
+    "real_4k_cpu_verified": true
+  },
+  "manual": {
+    "chapters": 16,
+    "new_tab": true,
+    "filename": "manual.html"
+  },
+  "targeted_regression": {
+    "dual-track": 45,
+    "rotation-save": 71,
+    "music-example": 68,
+    "i18n": 41
+  },
+  "release_verification": "295 targeted checks passed; 49 protected restore artifacts unchanged. Not a full-suite rerun."
 }

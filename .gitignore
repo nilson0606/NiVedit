@@ -9,3 +9,6 @@ NiVedit.html
 *.mp3
 .env
 .env.*
+
+!nivedit-src/tests/fixtures/compat-hevc.mp4
+!nivedit-src/tests/fixtures/compat-hdr.mp4

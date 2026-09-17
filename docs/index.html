@@ -431,6 +431,24 @@ select option.miss{color:var(--fg3)}
 @media(max-width:760px){.mu-body{grid-template-columns:minmax(0,1fr) 240px;gap:12px}
  #muGrid{grid-template-columns:1fr}.mu-card{min-height:95px}}
 @media(max-width:520px){.mu-body{grid-template-columns:1fr}#muGrid{max-height:32vh}.mu-symbol{display:none}}
+
+#compatNotice{flex-shrink:0;padding:8px 12px;background:var(--bg3);border-top:2px solid var(--warn);color:var(--fg);font-size:12px}
+#compatNotice[hidden]{display:none}
+#compatNotice strong{display:block;color:var(--warn-soft);overflow-wrap:anywhere}
+#compatNotice button{margin:4px 0 0 8px}
+.compat-dialog{width:min(640px,90vw);max-height:88vh;overflow:auto;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--fg)}
+.compat-dialog::backdrop{background:#0009}
+.compat-dialog h2{font-size:19px;margin:0 0 12px}
+.compat-dialog p{line-height:1.65;overflow-wrap:anywhere}
+.compat-dialog label{display:block;margin:10px 0 5px;font-weight:600}
+.compat-dialog select{max-width:100%;margin-bottom:8px}
+.compat-dialog progress{width:100%;accent-color:var(--acc)}
+.compat-dialog .hint{color:var(--fg2)}
+.compat-actions{display:flex;flex-wrap:wrap;gap:8px}
+.compat-actions [hidden]{display:none}
+.compat-dialog a{color:var(--acc)}
+
+#btnManual{white-space:nowrap;color:var(--fg);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}#btnManual:hover{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -443,6 +461,7 @@ select option.miss{color:var(--fg3)}
             style="padding:3px 9px;font-size:12px;line-height:1.4">EN</button>
     <button class="gh" id="themeBtn" type="button" data-nt aria-label="白天模式" aria-pressed="false" title="切換至白天模式">☾ 夜間模式</button>
     <div class="badge" id="envBadge">檢查瀏覽器支援中…</div>
+    <a id="btnManual" href="manual.html" target="_blank" rel="noopener" title="在新分頁開啟操作手冊">操作手冊</a>
     <div class="spacer"></div>
     <div class="tc">總長 <b id="totalDur">00:00.0</b></div>
     <button id="btnExport" class="pri">匯出影片</button>
@@ -461,6 +480,7 @@ select option.miss{color:var(--fg3)}
           <button class="gh" id="btnProjSaveAs" title="另存成新的專案">另存</button>
         </div>
         <button class="gh" id="btnExample" style="width:100%;margin-top:6px" title="載入附帶的示範專案，參考影片、字幕、動畫與配樂的搭配">開啟範例</button>
+        <button class="gh" id="btnCompat" style="width:100%;margin-top:6px">轉成相容格式</button>
       </div>
       <div class="ph">片段 <span class="spacer"></span><span id="clipCount" style="font-weight:400">0</span></div>
       <div class="pb">
@@ -484,6 +504,11 @@ select option.miss{color:var(--fg3)}
         </div>
       </div>
 
+      <div id="compatNotice" role="status" hidden>
+        <strong id="compatWarning"></strong>
+        <span>可能是影片編碼不支援；可轉成 H.264，或開啟硬體加速並重新啟動瀏覽器。</span>
+        <button class="gh" id="compatFix">轉成相容格式</button>
+      </div>
       <div id="transport">
         <button id="playBtn" title="播放 / 暫停（空白鍵）">▶</button>
         <button class="gh" id="btnStart" title="回到開頭">⏮</button>
@@ -682,6 +707,30 @@ select option.miss{color:var(--fg3)}
 <input type="file" id="fileProj" accept=".nvproj" class="hide">
 <input type="file" id="fileSub" accept=".srt,.txt,text/plain" multiple class="hide">
 <div id="videoPool" class="hide"></div>
+
+<dialog id="compatDialog" class="compat-dialog" aria-labelledby="compatHeading">
+  <h2 id="compatHeading">轉成相容格式</h2>
+  <p>在這台電腦將影片轉為 H.264／AAC MP4，不上傳影片。原檔不會被覆蓋。</p>
+  <label for="compatClip">專案片段</label>
+  <select id="compatClip" data-nt></select>
+  <button id="compatChoose" class="gh">選擇電腦上的影片</button>
+  <input id="compatFile" type="file" accept="video/*,.mov,.mkv,.mp4" hidden>
+  <p id="compatName" data-nt></p>
+  <label for="compatSize">相容副本尺寸</label>
+  <select id="compatSize"><option value="original">保留原尺寸（含 4K）</option><option value="1080">最高 1080p（較省資源）</option></select>
+  <p class="hint">首次載入工具約 43 MB。4K 轉碼可能需要數分鐘；單檔上限 512 MB。HDR 會轉成 SDR；保留第一條音訊，其他音軌不帶入副本。</p>
+  <p class="hint">套用只替換選取的片段，保留時間軸、裁切、轉場與關鍵幀；同一素材的其他片段不受影響。</p>
+  <progress id="compatProgress" max="100" value="0"></progress>
+  <p id="compatStatus" role="status" aria-live="polite"></p>
+  <div class="compat-actions">
+    <button id="compatRun" class="pri">開始轉換</button>
+    <button id="compatCancel" hidden>取消轉換</button>
+    <button id="compatDownload" hidden>下載 MP4 副本</button>
+    <button id="compatApply" hidden>套用到選取片段</button>
+    <button id="compatClose" class="gh">關閉</button>
+  </div>
+  <p class="hint">轉碼核心：FFmpeg.wasm（GPL-2.0-or-later）。<a href="video-compat/README.html" target="_blank" rel="noopener">授權與原始碼</a></p>
+</dialog>
 <script>
 /* mp4-muxer (MIT) — 內嵌以確保離線可用 */
 "use strict";
@@ -5312,7 +5361,47 @@ Lo-fi 爵士	Lo-fi & jazz
 活力律動	Groove & energy
 溫暖故事	Warm stories
 新版配樂 v2：40 首新配樂＋1 首範例配樂，每首約 40 秒，無人聲。	Music pack v2: 40 new tracks plus 1 example track, about 40 seconds each, instrumental.
-下載 41 首 MP3 素材包	Download all 41 MP3 tracks`;
+下載 41 首 MP3 素材包	Download all 41 MP3 tracks
+轉成相容格式	Convert to compatible format
+影片無法顯示或仍在等待影像：	Video unavailable or still waiting for a frame:
+可能是影片編碼不支援；可轉成 H.264，或開啟硬體加速並重新啟動瀏覽器。	The video codec may be unsupported. Convert to H.264, or enable hardware acceleration and restart your browser.
+在這台電腦將影片轉為 H.264／AAC MP4，不上傳影片。原檔不會被覆蓋。	Convert video to H.264/AAC MP4 on this computer. No video uploads; original files are never overwritten.
+專案片段	Project clip
+選擇專案中的影片	Choose a video from the project
+選擇電腦上的影片	Choose a video from your computer
+相容副本尺寸	Compatible copy size
+保留原尺寸（含 4K）	Keep original size (including 4K)
+最高 1080p（較省資源）	Up to 1080p (uses fewer resources)
+首次載入工具約 43 MB。4K 轉碼可能需要數分鐘；單檔上限 512 MB。HDR 會轉成 SDR；保留第一條音訊，其他音軌不帶入副本。	The first tool download is about 43 MB. 4K conversion may take several minutes; maximum input size is 512 MB. HDR is converted to SDR. The first audio stream is retained; other streams are omitted.
+套用只替換選取的片段，保留時間軸、裁切、轉場與關鍵幀；同一素材的其他片段不受影響。	Apply replaces only the selected clip and keeps its timing, crop, transitions and keyframes. Other clips using the same source are unchanged.
+開始轉換	Start conversion
+取消轉換	Cancel conversion
+下載 MP4 副本	Download MP4 copy
+套用到選取片段	Apply to selected clip
+轉碼核心：	Conversion engine:
+授權與原始碼	Licenses and source code
+選好影片後按「開始轉換」。完成後可下載副本，或套用到選取片段。	Choose a video and start conversion. Then download the copy or apply it to the selected clip.
+已取消轉換，原素材與剪輯資料未變。	Conversion canceled. Original media and edits are unchanged.
+轉換結果尚無法顯示，請重試。	The converted video could not be decoded. Please retry.
+此轉碼工具單檔上限為 512 MB。請先在電腦上轉成 H.264，或縮短原影片。	The input limit is 512 MB. Convert large files to H.264 with a desktop tool, or shorten the source first.
+正在載入轉碼工具（首次約 43 MB）…	Loading converter (about 43 MB on first use)...
+正在轉成 H.264／AAC，相容副本不會覆蓋原檔。	Converting to H.264/AAC. The compatible copy will not overwrite the original.
+正在轉換：	Converting:
+正在驗證轉換結果…	Validating the converted video...
+轉換完成。HDR 已轉為 SDR；可下載副本或套用到片段。	Conversion complete. HDR was converted to SDR. Download the copy or apply it to the clip.
+轉換完成。可下載副本或套用到片段，原素材檔案保持不變。	Conversion complete. Download the copy or apply it to the clip. Original files are unchanged.
+轉換失敗，原素材與剪輯資料未變。可重試或選 1080p 以減少記憶體需求。	Conversion failed. Original media and edits are unchanged. Retry or choose 1080p to reduce memory use.
+原片段已變更，請重新選擇。轉換副本仍可下載。	The original clip changed. Select it again. The converted copy is still available to download.
+轉換結果長度不足，未替換原片段。	The converted video is too short. The original clip was not replaced.
+已套用到片段，剪輯設定保持不變；可按「復原」回到原素材。請儲存或另存專案。	Applied to the clip with editing settings preserved. Undo restores the original media. Save or save as a new project.
+轉碼工具載入逾時，請重試。	Converter loading timed out. Please retry.
+找不到轉碼工具。請確認 video-compat 資料夾與 HTML 放在一起，網站版請檢查連線後重試。	Converter unavailable. Keep video-compat beside the local HTML, or check your connection and retry on the website.
+無法取得影片影像：	Unable to decode video:
+請先使用「轉成相容格式」，或開啟瀏覽器硬體加速後重新啟動。原素材與剪輯資料會保留。	Use Convert to compatible format, or enable browser hardware acceleration and restart. Original media and edits are retained.
+影片沒有可用的影像解碼器	No usable video decoder is available
+等待影片影像逾時	Timed out waiting for a video frame
+操作手冊	User manual
+在新分頁開啟操作手冊	Open the user manual in a new tab`;
 
 </script>
 <script>
@@ -5537,7 +5626,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -5920,6 +6009,7 @@ const UNDO_MAX = 60;
 const _undo = [], _redo = [];
 
 function regMedia(item, extra){
+  if (typeof watchVideoMedia === 'function') watchVideoMedia(item.video);
   MEDIA.set(item.id, Object.assign({
     file: item.file, url: item.url, el: item.el, video: item.video,
     img: item.img, thumb: item.thumb, _gif: item._gif
@@ -6466,10 +6556,12 @@ async function addVideoFiles(files){
   const list = [...files].filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|m4v|avi)$/i.test(f.name));
   if (!list.length){ toast('沒有偵測到影片檔', true); return; }
   pushUndo();
+  let firstFailed=null;
   for (const f of list){
     try { await addVideo(f); }
-    catch(e){ console.error(e); toast(`「${f.name}」載入失敗：${e.message}`, true); }
+    catch(e){ firstFailed=firstFailed||f; console.error(e); toast(`「${f.name}」載入失敗：${e.message}`, true); }
   }
+  if(firstFailed)openCompatibilityTool(null,firstFailed);
   render();
   fitZoom();          // 匯入後自動把整支影片縮到看得完
   refreshProp();
@@ -6484,9 +6576,15 @@ function addVideo(file){
     // 設了反而讓 CORS 檢查過不了，畫面照放但畫布會被當成被汙染，匯出就死。
     // 萬一某個環境相反，匯出前的 healSources() 會實測後自動換掉。
     v.src = url; v.preload = 'auto'; v.playsInline = true; v.muted = true;
-    const fail = () => rej(new Error('瀏覽器無法解碼這個檔案'));
+    const fail = () => {
+      clearTimeout(timer);v.onerror=null;v.onloadedmetadata=null;
+      v.removeAttribute('src');v.load();v.remove();URL.revokeObjectURL(url);
+      rej(new Error('瀏覽器無法解碼這個檔案'));
+    };
+    const timer=setTimeout(fail,15000);
     v.onerror = fail;
     v.onloadedmetadata = async () => {
+      clearTimeout(timer);
       // 一次性：用完就拆掉。這個元素之後可能會被重新指定 src（素材重接、
       // 修畫布汙染），沒拆掉的話「建立片段」會再跑一次，片段就無限增生。
       v.onloadedmetadata = null; v.onerror = null;
@@ -7063,6 +7161,277 @@ function splitClip(){
   render(); refreshProp();
   toast('已分割');
 }
+
+</script>
+<script>
+/* Video compatibility: actual decoded dimensions, local software conversion, no uploads.
+   @ffmpeg/core is isolated in a disposable Worker. The editor never executes native tools. */
+'use strict';
+const COMPAT = {target:null,file:null,result:null,url:null,busy:false,job:0,worker:null,cancel:null,focus:null};
+const _compatWatched = new WeakSet(), _compatSince = new WeakMap();
+let _compatTick=0, _compatNoticeKey='', _compatAssetPromise=null;
+function videoProblem(c){
+  const v=c.video;
+  if (!v) return '';
+  if (v.error) return 'decode';
+  if (v.readyState>=1 && (!v.videoWidth || !v.videoHeight)) return 'no-video';
+  if (v.readyState<2){
+    if (!_compatSince.has(v)) _compatSince.set(v,performance.now());
+    if (performance.now()-_compatSince.get(v)>15000) return 'waiting';
+  } else _compatSince.delete(v);
+  return '';
+}
+function watchVideoMedia(v){
+  if (!v || _compatWatched.has(v)) return;
+  _compatWatched.add(v); _compatSince.set(v,performance.now());
+  for (const name of ['loadedmetadata','loadeddata','seeked','error','emptied']){
+    v.addEventListener(name,()=>{
+      if(name==='emptied') _compatSince.set(v,performance.now());
+      if (typeof markDirty==='function') markDirty(100);
+      _compatTick=0;
+    });
+  }
+}
+function updateVideoHealth(now){
+  if(now<_compatTick)return; _compatTick=now+500;
+  const bad=A.clips.filter(c=>{watchVideoMedia(c.video);return !!videoProblem(c)});
+  const key=LANG+'|'+bad.map(c=>c.id+':'+videoProblem(c)).join('|');
+  if(key===_compatNoticeKey)return; _compatNoticeKey=key;
+  const box=$('#compatNotice'); box.hidden=!bad.length;
+  if(!bad.length)return;
+  $('#compatWarning').textContent=L('影片無法顯示或仍在等待影像：')+' '+bad.map(c=>'「'+c.name+'」').join('、');
+  $('#compatFix').onclick=()=>openCompatibilityTool(bad[0]);
+}
+function videoCompatibilityError(c){
+  return new Error(L('無法取得影片影像：')+'「'+c.name+'」。'+
+    L('請先使用「轉成相容格式」，或開啟瀏覽器硬體加速後重新啟動。原素材與剪輯資料會保留。'));
+}
+function loadCompatAssets(){
+  if (_compatAssetPromise) return _compatAssetPromise;
+  _compatAssetPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    let done=false;
+    const finish=(err,value)=>{
+      if(done)return;done=true;clearTimeout(timer);script.remove();delete window.__nvCompatAsset;
+      if(err){_compatAssetPromise=null;reject(err)}else resolve(value);
+    };
+    const timer=setTimeout(()=>finish(new Error(L('轉碼工具載入逾時，請重試。'))),90000);
+    window.__nvCompatAsset=async(core,chunks)=>{
+      try{
+        const bytes=new Uint8Array(32232419);let at=0;
+        for(const part of chunks){
+          const s=atob(part);
+          for(let i=0;i<s.length;i++)bytes[at++]=s.charCodeAt(i);
+        }
+        if(at!==bytes.length)throw new Error('Invalid converter size');
+        const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
+        if(hex(await crypto.subtle.digest('SHA-256',bytes))!=='9f57947a5bd530d8f00c5b3f2cb2a3492faa7e5d823315342d6a8656d0a6b7b7' ||
+           hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(core)))!=='b266ab5b952555881dd6310663986994a182acb2b7ff25cf10a25f7a37ac2b21')
+          throw new Error('Invalid converter checksum');
+        finish(null,{core,bytes});
+      }catch(e){finish(e)}
+    };
+    script.src=new URL('video-compat/ffmpeg-0.12.10.js',document.baseURI).href;
+    script.onerror=()=>finish(new Error(L('找不到轉碼工具。請確認 video-compat 資料夾與 HTML 放在一起，網站版請檢查連線後重試。')));
+    document.head.append(script);
+  });
+  return _compatAssetPromise;
+}
+/* Serialized into the Worker together with the unmodified upstream core. */
+function compatibilityWorker(){
+  self.onmessage=async e=>{
+    let ff;const logs=[];
+    try{
+      ff=await createFFmpegCore({wasmBinary:e.data.wasm});
+      ff.setLogger(o=>{logs.push(o.message);if(logs.length>12)logs.shift()});
+      ff.FS.mkdir('/input');
+      ff.FS.mount(ff.FS.filesystems.WORKERFS,{files:[new File([e.data.file],'source.bin')]},'/input');
+      const rc=ff.ffprobe('-v','error','-show_streams','-show_format','-of','json','/input/source.bin','-o','/info.json');
+      // Core 0.12.10 ffprobe leaves ret=-1 on successful JSON output; validate the output itself.
+      if(rc>0)throw new Error('Cannot read video');
+      const info=JSON.parse(ff.FS.readFile('/info.json',{encoding:'utf8'}));
+      const v=info.streams.find(s=>s.codec_type==='video');
+      if(!v || !v.width || !v.height)throw new Error('No video stream');
+      if(v.width*v.height>4096*4096)throw new Error('Resolution exceeds conversion limit');
+      const seconds=Number(v.duration)||Number(info.format.duration);
+      const hdr=['smpte2084','arib-std-b67'].includes(v.color_transfer);
+      const filters=[];
+      if(hdr) filters.push('zscale=t=linear:npl=100','format=gbrpf32le','tonemap=tonemap=hable:desat=0','zscale=p=bt709:t=bt709:m=bt709:r=limited');
+      if(e.data.size==='1080')filters.push("scale=w='if(gte(iw,ih),min(1920,iw),min(1080,iw))':h='if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2");
+      else filters.push('scale=ceil(iw/2)*2:ceil(ih/2)*2');
+      filters.push('format=yuv420p');
+      const args=['-i','/input/source.bin','-map','0:v:0','-map','0:a:0?','-c:v','libx264','-preset','ultrafast','-crf','20',
+        '-threads','1','-vf',filters.join(','),'-pix_fmt','yuv420p','-fps_mode','passthrough',
+        '-c:a','aac','-b:a','192k','-movflags','+faststart','-map_metadata','-1'];
+      if(hdr)args.push('-color_primaries','bt709','-color_trc','bt709','-colorspace','bt709','-color_range','tv');
+      args.push('/output.mp4');
+      self.postMessage({type:'info',seconds,hdr,width:v.width,height:v.height});
+      ff.reset();
+      ff.setProgress(o=>self.postMessage({type:'progress',seconds:o.time/1000000,total:seconds}));
+      const result=ff.exec(...args);
+      if(result!==0)throw new Error('Conversion failed ('+result+')');
+      const bytes=ff.FS.readFile('/output.mp4');
+      self.postMessage({type:'done',bytes,hdr},[bytes.buffer]);
+    }catch(err){self.postMessage({type:'error',message:String(err.message||err),log:logs.join('\n')})}
+  };
+}
+function releaseCompatResult(){
+  if(COMPAT.url)URL.revokeObjectURL(COMPAT.url);
+  COMPAT.url=null;COMPAT.result=null;
+  $('#compatDownload').hidden=true;$('#compatApply').hidden=true;
+}
+function compatibilityStatus(s){$('#compatStatus').textContent=s}
+function selectCompatSource(c,file){
+  releaseCompatResult();COMPAT.target=c||null;COMPAT.file=file||(c&&c.file)||null;
+  $('#compatName').textContent=COMPAT.file?COMPAT.file.name:'';
+  $('#compatRun').disabled=!COMPAT.file;
+  $('#compatProgress').value=0;
+  compatibilityStatus('選好影片後按「開始轉換」。完成後可下載副本，或套用到選取片段。');
+}
+function openCompatibilityTool(c,file){
+  if(A.exporting)return;
+  if(COMPAT.busy)return;
+  setPlaying(false);COMPAT.focus=document.activeElement;
+  const sel=$('#compatClip');sel.replaceChildren();
+  const empty=document.createElement('option');empty.value='';empty.textContent=L('選擇專案中的影片');sel.append(empty);
+  for(const clip of A.clips.filter(x=>x.video)){
+    const o=document.createElement('option');o.value=clip.id;o.textContent=clip.name;sel.append(o);
+  }
+  c=file?null:(c||(A.sel.type==='clip'?A.clips.find(x=>x.id===A.sel.id&&x.video):null));
+  sel.value=c?c.id:'';
+  selectCompatSource(c,file);
+  if(!$('#compatDialog').open)$('#compatDialog').showModal();
+}
+function stopCompatibility(){
+  ++COMPAT.job;
+  if(COMPAT.cancel)COMPAT.cancel();
+  if(COMPAT.worker)COMPAT.worker.terminate();
+  COMPAT.worker=null;COMPAT.cancel=null;setCompatBusy(false);
+  compatibilityStatus('已取消轉換，原素材與剪輯資料未變。');
+}
+function setCompatBusy(busy){
+  COMPAT.busy=busy;
+  for(const id of ['compatClip','compatChoose','compatSize','compatRun'])$('#'+id).disabled=busy|| (id==='compatRun'&&!COMPAT.file);
+  $('#compatCancel').hidden=!busy;
+  $('#compatClose').disabled=busy;
+}
+function waitCompatVideo(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file),v=document.createElement('video');
+    v.preload='auto';v.muted=true;v.playsInline=true;
+    let ended=false;
+    const finish=err=>{
+      if(ended)return;ended=true;clearTimeout(timer);v.onloadeddata=null;v.onerror=null;
+      if(err){v.removeAttribute('src');v.load();URL.revokeObjectURL(url);reject(err)}
+      else resolve({v,url});
+    };
+    const timer=setTimeout(()=>finish(new Error(L('轉換結果尚無法顯示，請重試。'))),20000);
+    v.onerror=()=>finish(new Error(L('轉換結果尚無法顯示，請重試。')));
+    v.onloadeddata=()=>{
+      if(v.videoWidth>0&&v.videoHeight>0&&isFinite(v.duration)&&v.duration>0)finish();
+      else finish(new Error(L('轉換結果尚無法顯示，請重試。')));
+    };
+    v.src=url;
+  });
+}
+async function runCompatibility(){
+  const file=COMPAT.file;if(!file||COMPAT.busy)return;
+  if(file.size>512*1024*1024){compatibilityStatus('此轉碼工具單檔上限為 512 MB。請先在電腦上轉成 H.264，或縮短原影片。');return}
+  releaseCompatResult();setCompatBusy(true);const job=++COMPAT.job;
+  $('#compatProgress').value=0;
+  compatibilityStatus('正在載入轉碼工具（首次約 43 MB）…');
+  let workerURL=null;
+  try{
+    const asset=await loadCompatAssets();if(job!==COMPAT.job)return;
+    const source=asset.core+'\n('+compatibilityWorker.toString()+')();';
+    workerURL=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+    const w=new Worker(workerURL);COMPAT.worker=w;
+    const bytes=asset.bytes.slice();
+    const output=await new Promise((resolve,reject)=>{
+      COMPAT.cancel=()=>reject(new Error('__cancel__'));
+      w.onerror=e=>reject(new Error(e.message||'Worker failed'));
+      w.onmessage=e=>{
+        if(job!==COMPAT.job)return;
+        const m=e.data;
+        if(m.type==='info')compatibilityStatus('正在轉成 H.264／AAC，相容副本不會覆蓋原檔。');
+        if(m.type==='progress'){
+          const pct=m.total>0?Math.min(99,Math.max(0,m.seconds/m.total*100)):0;
+          $('#compatProgress').value=pct;
+          compatibilityStatus(L('正在轉換：')+Math.round(pct)+'%');
+        }
+        if(m.type==='done')resolve(m);
+        if(m.type==='error'){console.warn('[compat]',m.log);reject(new Error(m.message))}
+      };
+      w.postMessage({wasm:bytes,file,size:$('#compatSize').value},[bytes.buffer]);
+    });
+    if(job!==COMPAT.job)return;
+    const result=new File([output.bytes],file.name.replace(/\.[^.]*$/,'')+'_H264.mp4',{type:'video/mp4'});
+    compatibilityStatus('正在驗證轉換結果…');
+    const check=await waitCompatVideo(result);
+    check.v.removeAttribute('src');check.v.load();URL.revokeObjectURL(check.url);
+    if(job!==COMPAT.job)return;
+    COMPAT.result=result;COMPAT.url=URL.createObjectURL(result);
+    $('#compatProgress').value=100;
+    $('#compatDownload').hidden=false;
+    $('#compatApply').hidden=!COMPAT.target;
+    compatibilityStatus(output.hdr?'轉換完成。HDR 已轉為 SDR；可下載副本或套用到片段。':'轉換完成。可下載副本或套用到片段，原素材檔案保持不變。');
+  }catch(e){
+    if(job===COMPAT.job && e.message!=='__cancel__'){
+      compatibilityStatus(L('轉換失敗，原素材與剪輯資料未變。可重試或選 1080p 以減少記憶體需求。')+' '+e.message);
+      console.warn('[compat]',e);
+    }
+  }finally{
+    if(workerURL)URL.revokeObjectURL(workerURL);
+    if(job===COMPAT.job){if(COMPAT.worker)COMPAT.worker.terminate();COMPAT.worker=null;COMPAT.cancel=null;setCompatBusy(false)}
+  }
+}
+async function applyCompatibility(){
+  const c=COMPAT.target,file=COMPAT.result;
+  if(!c||!file||COMPAT.busy)return;
+  if(!A.clips.includes(c)){compatibilityStatus('原片段已變更，請重新選擇。轉換副本仍可下載。');return}
+  setCompatBusy(true);
+  let loaded;
+  try{
+    loaded=await waitCompatVideo(file);
+    const v=loaded.v;
+    if(v.duration+0.1<c.outP)throw new Error(L('轉換結果長度不足，未替換原片段。'));
+    if(!A.clips.includes(c))throw new Error(L('原片段已變更，請重新選擇。轉換副本仍可下載。'));
+    const nc={...c,id:uid(),name:file.name,file,url:loaded.url,video:v,el:v,
+      w:v.videoWidth,h:v.videoHeight,audioBuf:null,audioTried:false,_ab:null,exportSrc:null};
+    nc.thumb=await grabThumb(v);
+    if(!A.clips.includes(c))throw new Error(L('原片段已變更，請重新選擇。轉換副本仍可下載。'));
+    pushUndo();c.video.pause();
+    $('#videoPool').append(v);
+    A.clips[A.clips.indexOf(c)]=nc;regMedia(nc);
+    A.sel={type:'clip',id:nc.id};COMPAT.target=null;
+    $('#compatApply').hidden=true;
+    render();refreshProp();markDirty(700);_compatTick=0;
+    compatibilityStatus('已套用到片段，剪輯設定保持不變；可按「復原」回到原素材。請儲存或另存專案。');
+    loaded=null;
+  }catch(e){compatibilityStatus(e.message)}
+  finally{
+    if(loaded){loaded.v.removeAttribute('src');loaded.v.load();URL.revokeObjectURL(loaded.url)}
+    setCompatBusy(false);
+  }
+}
+$('#btnCompat').onclick=()=>openCompatibilityTool();
+$('#compatClip').onchange=e=>selectCompatSource(A.clips.find(c=>c.id===e.target.value));
+$('#compatChoose').onclick=()=>$('#compatFile').click();
+$('#compatFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f){$('#compatClip').value='';selectCompatSource(null,f)}};
+$('#compatRun').onclick=runCompatibility;
+$('#compatCancel').onclick=stopCompatibility;
+$('#compatApply').onclick=applyCompatibility;
+$('#compatDownload').onclick=()=>{
+  if(!COMPAT.result||!COMPAT.url)return;
+  const a=document.createElement('a');a.href=COMPAT.url;a.download=COMPAT.result.name;a.click();
+};
+$('#compatClose').onclick=()=>$('#compatDialog').close();
+$('#compatDialog').addEventListener('cancel',e=>{if(COMPAT.busy)e.preventDefault()});
+$('#compatDialog').addEventListener('close',()=>{releaseCompatResult();COMPAT.target=null;COMPAT.file=null;if(COMPAT.focus&&COMPAT.focus.isConnected)COMPAT.focus.focus()});
+
+document.addEventListener('click',e=>{if(e.target.closest('#cCompat'))openCompatibilityTool()});
+
+$('#compatDialog').addEventListener('keydown',e=>e.stopPropagation());
 
 </script>
 <script>
@@ -9176,6 +9545,7 @@ function loop(){
 
 function loopBody(){
   const now = performance.now();
+  updateVideoHealth(now);
   if (A.playing && !A.exporting){
     A.playhead += (now - _last) / 1000;
     const tot = totalDur();
@@ -10275,6 +10645,7 @@ function refreshPropRaw(){
         <div class="hint">${isImg(c) ? `圖片　${c.w}×${c.h}　長度可任意調整`
                                      : `原始長度 ${fmt(c.dur)}　解析度 ${c.w}×${c.h}`
                                        + (c.rot ? `　→ 轉 ${c.rot}° 後 ${clipSize(c).w}×${clipSize(c).h}` : '')}</div></div>` +
+      (!isImg(c) ? '<div class="grp"><button class="gh" id="cCompat">轉成相容格式</button></div>' : '') +
       (isImg(c)
        ? `<div class="grp"><h4>停留長度</h4>
             ${rowNum('cOut','秒數', c.outP, 0.5, '')}
@@ -11846,9 +12217,10 @@ function elFor(kind, url){
     const el = document.createElement(kind === 'audio' ? 'audio' : 'video');
     el.src = url; el.preload = 'auto';
     if (kind !== 'audio'){ el.playsInline = true; el.muted = true; }
-    const clr = () => { el.onloadedmetadata = null; el.onerror = null; };
+    const timer=setTimeout(()=>{clr();if(kind==='audio')rej(new Error('媒體載入逾時'));else res(el)},15000);
+    const clr = () => { clearTimeout(timer); el.onloadedmetadata = null; el.onerror = null; };
     el.onloadedmetadata = () => { clr(); res(el); };
-    el.onerror = () => { clr(); rej(new Error('媒體載入失敗')); };
+    el.onerror = () => { clr(); if(kind==='audio')rej(new Error('媒體載入失敗'));else res(el); };
     $('#videoPool').appendChild(el);
   });
 }
@@ -14053,14 +14425,24 @@ async function probe(){
 
 /* ── 影片 seek ─────────────────────────────────────────────── */
 function seekVideo(v, t){
-  return new Promise(res => {
-    const target = clamp(t, 0, Math.max(0, (v.duration || 0) - 0.03));
-    if (!v.seeking && v.readyState >= 2 && Math.abs(v.currentTime - target) < 0.0015) return res();
-    let done = false;
-    const ok = () => { if (done) return; done = true; v.removeEventListener('seeked', ok); res(); };
-    v.addEventListener('seeked', ok, { once:true });
-    try { v.currentTime = target; } catch(e){ return ok(); }
-    setTimeout(ok, 800);
+  return new Promise((resolve,reject)=>{
+    const target=clamp(t,0,Math.max(0,(v.duration||0)-0.03));
+    let ended=false,timer;
+    const ready=()=>!v.error&&!v.seeking&&v.readyState>=2&&v.videoWidth>0&&v.videoHeight>0&&Math.abs(v.currentTime-target)<0.0015;
+    const finish=err=>{
+      if(ended)return;ended=true;clearTimeout(timer);
+      for(const name of ['seeked','loadeddata','error'])v.removeEventListener(name,check);
+      if(err)reject(err);else resolve();
+    };
+    const check=()=>{
+      if(v.error||(v.readyState>=1&&(!v.videoWidth||!v.videoHeight)))
+        finish(new Error('影片沒有可用的影像解碼器'));
+      else if(ready())finish();
+    };
+    for(const name of ['seeked','loadeddata','error'])v.addEventListener(name,check);
+    timer=setTimeout(()=>finish(new Error('等待影片影像逾時')),10000);
+    if(ready())return finish();
+    try{v.currentTime=target;check()}catch(e){finish(e)}
   });
 }
 
@@ -14424,7 +14806,10 @@ async function startExport(){
   const nFrames = Math.max(1, Math.round(total * fps));
   const t0 = performance.now();
 
+  let exportSources=new Map(),activeVideoEncoder=null,activeAudioEncoder=null;
   try {
+    const badVideo=A.clips.find(c=>c.video&&['decode','no-video'].includes(videoProblem(c)));
+    if(badVideo)throw videoCompatibilityError(badVideo);
     // 上一輪如果有畫布被汙染，這裡先全部換新的，才不會一路失敗到重新整理為止
     if (typeof resetBuffers === 'function') resetBuffers();
     // 先實測每個素材會不會弄髒畫布，髒的就當場換掉（見 healSources 的說明）
@@ -14474,6 +14859,7 @@ async function startExport(){
       output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
       error: e => { encErr = e; }
     });
+    activeVideoEncoder=vEnc;
     vEnc.configure(cap.video);
 
     const cv = document.createElement('canvas');
@@ -14484,7 +14870,7 @@ async function startExport(){
 
     /* 連續解碼：能拆解的片段走快路，拆不開的自動退回逐幀 seek */
     mProg(4, '準備解碼器…');
-    const srcs = new Map();
+    const srcs = exportSources;
     let vidN = 0;
     for (const c of A.clips){
       if (!c.video) continue;
@@ -14520,7 +14906,7 @@ async function startExport(){
         _healLog.push(`${c.name}：連續解碼取不到畫面，改用逐幀 seek（會比較慢）`);
       }
       c.exportSrc = null;
-      if (c.video) await seekVideo(c.video, ref.t);
+      if (c.video){try{await seekVideo(c.video, ref.t)}catch(e){throw videoCompatibilityError(c)}}
     };
     A.musics.forEach(m => m.el.pause());
 
@@ -14587,6 +14973,7 @@ async function startExport(){
         output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
         error: e => { aErr = e; }
       });
+      activeAudioEncoder=aEnc;
       aEnc.configure(cap.audio);
       const sr = pcm.sampleRate, len = pcm.length;
       const L0 = pcm.getChannelData(0);
@@ -14645,7 +15032,8 @@ async function startExport(){
       mDone('匯出失敗', '', `<span style="color:var(--danger)">${esc(err.message || err)}</span>`);
     }
   } finally {
-    try { for (const fsrc of (typeof srcs !== 'undefined' ? srcs.values() : [])) fsrc.close(); } catch(e){}
+    try { for (const fsrc of exportSources.values()) fsrc.close(); } catch(e){}
+    for(const enc of [activeVideoEncoder,activeAudioEncoder]){try{if(enc&&enc.state!=='closed')enc.close()}catch(e){}}
     A.clips.forEach(c => { c.exportSrc = null; });
     A.exporting = false;
     if (typeof markDirty === 'function') markDirty(700);   // 匯出時預覽被借去用了，回來要重畫

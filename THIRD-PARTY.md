@@ -17,3 +17,10 @@ The original NiVedit arrangements are rendered with **GeneralUser GS v2.0.3** by
 Production tools: [TinySoundFont / tinysoundfont](https://github.com/nwhitehead/tinysoundfont-pybind) (MIT), NumPy, and ffmpeg. These tools are not bundled into the editor. SoundFont source, pinned commit and checksum are recorded under nivedit-src/tools/music-v2-notices/.
 
 The additional **Cheerful example music** track is the original project audio, explicitly authorized by the user on 2026-09-17. It is preserved byte-for-byte and is separate from the 40 new GeneralUser GS arrangements; see example-provenance.json in the download.
+
+
+## Optional video compatibility converter (v12.5)
+
+The unmodified UMD JavaScript and WebAssembly from **@ffmpeg/core 0.12.10** are loaded on demand in a separate Worker. This single-thread core is licensed **GPL-2.0-or-later**, not the MIT license of the wrapper package. Full license and corresponding release source/build archives are provided alongside the binary payload at [video-compat/README.html](docs/video-compat/README.html). Hashes and exact upstream release commit are recorded in its manifest and source index. Individual library notices remain in the source archives.
+
+The file-compatible base64 wrapper does not change core bytes; tools/unpack_compat_core.py recovers and verifies the original JS/WASM. The application invokes the core through a local worker message interface. User media is never uploaded for conversion.

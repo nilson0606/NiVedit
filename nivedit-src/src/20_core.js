@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -386,6 +386,7 @@ const UNDO_MAX = 60;
 const _undo = [], _redo = [];
 
 function regMedia(item, extra){
+  if (typeof watchVideoMedia === 'function') watchVideoMedia(item.video);
   MEDIA.set(item.id, Object.assign({
     file: item.file, url: item.url, el: item.el, video: item.video,
     img: item.img, thumb: item.thumb, _gif: item._gif
@@ -932,10 +933,12 @@ async function addVideoFiles(files){
   const list = [...files].filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|m4v|avi)$/i.test(f.name));
   if (!list.length){ toast('沒有偵測到影片檔', true); return; }
   pushUndo();
+  let firstFailed=null;
   for (const f of list){
     try { await addVideo(f); }
-    catch(e){ console.error(e); toast(`「${f.name}」載入失敗：${e.message}`, true); }
+    catch(e){ firstFailed=firstFailed||f; console.error(e); toast(`「${f.name}」載入失敗：${e.message}`, true); }
   }
+  if(firstFailed)openCompatibilityTool(null,firstFailed);
   render();
   fitZoom();          // 匯入後自動把整支影片縮到看得完
   refreshProp();
@@ -950,9 +953,15 @@ function addVideo(file){
     // 設了反而讓 CORS 檢查過不了，畫面照放但畫布會被當成被汙染，匯出就死。
     // 萬一某個環境相反，匯出前的 healSources() 會實測後自動換掉。
     v.src = url; v.preload = 'auto'; v.playsInline = true; v.muted = true;
-    const fail = () => rej(new Error('瀏覽器無法解碼這個檔案'));
+    const fail = () => {
+      clearTimeout(timer);v.onerror=null;v.onloadedmetadata=null;
+      v.removeAttribute('src');v.load();v.remove();URL.revokeObjectURL(url);
+      rej(new Error('瀏覽器無法解碼這個檔案'));
+    };
+    const timer=setTimeout(fail,15000);
     v.onerror = fail;
     v.onloadedmetadata = async () => {
+      clearTimeout(timer);
       // 一次性：用完就拆掉。這個元素之後可能會被重新指定 src（素材重接、
       // 修畫布汙染），沒拆掉的話「建立片段」會再跑一次，片段就無限增生。
       v.onloadedmetadata = null; v.onerror = null;

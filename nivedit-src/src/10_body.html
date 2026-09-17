@@ -7,6 +7,7 @@
             style="padding:3px 9px;font-size:12px;line-height:1.4">EN</button>
     <button class="gh" id="themeBtn" type="button" data-nt aria-label="白天模式" aria-pressed="false" title="切換至白天模式">☾ 夜間模式</button>
     <div class="badge" id="envBadge">檢查瀏覽器支援中…</div>
+    <a id="btnManual" href="manual.html" target="_blank" rel="noopener" title="在新分頁開啟操作手冊">操作手冊</a>
     <div class="spacer"></div>
     <div class="tc">總長 <b id="totalDur">00:00.0</b></div>
     <button id="btnExport" class="pri">匯出影片</button>
@@ -25,6 +26,7 @@
           <button class="gh" id="btnProjSaveAs" title="另存成新的專案">另存</button>
         </div>
         <button class="gh" id="btnExample" style="width:100%;margin-top:6px" title="載入附帶的示範專案，參考影片、字幕、動畫與配樂的搭配">開啟範例</button>
+        <button class="gh" id="btnCompat" style="width:100%;margin-top:6px">轉成相容格式</button>
       </div>
       <div class="ph">片段 <span class="spacer"></span><span id="clipCount" style="font-weight:400">0</span></div>
       <div class="pb">
@@ -48,6 +50,11 @@
         </div>
       </div>
 
+      <div id="compatNotice" role="status" hidden>
+        <strong id="compatWarning"></strong>
+        <span>可能是影片編碼不支援；可轉成 H.264，或開啟硬體加速並重新啟動瀏覽器。</span>
+        <button class="gh" id="compatFix">轉成相容格式</button>
+      </div>
       <div id="transport">
         <button id="playBtn" title="播放 / 暫停（空白鍵）">▶</button>
         <button class="gh" id="btnStart" title="回到開頭">⏮</button>
@@ -246,3 +253,27 @@
 <input type="file" id="fileProj" accept=".nvproj" class="hide">
 <input type="file" id="fileSub" accept=".srt,.txt,text/plain" multiple class="hide">
 <div id="videoPool" class="hide"></div>
+
+<dialog id="compatDialog" class="compat-dialog" aria-labelledby="compatHeading">
+  <h2 id="compatHeading">轉成相容格式</h2>
+  <p>在這台電腦將影片轉為 H.264／AAC MP4，不上傳影片。原檔不會被覆蓋。</p>
+  <label for="compatClip">專案片段</label>
+  <select id="compatClip" data-nt></select>
+  <button id="compatChoose" class="gh">選擇電腦上的影片</button>
+  <input id="compatFile" type="file" accept="video/*,.mov,.mkv,.mp4" hidden>
+  <p id="compatName" data-nt></p>
+  <label for="compatSize">相容副本尺寸</label>
+  <select id="compatSize"><option value="original">保留原尺寸（含 4K）</option><option value="1080">最高 1080p（較省資源）</option></select>
+  <p class="hint">首次載入工具約 43 MB。4K 轉碼可能需要數分鐘；單檔上限 512 MB。HDR 會轉成 SDR；保留第一條音訊，其他音軌不帶入副本。</p>
+  <p class="hint">套用只替換選取的片段，保留時間軸、裁切、轉場與關鍵幀；同一素材的其他片段不受影響。</p>
+  <progress id="compatProgress" max="100" value="0"></progress>
+  <p id="compatStatus" role="status" aria-live="polite"></p>
+  <div class="compat-actions">
+    <button id="compatRun" class="pri">開始轉換</button>
+    <button id="compatCancel" hidden>取消轉換</button>
+    <button id="compatDownload" hidden>下載 MP4 副本</button>
+    <button id="compatApply" hidden>套用到選取片段</button>
+    <button id="compatClose" class="gh">關閉</button>
+  </div>
+  <p class="hint">轉碼核心：FFmpeg.wasm（GPL-2.0-or-later）。<a href="video-compat/README.html" target="_blank" rel="noopener">授權與原始碼</a></p>
+</dialog>

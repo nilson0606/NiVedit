@@ -1,4 +1,4 @@
-# NiVedit v12.4
+# NiVedit v12.5
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -6,11 +6,21 @@ A browser-based video editor with English and Traditional Chinese interfaces.
 
 **操作手冊 / User guide（繁體中文）：** [HTML 操作手冊](https://nilson0606.github.io/NiVedit/manual.html)
 
-The guide has 15 chapters with a home index, direct chapter links, search, dark/light modes and print styling.
+The guide has 16 chapters with a home index, direct chapter links, search, dark/light modes and print styling.
 
-Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
+Use Chrome or Microsoft Edge on a desktop computer. HEVC support depends on the browser and hardware; v12.5 includes an optional local software converter. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
 
 ## Latest update
+
+**v12.5 video compatibility:** detects video elements without a decoded picture (including audio-only HEVC playback), identifies affected clips, preserves their project data, and stops export instead of silently rendering missing frames. **Convert to compatible format** converts a chosen clip or local file to H.264/AAC MP4 inside a disposable browser Worker. Keep original size, including 4K, or choose up to 1080p. Cancel, retry, download a copy, or apply it to one clip with undo/redo and editing settings retained. Conversion is explicit, not automatic.
+
+The initial converter asset is approximately 43 MB. Files remain local. Input limit: 512 MiB and 4096×4096 pixels; 4K software conversion can take minutes. HDR is mapped to SDR and only the first audio stream is retained. Re-encoding is not lossless. See [engine licenses and corresponding sources](https://nilson0606.github.io/NiVedit/video-compat/README.html).
+
+**User manual** opens a new tab from the editor header. The HTML guide has a left chapter menu, one-chapter view, search, light/dark modes and full-document print support.
+
+Validation: 70 new compatibility/manual checks under Chrome 153 with GPU disabled, plus 225 targeted Edge regression checks (dual-track, rotation/save/export, music/example, i18n). A real 25-second 4K HEVC clip converted and displayed under CPU-only Chrome. Unrelated full-suite checks were not rerun; the previously documented v12.2 title-pixel baseline remains unchanged.
+
+### Previous music and example update
 
 **Background music pack v2:** **41 tracks**: 40 newly arranged instrumental cues, plus the user-authorized original example music. Each is about **40 seconds**, replacing the original 25-second selection. Four mood categories, 10 each: Cheerful everyday, Easygoing, Groove & energy, and Warm stories. Themes, answering phrases, changing grooves and endings use sampled instruments rather than the original simple waveform voices. Search by title or style, audition, then Add music track. **Import audio from computer** is still available.
 

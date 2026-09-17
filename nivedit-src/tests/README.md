@@ -454,3 +454,8 @@ pps    左欄  中欄  右欄   時間軸內容寬
 music-example.e2e.cjs：68 項（配樂 v2），涵蓋本機／網站、曲目搜尋與分類、預覽不改專案、本機音檔、失敗重試、41 首 × 約 40 秒音訊解碼、720p／4K 提醒、範例取消、首次另存、後續儲存、另存另一份、重新載入原始範例及使用者檔案。原生 picker 使用測試 handle，其餘保存流程實際執行。設定 NIVEDIT_HTML、NIVEDIT_CHROME、NIVEDIT_FIX、NIVEDIT_WORKSPACE 後用 Node 執行。
 
 完整本機結果：qa-v12.4/regression/results.json；配樂 v2 結果：qa-music-v2/music-example-qa/results.json（初版結果在 qa-v12.4）。標題像素容差的 Edge 154 既有差異見 v12.3 對照紀錄，沒有放寬測試閾值。
+
+
+## v12.5 compatibility
+
+compat.e2e.cjs: 52 checks; compat-extras.e2e.cjs: 18 checks. Set NIVEDIT_HTML, NIVEDIT_CHROME (Chrome), NIVEDIT_COMPAT_OUT. Both launch with GPU/video acceleration disabled. Synthetic fixtures in fixtures/ are generated test patterns, not user media. Tests include real WASM HEVC conversion, failed loader retry, cancel, retained edits/keyframes, undo/redo, embedded project reopen, real MP4 export, HDR/silent portrait, oversized input, and manual navigation in a new tab.

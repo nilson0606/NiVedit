@@ -431,6 +431,24 @@ select option.miss{color:var(--fg3)}
 @media(max-width:760px){.mu-body{grid-template-columns:minmax(0,1fr) 240px;gap:12px}
  #muGrid{grid-template-columns:1fr}.mu-card{min-height:95px}}
 @media(max-width:520px){.mu-body{grid-template-columns:1fr}#muGrid{max-height:32vh}.mu-symbol{display:none}}
+
+#compatNotice{flex-shrink:0;padding:8px 12px;background:var(--bg3);border-top:2px solid var(--warn);color:var(--fg);font-size:12px}
+#compatNotice[hidden]{display:none}
+#compatNotice strong{display:block;color:var(--warn-soft);overflow-wrap:anywhere}
+#compatNotice button{margin:4px 0 0 8px}
+.compat-dialog{width:min(640px,90vw);max-height:88vh;overflow:auto;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--fg)}
+.compat-dialog::backdrop{background:#0009}
+.compat-dialog h2{font-size:19px;margin:0 0 12px}
+.compat-dialog p{line-height:1.65;overflow-wrap:anywhere}
+.compat-dialog label{display:block;margin:10px 0 5px;font-weight:600}
+.compat-dialog select{max-width:100%;margin-bottom:8px}
+.compat-dialog progress{width:100%;accent-color:var(--acc)}
+.compat-dialog .hint{color:var(--fg2)}
+.compat-actions{display:flex;flex-wrap:wrap;gap:8px}
+.compat-actions [hidden]{display:none}
+.compat-dialog a{color:var(--acc)}
+
+#btnManual{white-space:nowrap;color:var(--fg);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}#btnManual:hover{background:var(--bg3)}
 </style>
 </head>
 <body>

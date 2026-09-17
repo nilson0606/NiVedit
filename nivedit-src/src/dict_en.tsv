@@ -1220,3 +1220,44 @@ Lo-fi 爵士	Lo-fi & jazz
 溫暖故事	Warm stories
 新版配樂 v2：40 首新配樂＋1 首範例配樂，每首約 40 秒，無人聲。	Music pack v2: 40 new tracks plus 1 example track, about 40 seconds each, instrumental.
 下載 41 首 MP3 素材包	Download all 41 MP3 tracks
+
+轉成相容格式	Convert to compatible format
+影片無法顯示或仍在等待影像：	Video unavailable or still waiting for a frame:
+可能是影片編碼不支援；可轉成 H.264，或開啟硬體加速並重新啟動瀏覽器。	The video codec may be unsupported. Convert to H.264, or enable hardware acceleration and restart your browser.
+在這台電腦將影片轉為 H.264／AAC MP4，不上傳影片。原檔不會被覆蓋。	Convert video to H.264/AAC MP4 on this computer. No video uploads; original files are never overwritten.
+專案片段	Project clip
+選擇專案中的影片	Choose a video from the project
+選擇電腦上的影片	Choose a video from your computer
+相容副本尺寸	Compatible copy size
+保留原尺寸（含 4K）	Keep original size (including 4K)
+最高 1080p（較省資源）	Up to 1080p (uses fewer resources)
+首次載入工具約 43 MB。4K 轉碼可能需要數分鐘；單檔上限 512 MB。HDR 會轉成 SDR；保留第一條音訊，其他音軌不帶入副本。	The first tool download is about 43 MB. 4K conversion may take several minutes; maximum input size is 512 MB. HDR is converted to SDR. The first audio stream is retained; other streams are omitted.
+套用只替換選取的片段，保留時間軸、裁切、轉場與關鍵幀；同一素材的其他片段不受影響。	Apply replaces only the selected clip and keeps its timing, crop, transitions and keyframes. Other clips using the same source are unchanged.
+開始轉換	Start conversion
+取消轉換	Cancel conversion
+下載 MP4 副本	Download MP4 copy
+套用到選取片段	Apply to selected clip
+轉碼核心：	Conversion engine:
+授權與原始碼	Licenses and source code
+選好影片後按「開始轉換」。完成後可下載副本，或套用到選取片段。	Choose a video and start conversion. Then download the copy or apply it to the selected clip.
+已取消轉換，原素材與剪輯資料未變。	Conversion canceled. Original media and edits are unchanged.
+轉換結果尚無法顯示，請重試。	The converted video could not be decoded. Please retry.
+此轉碼工具單檔上限為 512 MB。請先在電腦上轉成 H.264，或縮短原影片。	The input limit is 512 MB. Convert large files to H.264 with a desktop tool, or shorten the source first.
+正在載入轉碼工具（首次約 43 MB）…	Loading converter (about 43 MB on first use)...
+正在轉成 H.264／AAC，相容副本不會覆蓋原檔。	Converting to H.264/AAC. The compatible copy will not overwrite the original.
+正在轉換：	Converting:
+正在驗證轉換結果…	Validating the converted video...
+轉換完成。HDR 已轉為 SDR；可下載副本或套用到片段。	Conversion complete. HDR was converted to SDR. Download the copy or apply it to the clip.
+轉換完成。可下載副本或套用到片段，原素材檔案保持不變。	Conversion complete. Download the copy or apply it to the clip. Original files are unchanged.
+轉換失敗，原素材與剪輯資料未變。可重試或選 1080p 以減少記憶體需求。	Conversion failed. Original media and edits are unchanged. Retry or choose 1080p to reduce memory use.
+原片段已變更，請重新選擇。轉換副本仍可下載。	The original clip changed. Select it again. The converted copy is still available to download.
+轉換結果長度不足，未替換原片段。	The converted video is too short. The original clip was not replaced.
+已套用到片段，剪輯設定保持不變；可按「復原」回到原素材。請儲存或另存專案。	Applied to the clip with editing settings preserved. Undo restores the original media. Save or save as a new project.
+轉碼工具載入逾時，請重試。	Converter loading timed out. Please retry.
+找不到轉碼工具。請確認 video-compat 資料夾與 HTML 放在一起，網站版請檢查連線後重試。	Converter unavailable. Keep video-compat beside the local HTML, or check your connection and retry on the website.
+無法取得影片影像：	Unable to decode video:
+請先使用「轉成相容格式」，或開啟瀏覽器硬體加速後重新啟動。原素材與剪輯資料會保留。	Use Convert to compatible format, or enable browser hardware acceleration and restart. Original media and edits are retained.
+影片沒有可用的影像解碼器	No usable video decoder is available
+等待影片影像逾時	Timed out waiting for a video frame
+操作手冊	User manual
+在新分頁開啟操作手冊	Open the user manual in a new tab
