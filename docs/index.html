@@ -11733,7 +11733,10 @@ async function openExampleProject(){
     if(epoch!==_gifEpoch||token!==DEMO.token)return;
     DEMO.file=file;$('#demoCancel').disabled=true;$('#demoDialog').close();
     await projImportFile(file);
-    if(!$('#mask').classList.contains('on'))markSaved();
+    if(!$('#mask').classList.contains('on')){
+      seekTo(0); // Always open the built-in example at the beginning.
+      markSaved();
+    }
   }catch(e){
     if(token!==DEMO.token)return;
     $('#demoStatus').textContent='範例載入失敗。請關閉後重試；本機使用時，請保留 HTML 旁的 example-project 資料夾。';

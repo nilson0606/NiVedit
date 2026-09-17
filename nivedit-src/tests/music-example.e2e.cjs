@@ -64,6 +64,7 @@ const {VER}=require('./_ver.cjs');
  await p.locator('#btnExample').click();await p.locator('#demoStart').click();
  await p.waitForFunction(()=>!DEMO.busy&&DEMO.file&&!document.querySelector('#mask').classList.contains('on'),null,{timeout:60000});
  check(protocol+': example contains all five types and 720p video',await p.evaluate(()=>A.clips.length===1&&A.titles.length===1&&A.subs.length===2&&A.overlays.length===1&&A.musics.length===1&&A.clips[0].video.videoWidth===1280&&A.clips[0].video.videoHeight===720));
+ check(protocol+': example opens paused at the beginning',await p.evaluate(()=>A.playhead===0&&!A.playing&&!_unsaved&&document.querySelector('#curTime').textContent==='00:00.0'));
  check(protocol+': example has no writable file handle',await p.evaluate(()=>_fh===null&&_curProj.name==='NiVedit_範例練習'));
  // Mock only native picker/handle, run real serialization, writer, rebind and subsequent save.
  await p.evaluate(()=>{
@@ -75,7 +76,7 @@ const {VER}=require('./_ver.cjs');
     createWritable:async()=>({write:async blob=>{rec.blob=new Blob([await blob.arrayBuffer()]);rec.writes++},close:async()=>{}})};
    savedFiles.push({rec,h});return h;
   };
-  window.originalTitle=A.titles[0].text;pushUndo();A.titles[0].text='MY EDITED EXAMPLE';
+  window.originalTitle=A.titles[0].text;seekTo(3);pushUndo();A.titles[0].text='MY EDITED EXAMPLE';
  });
  await p.locator('#btnProjSave').click();await p.waitForFunction(()=>savedFiles.length===1&&savedFiles[0].rec.writes===1&&_fh===savedFiles[0].h);
  check(protocol+': first Save chooses a new file',await p.evaluate(()=>pickerCalls===1&&lastSuggested==='NiVedit_範例練習.nvproj'&&_curProj.name==='my-example-1'));
@@ -88,12 +89,13 @@ const {VER}=require('./_ver.cjs');
  await p.evaluate(()=>document.querySelector('#mask').classList.remove('on'));
  await p.locator('#btnExample').click();check(protocol+': reminder shown again for cached example',await p.locator('#demoDialog').evaluate(d=>d.open));
  await p.locator('#demoStart').click();await p.waitForFunction(()=>!DEMO.busy&&_fh===null);
+ check(protocol+': cached example also resets to beginning',await p.evaluate(()=>A.playhead===0&&!A.playing&&!_unsaved));
  check(protocol+': original example survives edit/save/save-as',await p.evaluate(async()=>{
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await DEMO.file.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');
  return A.titles[0].text===originalTitle&&digest===EXAMPLE_PROJECT.sha256;
  }));
  await p.evaluate(async()=>projImportFile(await savedFiles[0].h.getFile(),savedFiles[0].h));
- check(protocol+': user saved file reopens with changes and all media',await p.evaluate(()=>A.titles[0].text==='SECOND EDIT'&&A.overlays[0]._gif.frames.length>1&&A.clips[0].video.videoWidth===1280&&A.musics[0].el.duration>0));
+ check(protocol+': user saved file reopens with changes and all media',await p.evaluate(()=>A.playhead===3&&A.titles[0].text==='SECOND EDIT'&&A.overlays[0]._gif.frames.length>1&&A.clips[0].video.videoWidth===1280&&A.musics[0].el.duration>0));
  await p.close();
  }
  const p=await b.newPage();await p.goto(pathToFileURL(html).href);await p.waitForFunction(()=>typeof MUSIC_CATALOG!=='undefined');

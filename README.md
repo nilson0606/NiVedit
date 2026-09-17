@@ -16,11 +16,11 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 [Download all 41 MP3 tracks (v2)](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_41_40s_v2.zip) includes four folders, an offline listening page, composition events and instrument-source notices. Existing saved projects keep their embedded original music. The built-in example's music is unchanged; that same original audio is also available in the library as Cheerful example music.
 
-**Open example:** the project panel offers a complete editable sample with video, title, subtitles, animation and music. Its video is 720p for faster loading; your own projects can be configured up to 4K. The reminder appears before loading. No new project is needed first: the first Save or Save As asks for your own file, later saves update that file, and the built-in example stays unchanged. Loading another example warns when current work has unsaved changes.
+**Open example:** the project panel offers a complete editable sample with video, title, subtitles, animation and music. Its video is 720p for faster loading; your own projects can be configured up to 4K. The reminder appears before loading; the example then opens paused at 00:00. No new project is needed first: the first Save or Save As asks for your own file, later saves update that file, and the built-in example stays unchanged. Loading another example warns when current work has unsaved changes.
 
 The **Animation effects** library still includes 240 GIFs and imports your own GIFs/images. Video, audio, and project processing remain local to your browser.
 
-Validation for music v2: 64 music/example checks, real MP4/AAC export, and 41 interface-language checks. All 41 unique stereo files decode at 40 seconds. The prior v12.4 full editor regression remains documented in RELEASE.json; unrelated suites were not rerun for this asset refresh.
+Validation for music v2: 68 music/example checks, real MP4/AAC export, and 41 interface-language checks. All 41 unique stereo files decode at 40 seconds. The prior v12.4 full editor regression remains documented in RELEASE.json; unrelated suites were not rerun for this asset refresh.
 
 ## Features
 
