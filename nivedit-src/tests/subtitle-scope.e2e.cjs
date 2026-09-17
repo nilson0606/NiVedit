@@ -1,4 +1,5 @@
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,OUT=path.dirname(HTML);
 (async()=>{
 const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -7,7 +8,7 @@ const b=await chromium.launch({executablePath:process.env.NIVEDIT_CHROME}),p=awa
 let count=0;const bad=[],errors=[];const chk=(name,v)=>{count++;if(!v)bad.push(name)};p.on('pageerror',e=>errors.push(e.message));
 try{
 await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof openSubEditor==='function');
-chk('version',await p.textContent('#verTag')==='v11.8');
+chk('version',await p.textContent('#verTag')===VER);
 await p.setInputFiles('#fileAny',process.env.NIVEDIT_FIX+'/t300.webm');await p.waitForFunction(()=>A.clips.length===1);
 await p.evaluate(()=>{
 setLang('zh');A.subs=[{id:'ai1',track:0,start:0,end:2,text:'AI字幕 电脑'},{id:'ai2',track:0,start:2,end:4,text:'AI第二句'}];
@@ -75,6 +76,56 @@ chk('project roundtrip preserves both tracks',await p.evaluate(async()=>{
 const before=A.subs.map(c=>({text:c.text,track:subTrack(c)}));const blob=await buildProjBlob();await projImportFile(new File([blob],'scoped.nvproj'));
 return JSON.stringify(A.subs.map(c=>({text:c.text,track:subTrack(c)})))===JSON.stringify(before)
 }));
+/* ── 「＋ 字幕」兩選一（v11.9）────────────────────────────────
+   以前這顆按鈕直接開檔案選取視窗，手打一句的唯一入口是「在字幕軌空白處連點兩下」，
+   而那句話只寫在 tooltip 裡。現在按下去先問「新增一句」還是「匯入 SRT 檔」。 */
+await p.evaluate(()=>{setLang('zh');A.subs=[];A.sel={type:'proj'};seekTo(1.4);render();refreshProp();});
+await p.waitForTimeout(150);
+const subs0=await p.evaluate(()=>A.subs.length);
+await p.click('#btnAddSub');
+await p.waitForSelector('#qmask.on',{timeout:3000});
+const dlg=await p.evaluate(()=>({
+  title:$('#qTitle').textContent.trim(),
+  btns:[...$('#qBtns').querySelectorAll('button')].map(b=>b.textContent.trim()),
+  pri:($('#qBtns').querySelector('button.pri')||{}).textContent,
+  focused:document.activeElement&&document.activeElement.textContent
+}));
+chk('＋字幕：跳出兩選一，不是直接開檔案視窗',/新增字幕/.test(dlg.title)&&dlg.btns.length===3);
+chk('＋字幕：兩條路都在選單上',dlg.btns.includes('新增一句')&&dlg.btns.includes('匯入 SRT 檔'));
+chk('＋字幕：主要按鈕是「新增一句」且拿到焦點（Enter 直接選它）',
+    (dlg.pri||'').trim()==='新增一句'&&(dlg.focused||'').trim()==='新增一句');
+
+await p.keyboard.press('Enter');
+await p.waitForFunction(n=>A.subs.length===n+1,subs0,{timeout:3000});
+const made=await p.evaluate(()=>{const c=A.subs[A.subs.length-1];
+  return {text:c.text,start:+c.start.toFixed(2),sel:A.sel.type==='sub'&&A.sel.id===c.id,
+          blocks:document.querySelectorAll('.sblk').length,
+          masked:$('#qmask').classList.contains('on'),undo:_undo.length>0};});
+chk('＋字幕：Enter 就新增一句，視窗關掉',made.masked===false);
+chk('＋字幕：生在播放頭位置',Math.abs(made.start-1.4)<0.05);
+chk('＋字幕：預設文字是可以直接改的提示字',made.text==='在這裡輸入字幕');
+chk('＋字幕：時間軸上真的出現方塊',made.blocks>0);
+chk('＋字幕：自動選取，右側面板可以馬上打字',made.sel&&await p.locator('#sText').count()===1);
+chk('＋字幕：吃得到復原',made.undo);
+await p.evaluate(()=>undo());await p.waitForTimeout(200);
+chk('＋字幕：復原後那一句不見了',await p.evaluate(()=>A.subs.length)===subs0);
+
+/* Esc 取消：什麼都不該發生 —— 連檔案選取視窗都不可以被叫出來。 */
+await p.click('#btnAddSub');
+await p.waitForSelector('#qmask.on',{timeout:3000});
+await p.keyboard.press('Escape');
+await p.waitForTimeout(200);
+chk('＋字幕：Esc 取消時不新增也不開檔案視窗',
+    await p.evaluate(()=>A.subs.length)===subs0&&await p.evaluate(()=>!$('#qmask').classList.contains('on')));
+
+await p.evaluate(()=>setLang('en'));await p.waitForTimeout(120);
+await p.click('#btnAddSub');
+await p.waitForSelector('#qmask.on',{timeout:3000});
+const dlgEn=await p.evaluate(()=>[...$('#qBtns').querySelectorAll('button')].map(b=>b.textContent.trim()));
+chk('＋字幕：英文介面下選項也翻譯了',dlgEn.includes('Type one')&&dlgEn.includes('Import an SRT file'));
+await p.keyboard.press('Escape');await p.waitForTimeout(150);
+await p.evaluate(()=>setLang('zh'));await p.waitForTimeout(120);
+
 chk('no page errors',errors.length===0);
 fs.writeFileSync(path.join(OUT,'subtitle-scope-results.json'),JSON.stringify({count,bad,errors},null,2));
 console.log('subtitle-scope: '+(count-bad.length)+' / '+count);if(bad.length){console.log(bad);process.exitCode=1}

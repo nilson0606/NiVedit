@@ -1,6 +1,7 @@
 
 const {expectedFormat}=require('./_fmt.cjs');
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML||'/home/claude/NiVedit.html';
 const CHROME=process.env.NIVEDIT_CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const FIX=process.env.NIVEDIT_FIX||'/tmp/tv',OUT=path.dirname(HTML);
@@ -16,7 +17,7 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv',OUT=path.dirname(HTML);
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);
  await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v11.8');
+ chk('version',await p.textContent('#verTag')===VER);
  await p.setInputFiles('#fileAny',[FIX+'/t300.webm',FIX+'/t900.webm']);
  await p.waitForFunction(()=>A.clips.length===2&&A.clips.every(c=>c.el.readyState>=2));
  const legacy=await p.evaluate(()=>({starts:layout().map(q=>q.start),dur:A.clips.map(clipDur),total:totalDur(),tracks:A.clips.map(clipTrack)}));
@@ -53,8 +54,8 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv',OUT=path.dirname(HTML);
  chk('track selector assigns upper',await p.evaluate(()=>clipTrack(A.clips[1])===1&&layout()[1].start===0));
  chk('two actual video rows',await p.locator('.videoLane').count()===2&&await p.locator('#videoUpper .blk').count()===1&&await p.locator('#videoLower .blk').count()===1);
  await p.waitForTimeout(120);
- // v11.8：時間軸上「下軌」那一組排在上面，L 編號才由上往下遞增。
- // v11.8 名稱改成頂層／底層：講的是【疊放順序】（頂層蓋住底層），不是時間軸上的位置。
+ // v11.9：時間軸上「下軌」那一組排在上面，L 編號才由上往下遞增。
+ // v11.9 名稱改成頂層／底層：講的是【疊放順序】（頂層蓋住底層），不是時間軸上的位置。
  chk('lower row above upper (L 編號由上往下遞增)',await p.evaluate(()=>$('#videoLower').getBoundingClientRect().top<$('#videoUpper').getBoundingClientRect().top));
  chk('English track labels',(await p.textContent('#trkVideo')).includes('Top video'));
  await p.evaluate(()=>setLang('zh'));await p.waitForTimeout(120);
@@ -154,7 +155,7 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv',OUT=path.dirname(HTML);
  chk('track move redo',await p.evaluate(()=>A.clips.every(c=>clipTrack(c)===0)));
  await p.evaluate(()=>dualReset());await p.waitForTimeout(100);
  box=await p.locator('#videoUpper .blk').boundingBox();
- const my=box.y+box.height*.5;   // v11.8 方塊變薄了，寫死的 22 會落在框外
+ const my=box.y+box.height*.5;   // v11.9 方塊變薄了，寫死的 22 會落在框外
  await p.mouse.move(box.x+40,my);await p.mouse.down();await p.mouse.move(box.x+95,my,{steps:6});await p.mouse.up();
  chk('horizontal drag positions clip in time',await p.evaluate(()=>Math.abs(layout()[A.clips.findIndex(c=>clipTrack(c)===1)].start-1)<.04));
  const split=await p.evaluate(()=>{

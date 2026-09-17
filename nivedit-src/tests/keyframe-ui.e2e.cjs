@@ -1,4 +1,5 @@
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=process.env.NIVEDIT_FIX,OUT=path.dirname(HTML);
 (async()=>{
  const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -8,7 +9,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  try{
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v11.8');
+ chk('version',await p.textContent('#verTag')===VER);
  await p.setInputFiles('#fileAny',[FIX+'/t300.webm',FIX+'/t900.webm']);
  await p.waitForFunction(()=>A.clips.length===2&&A.clips.every(c=>c.video.readyState>=2));
  await p.evaluate(()=>{

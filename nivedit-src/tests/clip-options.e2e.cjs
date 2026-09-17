@@ -1,4 +1,5 @@
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=process.env.NIVEDIT_FIX,OUT=path.dirname(HTML);
 (async()=>{
  const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -9,7 +10,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  try{
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v11.8');
+ chk('version',await p.textContent('#verTag')===VER);
  // 拖放（#fileAny）只收影片與聲音；圖片一律走「＋ 圖片」那個獨立的 input。
  await p.setInputFiles('#fileAny',[FIX+'/t300.webm',FIX+'/t900.webm',FIX+'/tone440.wav']);
  await p.waitForFunction(()=>A.clips.length===2&&A.musics.length===1);
@@ -89,7 +90,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  // 底層字幕在頂層影片之下，上軌交叉淡入時會被半透明地疊過 —— 純白像素數小幅浮動，
  // 那是整組連動的正確結果，不是字幕被調暗。
  //
- // v11.8：最後一格（6.5 秒）是圖片軌 L3 在畫面上，它在 L1／L2 之上，
+ // v11.9：最後一格（6.5 秒）是圖片軌 L3 在畫面上，它在 L1／L2 之上，
  // 所以連字幕都會被蓋掉 —— 那是「圖片浮在影片上方」這條規則的直接結果，
  // 不是字幕壞了。前四格沒有圖片，字幕照舊。
  chk('upper subtitle keeps exactly full brightness while no image layer covers it',
@@ -153,10 +154,10 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  });
  facts.legacy=legacy;
  chk('old track modes migrate to each clip',legacy.once.map(q=>q[0]).join(',')==='add,overlap,overlap');
- // v11.8：圖片獨立一軌，所以它同時是那一軌的頭與尾，兩端的淡入淡出都要補到。
+ // v11.9：圖片獨立一軌，所以它同時是那一軌的頭與尾，兩端的淡入淡出都要補到。
  chk('old project fades migrate to first and last on each lane',JSON.stringify(legacy.once.map(q=>q.slice(1)))==='[[0.8,1.2,false],[0.8,1.2,false],[0.8,1.2,false]]');
  chk('migration happens once and removes global settings',JSON.stringify(legacy.once)===JSON.stringify(legacy.twice)&&legacy.clean);
-/* ── 「現在」要先看播放頭在不在這一段上（v11.8）──────────────────
+/* ── 「現在」要先看播放頭在不在這一段上（v11.9）──────────────────
    以前不管播放頭在哪都硬算：在片段之外時會把它砍到只剩 0.1 秒，
    看起來像「按一下片段就不見了」。使用者實測列為 NG（E05）。 */
 {
@@ -174,7 +175,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
       Math.abs(await p.evaluate(()=>A.clips[0].inP)-1)<0.02);
 
   /* 裁頭之後播放頭底下那一格要【留在原地】：片段左端移到播放頭、右端不動。
-     拖左邊緣本來就是這樣，按鈕以前沒做，按下去畫面整個換掉。（v11.8） */
+     拖左邊緣本來就是這樣，按鈕以前沒做，按下去畫面整個換掉。（v11.9） */
   const hold=await p.evaluate(async()=>{
     const c=A.clips[0];
     A.proj.videoMode='free';
@@ -192,7 +193,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
   chk('起點「現在」：右端不動（播放頭那一格留在原地）',Math.abs(held.end-hold.end0)<0.02);
 }
 
-/* ── 「歸零」「到底」（v11.8）────────────────────────────────────
+/* ── 「歸零」「到底」（v11.9）────────────────────────────────────
    使用者在人工檢查表 E04 的備註要的功能。驗四件事：
    1 真的回到素材的頭／尾  2 語意跟拖左右緣一致（左緣往前長、右端不動）
    3 被同軌鄰段擋住時只退到擋住的地方，而且有說明  4 兩顆都吃得到復原。 */

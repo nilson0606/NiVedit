@@ -1,4 +1,5 @@
 const {chromium}=require('playwright');
+const { VER } = require('./_ver.cjs');
 const assert=require('assert/strict');const fs=require('fs');const path=require('path');
 const {expectedFormat}=require('./_fmt.cjs');
 (async()=>{
@@ -16,7 +17,7 @@ const {expectedFormat}=require('./_fmt.cjs');
  const errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')console.log('browser:',m.text())});
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto(require('url').pathToFileURL(html).href);
- await p.waitForFunction(()=>document.querySelector('#verTag').textContent==='v11.8');
+ await p.waitForFunction(v=>document.querySelector('#verTag').textContent===v,VER);
  await p.locator('#fileImage').setInputFiles(path.join(workspace,'logo/NiVedit_icon.png'));await p.waitForFunction(()=>A.clips.length===1);
  await p.locator('#fileOverlay').setInputFiles(path.join(workspace,'assets/boy_smile_sway.gif'));await p.waitForFunction(()=>A.overlays.length===1,{}, {timeout:30000});
  const info=await p.evaluate(()=>{const g=A.overlays[0]._gif;return {frames:g.frames.length,duration:g.duration,bytes:_gifBytes,serialized:snapshot().length};});
@@ -51,7 +52,7 @@ const {expectedFormat}=require('./_fmt.cjs');
  const server=require('http').createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(fs.readFileSync(html))});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const p2=await c.newPage();await p2.goto('http://127.0.0.1:'+server.address().port);
- await p2.waitForFunction(()=>document.querySelector('#verTag').textContent==='v11.8');
+ await p2.waitForFunction(v=>document.querySelector('#verTag').textContent===v,VER);
  await p2.locator('#fileImage').setInputFiles(path.join(workspace,'logo/NiVedit_icon.png'));await p2.waitForFunction(()=>A.clips.length===1);
  await p2.locator('#fileOverlay').setInputFiles(path.join(workspace,'assets/boy_smile_sway.gif'));await p2.waitForFunction(()=>A.overlays.length===1);
  const rebound=await p2.evaluate(async()=>{const root=await navigator.storage.getDirectory();const fh=await root.getFileHandle('gif-save-test.nvproj',{create:true});const g=A.overlays[0]._gif;for(let i=0;i<2;i++){const info={};const blob=await buildProjBlob(info);const w=await fh.createWritable();await w.write(blob);await w.close();await rebindMedia(fh,info.base,info.index);}return A.overlays[0]._gif===g && !g.closed && g.frames.length===40 && (await buildProjBlob()).size>3000000;});assert.equal(rebound,true);

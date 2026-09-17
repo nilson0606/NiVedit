@@ -1,4 +1,4 @@
-/* 圖層（L 編號）專項 —— v11.8 規則。
+/* 圖層（L 編號）專項 —— v11.9 規則。
 
    規則本身：
      L1  影片底層 ＋ 底層字幕（字幕畫在自己那一軌的影片前面）
@@ -13,6 +13,7 @@
    所以除了資料斷言，幾乎每一條都去量實際像素。
    這個專案吃過太多次「數值對、畫面不對」的虧。 */
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=process.env.NIVEDIT_FIX,OUT=path.dirname(HTML);
 (async()=>{
 const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -25,7 +26,7 @@ try{
 await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // 測下載備援；原生另存由 rotation-save 專項覆蓋
 await p.goto('http://127.0.0.1:'+srv.address().port);
 await p.waitForFunction(()=>typeof A!=='undefined');
-chk('version',await p.textContent('#verTag')==='v11.8');
+chk('version',await p.textContent('#verTag')===VER);
 
 /* 素材：藍色影片 ＋ 黃色疊圖 ＋ 一張圖片，標題用洋紅大字，字幕用純白。
    四者顏色分得開，量像素就知道最後是誰蓋在最上面。 */
@@ -248,7 +249,7 @@ chk('圖片 L3 蓋在影片 L1 上面',!isBlue(cover));
 /* ── 舊專案遷移 ─────────────────────────────────────────── */
 const mig=await p.evaluate(async()=>{
   const {st,files}=serialize();
-  // 做一份 v11.8 格式的舊檔：圖片排在影片底層、疊圖／標題帶著已經廢掉的 z、
+  // 做一份 v11.9 格式的舊檔：圖片排在影片底層、疊圖／標題帶著已經廢掉的 z、
   // 軌道順序沒有 img。這是實際會在使用者硬碟上的樣子。
   const imgIdx=st.clips.findIndex(c=>c.kind==='image');
   st.clips[imgIdx].track=0;st.clips[imgIdx].at=3;

@@ -1,6 +1,7 @@
 
 const {expectedFormat}=require('./_fmt.cjs');
 const {chromium}=require('playwright');
+const { VER } = require('./_ver.cjs');
 const fs=require('fs'),http=require('http'),path=require('path');
 const HTML=process.env.NIVEDIT_HTML||'/home/claude/NiVedit.html';
 const CHROME=process.env.NIVEDIT_CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -17,7 +18,7 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);
  await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v11.8');
+ chk('version',await p.textContent('#verTag')===VER);
  await p.setInputFiles('#fileAny',FIX+'/t300.webm');
  await p.waitForFunction(()=>A.clips.length===1&&A.clips[0].el.readyState>=2);
  await p.evaluate(()=>{
@@ -149,7 +150,7 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
  const imageAndTransition=await p.evaluate(()=>{
    const a=cropReset(),b=A.clips[1];
    Object.assign(a,{cropShape:'rect',cropW:.4,cropH:.4});
-   // v11.8：圖片自己一條軌（IMG_TRACK），不再接在影片後面。
+   // v11.9：圖片自己一條軌（IMG_TRACK），不再接在影片後面。
    // 排到影片結束之後，畫面上才只有這張圖，量到的才是它的遮罩。
    Object.assign(b,{cropShape:'circle',cropSize:.5,trans:{type:'dissolve',dur:.6},outP:2,
                     at:layout()[0].end+0.5});

@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { VER } = require('./_ver.cjs');
 /* NiVedit 回歸測試 —— 用法見 tests/README.md
    node tests/<檔名>            結束碼 0 = 全過
    可用環境變數覆寫：NIVEDIT_HTML（要測的單檔 HTML）、
@@ -27,7 +28,7 @@ const http = require('http'), fs = require('fs');
   const domOrder = () => p.evaluate(() => [...document.querySelectorAll('#tlinner .trk')].map(e => e.dataset.tk).join(','));
   const stateOrder = () => p.evaluate(() => A.proj.tracks.join(','));
 
-  chk('版本', await p.textContent('#verTag') === 'v11.8');
+  chk('版本', await p.textContent('#verTag') === VER);
 
   // 放點東西進去，讓每一軌都有高度
   fs.writeFileSync(FIX + '/tk.srt', '1\n00:00:01,000 --> 00:00:03,000\nhello\n');
@@ -52,7 +53,7 @@ const http = require('http'), fs = require('fs');
   }
 
   const names = await p.$$eval('#tlinner .tkname', ns => ns.map(n => n.textContent.trim()));
-  chk('每一軌都有把手 ' + names.join('/'), names.length === 5);   // v11.8 多了圖片軌
+  chk('每一軌都有把手 ' + names.join('/'), names.length === 5);   // v11.9 多了圖片軌
   chk('把手名稱是英文', names.includes('Video') && names.includes('Audio'));
   chk('把手 tooltip 英文', (await p.$eval('#tlinner .tkname', n => n.title)) === 'Drag to reorder tracks');
   chk('把手吃得到滑鼠', await p.$eval('#tlinner .tkname', n => getComputedStyle(n).pointerEvents === 'auto'));
@@ -83,7 +84,7 @@ const http = require('http'), fs = require('fs');
   await p.waitForTimeout(300);
 
   const after = await stateOrder();
-  // v11.8：影片軌固定 L1／L2，釘死在第一條；音軌最多只能排到第二。
+  // v11.9：影片軌固定 L1／L2，釘死在第一條；音軌最多只能排到第二。
   chk('放開後音軌排到影片下面 ' + after, after === 'video,music,img,over,title');
   chk('DOM 與資料一致', (await domOrder()) === after);
   const t1 = (await p.textContent('#toast')).trim();
@@ -125,13 +126,13 @@ const http = require('http'), fs = require('fs');
   chk('舊專案的圖片軌補在影片之後而不是最後',
       await p.evaluate(() => layerOfTrack('img') === 3 && layerOfTrack('over') === 4 && layerOfTrack('title') === 5));
 
-  /* ── 縮放滑桿要錨點縮放，不能每次都把捲軸拉到播放頭（v11.8）────
+  /* ── 縮放滑桿要錨點縮放，不能每次都把捲軸拉到播放頭（v11.9）────
      以前是每次 input 都 followPlayhead(true)，往左拖（縮小）時播放頭的 x
      一直在變，捲軸就一直被重設 —— 使用者說「畫面抖動嚴重，尤其是拖到左邊」。
      驗法：把播放頭放在畫面中央，一路縮小，只要捲軸還沒到底，
      播放頭在視窗裡的 x 就不該移動。 */
   {
-    /* v11.8 起縮放走 requestAnimationFrame 節流，所以每改一次值都要等一個畫格
+    /* v11.9 起縮放走 requestAnimationFrame 節流，所以每改一次值都要等一個畫格
        再讀 —— 不等的話 A.pps 根本還沒變，斷言會「因為什麼都沒發生」而通過。 */
     const frame = () => p.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -173,7 +174,7 @@ const http = require('http'), fs = require('fs');
 
     /* 使用者的原話：「應該只要軌道縮放」。
        縮放不該碰到時間軸以外的任何東西 —— 預覽的大小與位置、時間軸區塊的高度、
-       播放頭，全部都要原封不動。v11.8 以前 renderTimeline 會順手 markDirty
+       播放頭，全部都要原封不動。v11.9 以前 renderTimeline 會順手 markDirty
        （逼預覽重繪）並做高度貼合，於是上面的預覽也跟著閃。 */
     const still = await p.evaluate(async () => {
       const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));

@@ -1,6 +1,6 @@
 {
-  "version": "11.8",
-  "html_sha256": "2ea094b9815282c22c3d329d6c03b94f2a0010ccdd854105be267f077d8c3b19",
-  "html_bytes": 1015147,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 682 checks passed across sixteen suites, plus the GIF suite. Thirteen of those are new and cover the two buttons added in this release, including what happens when a neighbouring clip blocks them."
+  "version": "11.9",
+  "html_sha256": "a1eb2af4e3e1c07dd6d0c9ef22ace5550d3cdd245bd96e15eb7534fec8d3be17",
+  "html_bytes": 1017238,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 694 checks passed across sixteen suites, plus the GIF suite. Twelve of those are new and cover the subtitle button's two-way prompt, including that cancelling opens nothing at all."
 }

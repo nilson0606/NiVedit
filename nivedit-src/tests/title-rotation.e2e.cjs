@@ -1,4 +1,5 @@
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=process.env.NIVEDIT_FIX,OUT=path.dirname(HTML);
 (async()=>{
  const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -8,7 +9,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  try{
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v11.8');
+ chk('version',await p.textContent('#verTag')===VER);
  await p.setInputFiles('#fileAny',FIX+'/t300.webm');await p.waitForFunction(()=>A.clips.length===1&&A.clips[0].video.readyState>=2);
  await p.evaluate(()=>{
    setLang('zh');Object.assign(A.proj,{w:320,h:180,fps:20,bitrate:2});A.clips[0].outP=2;A.clips[0].muted=true;addTitle();
@@ -72,10 +73,10 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  await p.click('#tKf');chk('disable keeps static start rotation',await p.evaluate(()=>A.titles[0].rot===-30&&!kfOn(A.titles[0])));
  await p.evaluate(()=>{delete A.titles[0].rot;refreshProp()});
  chk('legacy title defaults to zero rotation',await p.evaluate(()=>A.titles[0].rot===0));
- /* ── 字體清單（v11.8 加到 30 種）────────────────────────────
+ /* ── 字體清單（v11.9 加到 30 種）────────────────────────────
     重點不是「有 30 個」，是三件會壞的事：
       1. 分成中文／英文兩組，而且 optgroup 的 label 在英文介面下要真的變英文
-         （v11.8 以前 _ATTRS 沒收 label，轉場那幾個分組下拉的群組名一直是中文）。
+         （v11.9 以前 _ATTRS 沒收 label，轉場那幾個分組下拉的群組名一直是中文）。
       2. 這台電腦沒裝的字體要標「（未安裝）」並帶 miss class。
          容器裡幾乎什麼字都沒有，所以「至少有一個被標出來」就驗得到這條路有在跑。
       3. 選到帶引號的字體字串仍然存得進去、尺寸校正不會把字壓爛
@@ -110,7 +111,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  chk('quoted family survives the select and keeps sane size correction',
      pick.stored&&pick.quoted&&pick.corr>=0.8&&pick.corr<=1.25);
  await p.evaluate(()=>{A.titles[0].font='Arial';refreshProp()});
- /* ── 「＋ 標題」要能復原、要算成未存的改動（v11.8）──────────────
+ /* ── 「＋ 標題」要能復原、要算成未存的改動（v11.9）──────────────
     以前 addTitle() 沒有 pushUndo()：加了標題 Ctrl+Z 移不掉、復原鈕還是灰的，
     關分頁也不會提醒。影片／圖片／疊圖／音軌／字幕全都有，只有標題漏掉。
     使用者是從「關分頁沒提醒」這一端發現的（B14）。 */

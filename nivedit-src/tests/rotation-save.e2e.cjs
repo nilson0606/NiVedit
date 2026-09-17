@@ -1,5 +1,6 @@
 const {expectedFormat}=require('./_fmt.cjs');
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=process.env.NIVEDIT_FIX,OUT=path.dirname(HTML);
 (async()=>{
 const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -10,7 +11,7 @@ p.on('pageerror',e=>errors.push(e.message));
 try{
 await p.goto('http://127.0.0.1:'+srv.address().port);
 await p.waitForFunction(()=>typeof A!=='undefined');
-chk('version',await p.textContent('#verTag')==='v11.8');
+chk('version',await p.textContent('#verTag')===VER);
 await p.setInputFiles('#fileAny',FIX+'/t300.webm');await p.waitForFunction(()=>A.clips.length===1&&A.clips[0].video.readyState>=2);
 await p.setInputFiles('#fileImage',FIX+'/pic1.png');await p.waitForFunction(()=>A.clips.length===2);
 await p.setInputFiles('#fileOverlay',FIX+'/pic1.png');await p.waitForFunction(()=>A.overlays.length===1);
@@ -102,12 +103,12 @@ chk('save UI translated',await p.locator('#mSaveExport').textContent()==='Choose
 chk('user filename not translated',await p.locator('#mSub').textContent()==='renamed.'+FMT);
 await p.evaluate(()=>{window.showSaveFilePicker=undefined;mShow('test','');offerExportSave(new Blob(['fallback'],{type:'video/webm'}),'fallback.webm')});
 await p.waitForTimeout(200);chk('unsupported browser download fallback',downloads===1);
-/* ── 同一個專案檔連續存三次（v11.8）──────────────────────────
+/* ── 同一個專案檔連續存三次（v11.9）──────────────────────────
    使用者回報：「通常是好幾次儲存後偶爾發生，一發生就常常一直發生。」
    成因是素材其實是「這個 .nvproj 的切片」，存檔一蓋回同一個檔，切片就失效；
    存完會 rebindMedia 重接，但那段以前寫成 catch(e){ return; } —— 失敗無聲，
    從此素材永遠指著舊檔，之後每一次儲存都爆。
-   v11.8 改成：蓋回同一個檔之前一律先 resliceFromProj()，不問；
+   v11.9 改成：蓋回同一個檔之前一律先 resliceFromProj()，不問；
    寫到一半才失效的再自動重切並重試一次。
    這裡驗「重接真的有發生」：每存一次，素材的 File 物件都必須是新的。 */
 const save3=await p.evaluate(async()=>{
@@ -136,7 +137,7 @@ chk('media still readable after each save',save3.alive.every(Boolean));
 chk('saved file keeps real size',save3.sizes.every(n=>n>1000));
 
 /* 外面把檔案重寫一次（內容一樣、修改時間變了）＝ 切片全部失效。
-   v10.7 這時候就會卡住不動了；v11.8 應該自己重切並存成功。 */
+   v10.7 這時候就會卡住不動了；v11.9 應該自己重切並存成功。 */
 const healed=await p.evaluate(async()=>{
   const f=await _fh.getFile();
   const bytes=await f.arrayBuffer();
@@ -152,11 +153,11 @@ facts.healed=healed;
 chk('save still succeeds after the project file was touched from outside',healed.ok&&healed.alive);
 chk('touched project file forces a full reslice',healed.reslicedAll);
 
-/* ── 蓋回同一個檔時一定要繞暫存（v11.8）──────────────────────
+/* ── 蓋回同一個檔時一定要繞暫存（v11.9）──────────────────────
    使用者回報 v10.8 還是失敗，而且「太快出現」—— 是 createWritable() 當下就爆，
    不是寫到一半。也就是「一邊讀這個檔、一邊蓋掉它」本身就不合法，
    存檔前重切幾次都沒用，重切完下一秒又被作廢。
-   v11.8：蓋回目前開著的那個檔時，先把內容落到 OPFS 暫存檔，再從那裡搬進去。
+   v11.9：蓋回目前開著的那個檔時，先把內容落到 OPFS 暫存檔，再從那裡搬進去。
    這裡驗三件事：有走暫存、暫存有清掉、另存新檔不必繞。 */
 const scratch=await p.evaluate(async()=>{
   _dir=null;                     // 先驗暫存區那條；同資料夾改名那條另外驗
@@ -195,7 +196,7 @@ facts.writeOrder=order;
 chk('target file is written, and only after the content left the source',
     order.ok&&order.seen[order.seen.length-1]==='target');
 
-/* ── 最好的一條路：同資料夾暫存檔＋改名（v11.8）────────────────
+/* ── 最好的一條路：同資料夾暫存檔＋改名（v11.9）────────────────
    只寫一次、不佔瀏覽器配額，而且改名的過程完全不讀舊檔。
    這裡把 _dir 指到 OPFS 根目錄（它就是一個 FileSystemDirectoryHandle），
    驗：有走這條、暫存檔沒留下、內容正確、而且 _fh 有換成改名後的新 handle。 */
@@ -217,9 +218,9 @@ chk('no .nvtmp left behind',sib.skipped||!sib.tmpLeft);
 chk('renamed file is a real project file',sib.skipped||(sib.size>1000&&sib.magic.startsWith('NVPROJ')));
 chk('handle is re-acquired after the rename',sib.skipped||sib.handleSwapped);
 
-/* ── file:// 沒有 OPFS，要退到 IndexedDB（v11.8）──────────────────
+/* ── file:// 沒有 OPFS，要退到 IndexedDB（v11.9）──────────────────
    使用者是用 file:///D:/NiVedit/NiVedit.html 開的。file: 是獨立安全來源，
-   navigator.storage.getDirectory() 直接丟例外 —— v11.8 的暫存路徑在他那邊
+   navigator.storage.getDirectory() 直接丟例外 —— v11.9 的暫存路徑在他那邊
    從來沒跑到過，每次都安靜退回「直接寫」，整版等於沒改到東西。
    這裡把 OPFS 拔掉，驗「還是存得進去」而且「IDB 裡的暫存有清乾淨」。 */
 const noOpfs=await p.evaluate(async()=>{
@@ -261,7 +262,7 @@ const staleWords=await p.evaluate(()=>({
 facts.staleWords=staleWords;
 chk('both stale-snapshot wordings are recognised',staleWords.old&&staleWords.now&&!staleWords.other);
 
-/* ── 使用者實測抓到的三條（v11.8）────────────────────────────── */
+/* ── 使用者實測抓到的三條（v11.9）────────────────────────────── */
 const misc=await p.evaluate(async()=>{
   const out={};
   // B05 「換資料夾」以前按了毫無反應：ensureDir 只要現有資料夾還有權限就直接回傳它

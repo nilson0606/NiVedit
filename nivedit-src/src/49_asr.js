@@ -534,14 +534,17 @@ function asrAsk(title, msg, choices){
     const done = k => { mask.classList.remove('on'); mask.onmousedown = null;
                         document.removeEventListener('keydown', esc, true); res(k); };
     const esc = e => { if (e.key === 'Escape'){ e.stopPropagation(); done('cancel'); } };
+    let first = null;
     for (const c of choices){
       const b = document.createElement('button');
       b.textContent = c.label;
-      if (c.pri) b.className = 'pri';
+      if (c.pri){ b.className = 'pri'; first = first || b; }
       if (c.title) b.title = c.title;
       b.onclick = () => done(c.k);
       box.appendChild(b);
     }
+    // 焦點給主要的那顆，這樣 Enter 直接選它。沒有指定 pri 就不搶焦點。
+    if (first) setTimeout(() => first.focus(), 0);
     mask.onmousedown = e => { if (e.target === mask) done('cancel'); };
     document.addEventListener('keydown', esc, true);
     mask.classList.add('on');

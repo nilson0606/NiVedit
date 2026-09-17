@@ -1884,7 +1884,22 @@ function initUI(){
   $('#btnAddOverlay').onclick = () => { if (!A.clips.length) return toast('先加入影片或圖片，再放疊圖', true); $('#fileOverlay').click(); };
   $('#fileImage').onchange = e => { addImageFiles(e.target.files); e.target.value = ''; };
   $('#fileOverlay').onchange = e => { addOverlayFiles(e.target.files); e.target.value = ''; };
-  $('#btnAddSub').onclick = () => { if (!A.clips.length) return toast('先加入影片再放字幕', true); $('#fileSub').click(); };
+  /* 「＋ 字幕」以前直接開檔案選取視窗，等於這顆按鈕只有「匯入 SRT」一條路。
+     手打一句字幕的功能（addSub）其實早就有，但唯一的入口是「在字幕軌空白處
+     連點兩下」—— 那句話只寫在按鈕的 tooltip 裡，沒人會去看 tooltip。
+     v11.9 改成先問要哪一種。預設焦點放「新增一句」，按 Enter 就是它。 */
+  $('#btnAddSub').onclick = async () => {
+    if (!A.clips.length) return toast('先加入影片再放字幕', true);
+    const k = await asrAsk('新增字幕', '要自己打一句，還是匯入現成的 SRT 檔？', [
+      { k:'one',  label:'新增一句', pri:true, title:'在播放頭的位置生一個字幕方塊，右側面板可以直接打字' },
+      { k:'file', label:'匯入 SRT 檔', title:'讀進 .srt／.vtt，整批變成字幕' },
+      { k:'cancel', label:'取消' }
+    ]);
+    if (k === 'file') return $('#fileSub').click();
+    if (k !== 'one') return;
+    addSub();
+    toast('字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字');
+  };
   $('#fileSub').onchange = async e => { for (const f of [...e.target.files]) await importSRT(f); e.target.value = ''; };
   /* 右鍵刪點綁在「軌道」上，方塊每次重畫都是新節點，綁方塊會掉。
      連點兩下加點則由 startMusicDrag 自己判，原因見那邊的註解。 */

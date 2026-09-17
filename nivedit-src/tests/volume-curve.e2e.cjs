@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { VER } = require('./_ver.cjs');
 /* NiVedit 回歸測試 —— 用法見 tests/README.md
    node tests/<檔名>            結束碼 0 = 全過
    可用環境變數覆寫：NIVEDIT_HTML（要測的單檔 HTML）、
@@ -26,7 +27,7 @@ const http = require('http'), fs = require('fs');
 
   const ok = [], bad = [];
   const chk = (n, c) => (c ? ok : bad).push(n);
-  chk('版本', await p.textContent('#verTag') === 'v11.8');
+  chk('版本', await p.textContent('#verTag') === VER);
 
   await p.setInputFiles('#fileAny', [FIX + '/t300.webm', FIX + '/t900.webm', FIX + '/tone440.wav']);
   await p.waitForFunction(() => A.clips.length === 2 && A.musics.length === 1, null, { timeout: 60000 });

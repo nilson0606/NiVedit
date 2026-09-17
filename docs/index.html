@@ -431,7 +431,7 @@ select option.miss{color:var(--fg3)}
                title="拖曳可跳到影片任何位置" style="flex:1;min-width:110px;margin:0 6px">
         <button class="gh" id="btnAddImage" title="把圖片插進影片軌，佔一段時間">＋ 圖片</button>
         <button class="gh" id="btnAddOverlay" title="把圖片疊在畫面上方，底下影片照播">＋ 疊圖</button>
-        <button class="gh" id="btnAddSub" title="匯入 SRT 字幕檔，或在字幕軌雙擊新增一句">＋ 字幕</button>
+        <button class="gh" id="btnAddSub" title="新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句">＋ 字幕</button>
         <button class="gh" id="btnAddTitle">＋ 標題</button>
         <button class="gh" id="btnAddMusic">＋ 音軌</button>
         <button class="gh" id="btnProj">專案設定</button>
@@ -5070,7 +5070,15 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 已回到這支影片的開頭	Back to the start of this video
 已拉到這支影片的原始結尾	Extended to the original end of this video
 同軌前一段擋住了，只能退到	A clip before it on the same track stops it at
-同軌下一段擋住了，只能到	The next clip on the same track stops it at`;
+同軌下一段擋住了，只能到	The next clip on the same track stops it at
+新增字幕	Add a subtitle
+要自己打一句，還是匯入現成的 SRT 檔？	Type one yourself, or import an existing SRT file?
+新增一句	Type one
+匯入 SRT 檔	Import an SRT file
+在播放頭的位置生一個字幕方塊，右側面板可以直接打字	Puts a subtitle block at the playhead; type into the panel on the right
+讀進 .srt／.vtt，整批變成字幕	Reads an .srt or .vtt file and turns it into subtitles
+字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字	Subtitle added at the playhead — drag it along the subtitle track, drag its edges to resize, and type into the panel on the right
+新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句	Add one subtitle, or import an SRT file; double-clicking empty space on a subtitle track also adds one`;
 
 </script>
 <script>
@@ -5293,8 +5301,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v11.8';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/16';
+const VER = 'v11.9';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -10341,7 +10349,22 @@ function initUI(){
   $('#btnAddOverlay').onclick = () => { if (!A.clips.length) return toast('先加入影片或圖片，再放疊圖', true); $('#fileOverlay').click(); };
   $('#fileImage').onchange = e => { addImageFiles(e.target.files); e.target.value = ''; };
   $('#fileOverlay').onchange = e => { addOverlayFiles(e.target.files); e.target.value = ''; };
-  $('#btnAddSub').onclick = () => { if (!A.clips.length) return toast('先加入影片再放字幕', true); $('#fileSub').click(); };
+  /* 「＋ 字幕」以前直接開檔案選取視窗，等於這顆按鈕只有「匯入 SRT」一條路。
+     手打一句字幕的功能（addSub）其實早就有，但唯一的入口是「在字幕軌空白處
+     連點兩下」—— 那句話只寫在按鈕的 tooltip 裡，沒人會去看 tooltip。
+     v11.9 改成先問要哪一種。預設焦點放「新增一句」，按 Enter 就是它。 */
+  $('#btnAddSub').onclick = async () => {
+    if (!A.clips.length) return toast('先加入影片再放字幕', true);
+    const k = await asrAsk('新增字幕', '要自己打一句，還是匯入現成的 SRT 檔？', [
+      { k:'one',  label:'新增一句', pri:true, title:'在播放頭的位置生一個字幕方塊，右側面板可以直接打字' },
+      { k:'file', label:'匯入 SRT 檔', title:'讀進 .srt／.vtt，整批變成字幕' },
+      { k:'cancel', label:'取消' }
+    ]);
+    if (k === 'file') return $('#fileSub').click();
+    if (k !== 'one') return;
+    addSub();
+    toast('字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字');
+  };
   $('#fileSub').onchange = async e => { for (const f of [...e.target.files]) await importSRT(f); e.target.value = ''; };
   /* 右鍵刪點綁在「軌道」上，方塊每次重畫都是新節點，綁方塊會掉。
      連點兩下加點則由 startMusicDrag 自己判，原因見那邊的註解。 */
@@ -12553,14 +12576,17 @@ function asrAsk(title, msg, choices){
     const done = k => { mask.classList.remove('on'); mask.onmousedown = null;
                         document.removeEventListener('keydown', esc, true); res(k); };
     const esc = e => { if (e.key === 'Escape'){ e.stopPropagation(); done('cancel'); } };
+    let first = null;
     for (const c of choices){
       const b = document.createElement('button');
       b.textContent = c.label;
-      if (c.pri) b.className = 'pri';
+      if (c.pri){ b.className = 'pri'; first = first || b; }
       if (c.title) b.title = c.title;
       b.onclick = () => done(c.k);
       box.appendChild(b);
     }
+    // 焦點給主要的那顆，這樣 Enter 直接選它。沒有指定 pri 就不搶焦點。
+    if (first) setTimeout(() => first.focus(), 0);
     mask.onmousedown = e => { if (e.target === mask) done('cancel'); };
     document.addEventListener('keydown', esc, true);
     mask.classList.add('on');

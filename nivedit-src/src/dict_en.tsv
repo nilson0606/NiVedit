@@ -1098,3 +1098,11 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 已拉到這支影片的原始結尾	Extended to the original end of this video
 同軌前一段擋住了，只能退到	A clip before it on the same track stops it at
 同軌下一段擋住了，只能到	The next clip on the same track stops it at
+新增字幕	Add a subtitle
+要自己打一句，還是匯入現成的 SRT 檔？	Type one yourself, or import an existing SRT file?
+新增一句	Type one
+匯入 SRT 檔	Import an SRT file
+在播放頭的位置生一個字幕方塊，右側面板可以直接打字	Puts a subtitle block at the playhead; type into the panel on the right
+讀進 .srt／.vtt，整批變成字幕	Reads an .srt or .vtt file and turns it into subtitles
+字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字	Subtitle added at the playhead — drag it along the subtitle track, drag its edges to resize, and type into the panel on the right
+新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句	Add one subtitle, or import an SRT file; double-clicking empty space on a subtitle track also adds one

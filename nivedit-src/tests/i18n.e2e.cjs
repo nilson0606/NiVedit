@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { VER } = require('./_ver.cjs');
 /* NiVedit 回歸測試 —— 用法見 tests/README.md
    node tests/<檔名>            結束碼 0 = 全過
    可用環境變數覆寫：NIVEDIT_HTML（要測的單檔 HTML）、
@@ -25,7 +26,7 @@ const http = require('http'), fs = require('fs');
   const chk = (n, c) => (c ? ok : bad).push(n);
 
   // 1. 預設英文
-  chk('版本', await p.textContent('#verTag') === 'v11.8');
+  chk('版本', await p.textContent('#verTag') === VER);
   chk('語言鈕顯示 EN', (await p.textContent('#langBtn')).trim() === 'EN');
   chk('匯出鈕英文', (await p.textContent('#btnExport')).trim() === 'Export Video');
   chk('專案標頭英文', (await p.textContent('#projName')).includes('Untitled'));

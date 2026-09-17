@@ -1,4 +1,4 @@
-# NiVedit v11.8
+# NiVedit v11.7
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-A clip's start and end points each gained a second button. "To start" pulls the start point back to the very beginning of the source video, and "To end" extends the end point to the source's original end — the same thing as dragging the clip's edges all the way out on the timeline, which is hard to do precisely. Either one stops short when a neighbouring clip on the same track is in the way, and says so. Both can be undone, as can the "now" buttons next to them, which previously could not.
+The "+ Subtitle" button now asks what you want instead of going straight to the file picker: type one subtitle yourself, or import an SRT file. Typing one puts a block on the subtitle track at the playhead and selects it, so you can start typing in the panel on the right — the same shape as adding a title. That was always possible by double-clicking empty space on a subtitle track, but nothing on screen said so.
 
-The release before this one finished off five rough edges found in a full manual pass over the editor: the timeline zoom slider scales the tracks and nothing else — neither the preview above it nor the panels beside it shift or resize while you drag, however far you zoom in, the "now" button beside a clip's start point turns the frame you are looking at into the clip's first frame without shifting the picture, the button for changing the project folder actually opens the folder picker again, adding a title can be undone like every other kind of addition, and closing the tab with unsaved changes warns you first.
+The release before this one gave a clip's start and end points a second button each. "To start" pulls the start point back to the very beginning of the source video, and "To end" extends the end point to the source's original end. Either one stops short when a neighbouring clip on the same track is in the way, and says so.
 
 ## Features
 

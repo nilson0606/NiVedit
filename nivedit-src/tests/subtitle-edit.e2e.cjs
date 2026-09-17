@@ -1,4 +1,5 @@
 const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path');
+const { VER } = require('./_ver.cjs');
 const HTML=process.env.NIVEDIT_HTML,OUT=path.dirname(HTML);
 (async()=>{
 const srv=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');fs.createReadStream(HTML).pipe(r)});
@@ -7,7 +8,7 @@ const b=await chromium.launch({executablePath:process.env.NIVEDIT_CHROME}),p=awa
 let count=0;const bad=[],errors=[];const chk=(name,v)=>{count++;if(!v)bad.push(name)};p.on('pageerror',e=>errors.push(e.message));
 try{
 await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof openSubEditor==='function');
-chk('version',await p.textContent('#verTag')==='v11.8');
+chk('version',await p.textContent('#verTag')===VER);
 await p.setInputFiles('#fileAny',process.env.NIVEDIT_FIX+'/t300.webm');await p.waitForFunction(()=>A.clips.length===1);
 await p.evaluate(()=>{setLang('zh');A.subs=[{id:'old-ai',start:0,end:3,track:0,text:'原來的 AI 字幕'}];A.sel={type:'sub',id:'old-ai'};A.playhead=1;render();refreshProp();openSubEditor()});
 await p.click('#eAdd');
