@@ -1226,9 +1226,14 @@ function refreshProp(){
             ${rowNum('cOut','秒數', c.outP, 0.5, '')}
             <div class="hint">也可以拖時間軸上這一段的右緣。加長就是這張圖多插幾幀。</div></div>`
        : `<div class="grp"><h4>裁切</h4>
-            ${rowNum('cIn','起點', c.inP, 0.05, '<button class="gh" id="cInNow" style="padding:5px 8px">現在</button>')}
-            ${rowNum('cOut','終點', c.outP, 0.05, '<button class="gh" id="cOutNow" style="padding:5px 8px">現在</button>')}
-            <div class="hint">使用後長度 ${fmt(clipDur(c))}</div></div>
+            ${rowNum('cIn','起點', c.inP, 0.05,
+               '<button class="gh" id="cInNow" style="padding:5px 8px" title="設成播放頭現在的位置">現在</button>'
+             + '<button class="gh" id="cInZero" style="padding:5px 8px" title="退回素材的第 0 秒">歸零</button>')}
+            ${rowNum('cOut','終點', c.outP, 0.05,
+               '<button class="gh" id="cOutNow" style="padding:5px 8px" title="設成播放頭現在的位置">現在</button>'
+             + '<button class="gh" id="cOutMax" style="padding:5px 8px" title="拉到素材的原始結尾">到底</button>')}
+            <div class="hint">使用後長度 ${fmt(clipDur(c))}</div>
+            <div class="hint">「歸零」「到底」等同把時間軸上這一段的左右緣拉到底；被同軌前後段擋住時只會退到能退的地方。</div></div>
           <div class="grp"><h4>聲音</h4>
             <div class="row"><label>原聲靜音</label><div class="f">
               <input type="checkbox" id="cMute"${c.muted ? ' checked' : ''}>
@@ -1313,12 +1318,46 @@ function refreshProp(){
        同一個功能兩條路，只有一條是對的。結果是按下去畫面整個換掉，
        看起來像亂跳。（裁尾不必動 at，前面的內容本來就不會位移。） */
     on('cInNow', () => { const q = phInClip(); if (!q) return;
+      pushUndo();
       const in0 = c.inP;
       trimClip(c, c.inP + (A.playhead - q.start), c.outP);
       if (Number.isFinite(c.at)) c.at = Math.max(0, c.at + (c.inP - in0));
       render(); refreshProp(); });
     on('cOutNow',() => { const q = phInClip(); if (!q) return;
+      pushUndo();
       trimClip(c, c.inP, c.inP + (A.playhead - q.start)); render(); refreshProp(); });
+    /* 「歸零」「到底」＝把左右緣一路拉到素材的頭尾。
+       語意刻意跟 startClipTrim 的拖曳完全一致，不另開一套：
+
+         左緣：inP 往左、同時 at 也往左同樣的量（右緣留在原地，片段往前長），
+               下限是同軌前一段的結尾 floor，不能長到蓋過去。
+         右緣：outP 上限 = min(素材原始長度, inP + clipRoom)，clipRoom 就是
+               同軌下一段擋住的位置。
+
+       兩顆都先算出目標值再決定要不要 pushUndo —— 已經到底了還推一筆，
+       使用者按 Ctrl+Z 會看到「什麼都沒變」的一步，很像壞掉。 */
+    const trimFloor = () => { const L = layout(), q = L[i]; return q.prev < 0 ? 0 : L[q.prev].end; };
+    on('cInZero', () => {
+      const in0 = c.inP, at0 = c.at;
+      const lo = Number.isFinite(at0) ? Math.max(0, in0 + trimFloor() - at0) : 0;
+      const to = clamp(lo, 0, c.outP - 0.1);
+      if (Math.abs(to - in0) < 1e-4){ toast('已經是這支影片的開頭了'); return; }
+      pushUndo();
+      c.inP = to;
+      if (Number.isFinite(at0)) c.at = Math.max(0, at0 + to - in0);
+      render(); refreshProp();
+      toast(to > 1e-3 ? `同軌前一段擋住了，只能退到 ${to.toFixed(2)} 秒` : '已回到這支影片的開頭');
+    });
+    on('cOutMax', () => {
+      const out0 = c.outP;
+      const to = Math.min(c.dur, c.inP + clipRoom(c));
+      if (Math.abs(to - out0) < 1e-4){ toast('已經拉到這支影片的原始結尾了'); return; }
+      pushUndo();
+      trimClip(c, c.inP, c.dur);
+      render(); refreshProp();
+      toast(c.outP < c.dur - 1e-3 ? `同軌下一段擋住了，只能到 ${c.outP.toFixed(2)} 秒`
+                                  : '已拉到這支影片的原始結尾');
+    });
     bind('cMute','change', (_, el) => { c.muted = el.checked; render(); });
     bind('cVol','input', v => { c.vol = +v; setVal('cVol', (+v).toFixed(2)); });
     const showClip = () => {

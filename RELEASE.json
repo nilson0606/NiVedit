@@ -1,6 +1,6 @@
 {
-  "version": "11.7",
-  "html_sha256": "72ef159ec0502b26741c91903c75aa4808b0483827cf57175abef70d2ea2d158",
-  "html_bytes": 1011914,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 669 checks passed across sixteen suites, plus the GIF suite. Twenty-one of those come from a manual pass over the editor and cover behaviour that was wrong without being broken."
+  "version": "11.8",
+  "html_sha256": "2ea094b9815282c22c3d329d6c03b94f2a0010ccdd854105be267f077d8c3b19",
+  "html_bytes": 1015147,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 682 checks passed across sixteen suites, plus the GIF suite. Thirteen of those are new and cover the two buttons added in this release, including what happens when a neighbouring clip blocks them."
 }

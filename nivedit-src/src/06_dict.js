@@ -1085,4 +1085,14 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 標題與疊圖共用同一條，所以標題也可以拉到疊圖後面。	Titles and overlays share one axis, so a title can also go behind an overlay.
 疊圖與標題共用同一條，所以疊圖也可以拉到標題前面。	Overlays and titles share one axis, so an overlay can also go in front of a title.
 已經在最前面了	Already at the front
-已經在最後面了	Already at the back`;
+已經在最後面了	Already at the back
+歸零	To start
+設成播放頭現在的位置	Set to the current playhead position
+退回素材的第 0 秒	Go back to 0 s of the source
+拉到素材的原始結尾	Extend to the original end of the source
+「歸零」「到底」等同把時間軸上這一段的左右緣拉到底；被同軌前後段擋住時只會退到能退的地方。	"To start" and "To end" are the same as dragging this clip's edges all the way out; a neighbouring clip on the same track stops it short.
+已經是這支影片的開頭了	That is already the start of this video
+已回到這支影片的開頭	Back to the start of this video
+已拉到這支影片的原始結尾	Extended to the original end of this video
+同軌前一段擋住了，只能退到	A clip before it on the same track stops it at
+同軌下一段擋住了，只能到	The next clip on the same track stops it at`;

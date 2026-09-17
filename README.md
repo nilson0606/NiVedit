@@ -1,4 +1,4 @@
-# NiVedit v11.7
+# NiVedit v11.8
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Five rough edges found in a full manual pass over the editor: the timeline zoom slider scales the tracks and nothing else — neither the preview above it nor the panels beside it shift or resize while you drag, however far you zoom in, the "now" button beside a clip's start point turns the frame you are looking at into the clip's first frame without shifting the picture, and leaves the clip alone when the playhead is elsewhere, the button for changing the project folder actually opens the folder picker again, adding a title can be undone like every other kind of addition, and closing the tab with unsaved changes warns you first, and cleaning up unused media explains that it only touches browser storage.
+A clip's start and end points each gained a second button. "To start" pulls the start point back to the very beginning of the source video, and "To end" extends the end point to the source's original end — the same thing as dragging the clip's edges all the way out on the timeline, which is hard to do precisely. Either one stops short when a neighbouring clip on the same track is in the way, and says so. Both can be undone, as can the "now" buttons next to them, which previously could not.
 
-The release before this one made saving atomic: the editor writes a temporary file beside the project and renames it into place, so the original is untouched until the new file is complete.
+The release before this one finished off five rough edges found in a full manual pass over the editor: the timeline zoom slider scales the tracks and nothing else — neither the preview above it nor the panels beside it shift or resize while you drag, however far you zoom in, the "now" button beside a clip's start point turns the frame you are looking at into the clip's first frame without shifting the picture, the button for changing the project folder actually opens the folder picker again, adding a title can be undone like every other kind of addition, and closing the tab with unsaved changes warns you first.
 
 ## Features
 

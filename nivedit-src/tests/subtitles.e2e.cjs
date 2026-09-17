@@ -8,7 +8,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  try{
  await p.addInitScript(() => { window.showSaveFilePicker = undefined; }); // Test browser-download fallback; native save is covered separately.
   await p.goto('http://127.0.0.1:'+srv.address().port);await p.waitForFunction(()=>typeof A!=='undefined');
- chk('version',await p.textContent('#verTag')==='v10.7');
+ chk('version',await p.textContent('#verTag')==='v11.8');
  await p.setInputFiles('#fileAny',FIX+'/t300.webm');await p.waitForFunction(()=>A.clips.length===1&&A.clips[0].el.readyState>=2);
  await p.evaluate(()=>{
    Object.assign(A.proj,{w:320,h:180,fps:20,bitrate:2,fadeIn:0,fadeOut:0});
@@ -28,7 +28,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
    };
    window.shotSubs=()=>{const cv=document.createElement('canvas');cv.width=320;cv.height=180;renderFrame(cv.getContext('2d'),.7,320,180);return countText(cv)};
  });
- // v10.7：下軌那一組排在上面，整條時間軸的 L 編號才由上往下遞增（L1,L1,L2,L2,L3…）。
+ // v11.8：下軌那一組排在上面，整條時間軸的 L 編號才由上往下遞增（L1,L1,L2,L2,L3…）。
  // y 一律照【DOM 目前的順序】去量，不要另外寫死一份名單 —— 兩份名單會各自漂移。
  const layout=await p.evaluate(()=>{
    const want=['videoLower','subLower','videoUpper','subUpper'];
@@ -39,7 +39,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  });facts.layout=layout;
  chk('exact requested interleaved DOM order',layout.ids.join(',')==='videoLower,subLower,videoUpper,subUpper');
  chk('exact requested visual order (下軌組在上)',layout.y.every((y,i)=>i===0||y>layout.y[i-1]));
- // v10.7：時間軸高度自動貼合內容，L1~L5 加音軌不用捲就看得完；捲軸本身保留。
+ // v11.8：時間軸高度自動貼合內容，L1~L5 加音軌不用捲就看得完；捲軸本身保留。
  chk('timeline auto-fits its content (no scrolling needed)',layout.fit<=0&&layout.tl<=layout.cap);
  chk('timeline can still scroll when it has to',layout.scrollable==='auto');
  chk('both subtitle lanes have independent blocks',await p.locator('#subUpper .sblk').count()===1&&await p.locator('#subLower .sblk').count()===1);
@@ -47,7 +47,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  chk('both subtitle tracks actually render',pixels.red>100&&pixels.green>100);
  chk('separate subtitle positions',pixels.ry<pixels.gy-20);
 
- // ── v10.7：字幕自由定位（x＝字幕框水平中心、y＝字幕框底緣，整軌共用）──
+ // ── v11.8：字幕自由定位（x＝字幕框水平中心、y＝字幕框底緣，整軌共用）──
  const place=await p.evaluate(()=>{
    const lo=subStyleFor(0), up=subStyleFor(1);
    const cue=A.subs.find(c=>subTrack(c)===0);
@@ -197,7 +197,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  await p.setViewportSize({width:1366,height:768});await p.waitForTimeout(200);
  chk('compact layout keeps audio track visible',await p.evaluate(()=>$('#trkMusic').getBoundingClientRect().bottom<=innerHeight));
 
- // ── v10.7：字幕綁著某一段影片，那一段搬到哪就跟到哪（時間＋軌道）──
+ // ── v11.8：字幕綁著某一段影片，那一段搬到哪就跟到哪（時間＋軌道）──
  // 舊行為只搬時間不搬軌道，結果字幕留在 L1、它綁的影片跑到 L2，
  // 字幕反而被自己那段影片蓋住。
  await p.setViewportSize({width:1500,height:980});await p.waitForTimeout(150);
@@ -266,7 +266,7 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
  chk('原地換軌：綁第二段的字幕完全沒動',
      inPlace.after.slice(5).every((a,i)=>a.tr===0&&Math.abs(a.t-inPlace.before[i+5].t)<1e-9));
 
- // ── v10.7：開檔時把字幕拉回它綁的那一段所在的影片軌 ──────────
+ // ── v11.8：開檔時把字幕拉回它綁的那一段所在的影片軌 ──────────
  // v10.3 以前搬過軌的專案會留下「影片在上軌、字幕在下軌」，那種狀態下
  // 字幕會被它自己綁的那段影片蓋住。開檔修一次，不必叫使用者手動再搬一遍。
  //
