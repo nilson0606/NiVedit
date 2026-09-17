@@ -1,6 +1,7 @@
 {
-  "version": "12.2",
-  "html_sha256": "a2b8429973d40c6fb509b993bd3ec7dc6890e1c205ac4eb198a222e87621dcb8",
-  "html_bytes": 1028220,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 730 checks passed across sixteen suites, plus the GIF suite. Twenty-one are new, and every one was confirmed to fail with its fix removed."
+  "version": "12.3",
+  "html_sha256": "31f12449e19323252e415c1a62d97d1f1fb5fc870c09c6d33d05bf64f783bd37",
+  "html_bytes": 1140800,
+  "built_in_effects": 240,
+  "verification": "Windows Edge 154: 65 library checks plus exact hashes, frame counts and durations for all 240 GIFs. Existing suites 729/730 plus GIF suite; one title-pixel tolerance failure is identical on unchanged v12.2 (84 preview / 67 decoded). Two i18n diagnostics completed."
 }

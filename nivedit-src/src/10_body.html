@@ -55,7 +55,7 @@
         <input type="range" id="seekBar" min="0" max="1000" step="1" value="0"
                title="拖曳可跳到影片任何位置" style="flex:1;min-width:110px;margin:0 6px">
         <button class="gh" id="btnAddImage" title="把圖片插進影片軌，佔一段時間">＋ 圖片</button>
-        <button class="gh" id="btnAddOverlay" title="把圖片疊在畫面上方，底下影片照播">＋ 疊圖</button>
+        <button class="gh" id="btnAddOverlay" title="把圖片疊在畫面上方，底下影片照播">＋ 動畫效果</button>
         <button class="gh" id="btnAddSub" title="新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句">＋ 字幕</button>
         <button class="gh" id="btnAddTitle">＋ 標題</button>
         <button class="gh" id="btnAddMusic">＋ 音軌</button>
@@ -130,6 +130,30 @@
     </div>
   </div>
 </div>
+
+<dialog id="fxDialog" aria-labelledby="fxTitle">
+  <div class="fx-heading"><h3 id="fxTitle">動畫效果素材庫</h3><button id="fxClose" class="gh">關閉</button></div>
+  <p class="hint">內建 240 組動畫效果。點選預覽，再加入目前播放頭位置。</p>
+  <div class="fx-filters">
+    <input id="fxSearch" type="search" placeholder="搜尋動畫效果…" aria-label="搜尋動畫效果">
+    <select id="fxPack" aria-label="素材包"><option value="">全部素材包</option></select>
+    <select id="fxCategory" aria-label="效果分類"><option value="">全部分類</option></select>
+  </div>
+  <div class="fx-body">
+    <div class="fx-browse">
+      <div id="fxGrid"></div>
+      <div class="fx-pagination"><button id="fxPrev" class="gh">上一頁</button><span id="fxCount" data-nt></span><button id="fxNext" class="gh">下一頁</button></div>
+    </div>
+    <aside class="fx-detail">
+      <div class="fx-stage"><img id="fxPreview" alt="動畫預覽"></div>
+      <strong id="fxName" data-nt></strong>
+      <p id="fxStatus" role="status" aria-live="polite"></p>
+      <button id="fxRetry" class="gh" hidden>重新載入</button>
+      <button id="fxAdd" class="pri" disabled>加入時間軸</button>
+      <button id="fxImport" class="gh">匯入自己的 GIF／圖片</button>
+    </aside>
+  </div>
+</dialog>
 
 <div id="gmask">
   <div class="modal" style="width:min(900px,94vw)">

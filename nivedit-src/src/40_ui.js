@@ -6,7 +6,7 @@
 const pcv  = $('#preview');
 const pctx = pcv.getContext('2d');
 const ROW  = 34;                    // 時間軸每一列的高度（v10.6 由 42 收薄）
-// 空的圖片／疊圖／標題軌只佔一半高度。v10.2 多了一條圖片軌，
+// 空的圖片／動畫效果／標題軌只佔一半高度。v10.2 多了一條圖片軌，
 // 四條都用滿高的話 1366×768 這種常見筆電畫面會把音軌擠到看不到。
 // v10.6 再收一次：影片軌 38、字幕列 26、其餘 ROW 36，
 // 目標是 1366×768 不用捲就看得到 L1~L5 加音軌（捲軸本身保留）。
@@ -185,7 +185,7 @@ function followPlayhead(force){
   }
 }
 
-// 每段獨立切換。共用標題／疊圖／配樂固定在時間軸；綁定字幕跟著自己的片段。
+// 每段獨立切換。共用標題／動畫效果／配樂固定在時間軸；綁定字幕跟著自己的片段。
 function setClipMode(c,mode){
   if(!VIDEO_MODES.some(q=>q[0]===mode)||clipMode(c)===mode)return;
   pushUndo();pinFreeClips();
@@ -211,11 +211,11 @@ function render(){
      選了圖片按鈕還是說「✂ 分割影片」「刪除影片」。使用者在 J08 回報。 */
   const selClip = A.sel.type === 'clip' ? A.clips.find(x => x.id === A.sel.id) : null;
   const what = A.sel.type === 'music' ? '音軌' : A.sel.type === 'title' ? '標題'
-             : A.sel.type === 'overlay' ? '疊圖' : A.sel.type === 'sub' ? '字幕'
+             : A.sel.type === 'overlay' ? '動畫效果' : A.sel.type === 'sub' ? '字幕'
              : (selClip && isImg(selClip)) ? '圖片' : '影片';
   const sb = $('#btnSplit');
   if (sb){
-    sb.textContent = `✂ 分割${what}`;
+    sb.textContent = A.sel.type === 'overlay' ? '✂ 動畫效果切割' : `✂ 分割${what}`;
     sb.title = `在播放頭切開目前選取的${what}（快捷鍵 S）`;
   }
   const db = $('#btnDel');
@@ -279,7 +279,7 @@ function renderClipList(){
   if (typeof asrPanel === 'function') asrPanel();     // 「範圍」下拉要跟著片段一起變
 }
 
-/** 在陣列裡把某個項目往前後搬一格（標題／疊圖＝圖層上下，音軌＝排序） */
+/** 在陣列裡把某個項目往前後搬一格（標題／動畫效果＝圖層上下，音軌＝排序） */
 function moveLayer(arr, item, dir){
   const i = arr.indexOf(item), to = i + dir;
   if (i < 0 || to < 0 || to >= arr.length){ toast('已經在最外面了'); return; }
@@ -308,7 +308,7 @@ function fixInnerWidth(){
 const TRACK_DEF = [
   { k:'video', id:'trkVideo', name:'影片' },
   { k:'img',   id:'trkImg',   name:'圖片' },
-  { k:'over',  id:'trkOver',  name:'疊圖' },
+  { k:'over',  id:'trkOver',  name:'動畫效果' },
   { k:'title', id:'trkTitle', name:'標題' },
   { k:'music', id:'trkMusic', name:'音軌' }
 ];
@@ -451,7 +451,7 @@ function finishTrackDrag(d){
   toast(`${nm}軌移到第 ${d.order.indexOf(d.k) + 1} 條（只是時間軸排列，不影響畫面上的疊放順序）`);
 }
 
-/** 換軌道順序。v10.2 起這【就是】在換圖層：圖片／疊圖／標題三軌的
+/** 換軌道順序。v10.2 起這【就是】在換圖層：圖片／動畫效果／標題三軌的
     先後決定 L3、L4、L5…，所以提示要講對，不能再說「只是時間軸排列」。
     影片軌釘死在第一個，誰也不能排到它前面。 */
 function moveTrack(k, dir){
@@ -562,13 +562,13 @@ function renderTimeline(zoomOnly){
     }
   });
 
-  // 疊圖軌
+  // 動畫效果軌
   const to = $('#trkOver');
   to.querySelectorAll('.oblk,.trkhint').forEach(n => n.remove());
   if (!A.overlays.length){
     const hint = document.createElement('div');
     hint.className = 'trkhint';
-    hint.textContent = '這一軌的圖片會疊在影片上方 —— 按上面「＋ 疊圖」';
+    hint.textContent = '這一軌的圖片會疊在影片上方 —— 按上面「＋ 動畫效果」';
     to.appendChild(hint);
   }
   const olanes = [];
@@ -596,7 +596,7 @@ function renderTimeline(zoomOnly){
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');
   videoGroup.querySelectorAll('.subtitleLane').forEach(n=>n.remove());
   // v10.3：底層那一組排在上面，整條時間軸的 L 編號才會由上往下遞增
-  // （L1 影片底層／字幕底層 → L2 影片頂層／字幕頂層 → L3 圖片 → L4 疊圖 → L5 標題）。
+  // （L1 影片底層／字幕底層 → L2 影片頂層／字幕頂層 → L3 圖片 → L4 動畫效果 → L5 標題）。
   let subTop=46;
   for(const track of [0,1]){
     const lane=document.createElement('div');lane.className='subtitleLane';
@@ -811,7 +811,7 @@ function startSubDrag(e, c){
   document.addEventListener('mouseup', up);
 }
 
-/** 疊圖方塊：中間拖曳＝移動，兩端拖曳＝改長度（等於這張圖多插幾幀） */
+/** 動畫效果方塊：中間拖曳＝移動，兩端拖曳＝改長度（等於這張圖多插幾幀） */
 function startOverlayDrag(e, o){
   const blk = e.target.closest('.oblk');
   if (blk && kfBlockMouse(e, o, blk)) return;
@@ -924,7 +924,7 @@ function kfAlign(obj, prop, target){
   if (k) k.v = clamp(k.v + d, 0, 1);
 }
 
-/* ── 動態的兩個時間標記，畫在疊圖／標題方塊上 ─────────────────
+/* ── 動態的兩個時間標記，畫在動畫效果／標題方塊上 ─────────────────
    起點之前維持起點的樣子、終點之後維持終點的樣子，中間才走。
    標記可以拖；在方塊上連點兩下會把「比較近的那一個」移過來。
    跟音量曲線同樣的道理：只有標記吃得到滑鼠，方塊本身照樣拖得動。 */
@@ -1660,16 +1660,16 @@ function refreshPropRaw(){
   } else if (s.type === 'overlay'){
     const o = A.overlays.find(x => x.id === s.id);
     if (!o){ A.sel = { type:'proj' }; return refreshProp(); }
-    $('#propTitle').textContent = '疊圖';
+    $('#propTitle').textContent = '動畫效果';
     const shownW = Math.round(o.scale * A.proj.w);
     p.innerHTML =
       `<div class="grp"><h4 data-nt>${esc(o.name)}</h4>
         <div class="hint">原始尺寸 ${o.w}×${o.h}　畫面上約 ${shownW}px 寬</div>
-        ${o._gif ? '<div class="hint">GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。</div>' : ''}</div>
+        ${o._gif ? '<div class="hint">GIF 動畫會循環播放至動畫效果結束，預覽與匯出同步。</div>' : ''}</div>
        <div class="grp"><h4>時間</h4>
         ${rowNum('oStart','出現', o.start, 0.1, '<button class="gh" id="oStartNow" style="padding:5px 8px">現在</button>')}
         ${rowNum('oEnd','消失', o.end, 0.1, '<button class="gh" id="oEndNow" style="padding:5px 8px">現在</button>')}
-        <div class="hint">方塊也可以直接在「疊圖」軌上拖，兩端拉長縮短。</div></div>
+        <div class="hint">方塊也可以直接在「動畫效果」軌上拖，兩端拉長縮短。</div></div>
        <div class="grp"><h4>${kfOn(o) ? '位置與大小（起點）' : '位置與大小'}</h4>
         <div class="row"><label>快速對位</label><div class="f"><div class="nine" id="onine">
           <button data-p="0.12,0.15">↖</button><button data-p="0.5,0.15">↑</button><button data-p="0.88,0.15">↗</button>
@@ -1692,7 +1692,7 @@ function refreshPropRaw(){
           ['rot','旋轉',-360,360,1,o.rot||0,'°'],
          ],
          '這一段時間內從上面的起點平滑走到這裡的終點。淡入淡出與圖層順序照舊。')}
-       <button id="oDel" style="width:100%">移除這張疊圖</button>`;
+       <button id="oDel" style="width:100%">移除這張動畫效果</button>`;
     const show = () => { if (A.playhead < o.start || A.playhead > o.end) seekTo(o.start + Math.min(0.4, (o.end-o.start)/2)); };
     bind('oStart','input', v => {
       const ns = clamp(+v, 0, o.end - 0.2);
@@ -1872,12 +1872,12 @@ function refreshProp(){
 
 function bind(id, ev, fn){ const el = $('#' + id); if (el) el.addEventListener(ev, e => fn(el.value, el)); }
 
-/** 疊圖／標題的「目前在第幾層」說明。
+/** 動畫效果／標題的「目前在第幾層」說明。
 
-    v10.2 起層級是【整軌】的，不是單一物件的：所有疊圖都是同一號、
+    v10.2 起層級是【整軌】的，不是單一物件的：所有動畫效果都是同一號、
     所有標題都是同一號。所以這裡只報告現況，改順序要用時間軸左側的 ▲▼。
     原本那兩顆「往上一層／往下一層」已經拿掉 —— 它靠每個物件各自的 z，
-    正是「每加一個疊圖就多一號」的成因。
+    正是「每加一個動畫效果就多一號」的成因。
 
     影片與字幕沒有這一區，而且是刻意的：字幕綁在自己的影片軌上，
     要跟著那一軌一起上下，單獨拉層級會讓字幕跑到別軌影片後面。 */
@@ -1926,7 +1926,8 @@ function initUI(){
   });
   $('#btnAddMusic').onclick = () => $('#fileAudio').click();
   $('#btnAddImage').onclick = () => { if (!A.clips.length && !confirm('目前還沒有影片，要直接用圖片開始嗎？')) return; $('#fileImage').click(); };
-  $('#btnAddOverlay').onclick = () => { if (!A.clips.length) return toast('先加入影片或圖片，再放疊圖', true); $('#fileOverlay').click(); };
+  $('#btnAddOverlay').onclick = openEffectLibrary;
+  initEffectLibrary();
   $('#fileImage').onchange = e => { addImageFiles(e.target.files); e.target.value = ''; };
   $('#fileOverlay').onchange = e => { addOverlayFiles(e.target.files); e.target.value = ''; };
   /* 「＋ 字幕」以前直接開檔案選取視窗，等於這顆按鈕只有「匯入 SRT」一條路。
@@ -2095,6 +2096,11 @@ function initUI(){
   document.addEventListener('keydown', e => {
     const el = document.activeElement;
     if (A.exporting) return;
+    if ($('#fxDialog').open){
+      // Prevent native undo from editing the last search field while a card/button has focus.
+      if (!inTextField(el) && (e.ctrlKey || e.metaKey) && /^[zy]$/i.test(e.key)) e.preventDefault();
+      return;
+    }
     if ($('#gmask').classList.contains('on')){        // 預覽選單開著時，鍵盤先給它
       if (e.key === 'Escape') closePicker();
       return;

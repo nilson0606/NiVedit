@@ -168,6 +168,7 @@ function setLang(l){
   if (typeof updateThemeButton === 'function') updateThemeButton();
   i18nSweep(document.body);
   try { if (typeof render === 'function') render(); } catch (e) {}
+  if (document.querySelector('#fxDialog')?.open) renderEffectGrid();
 }
 
 function i18nInit(){

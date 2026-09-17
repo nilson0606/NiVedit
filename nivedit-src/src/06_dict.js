@@ -656,7 +656,6 @@ NiVedit 專案	NiVedit project
 已儲存到電腦	Saved to your computer
 真實檔案，跟瀏覽器儲存無關。	A real file — nothing to do with browser storage.
 「開啟」列表讀的是你在專案視窗選的資料夾；如果剛才存到別的地方，用「換一個資料夾」指過去就看得到。	The Open list reads the folder you picked in the project window. If you just saved somewhere else, use "Change folder" to point at it.
-試了四次都失敗。多半是外面有程式正在掃這個專案檔 —— Windows 搜尋索引或防毒在掃剛寫出去的大檔，掃完之前一直存不進去。	Four attempts failed. Something outside the editor is most likely scanning this project file — Windows Search indexing or antivirus working through the large file that was just written. Saving keeps failing until that finishes.
 多半是素材檔在外面被移動、改名或改過內容。	usually the files were moved, renamed or edited outside the app.
 重新開啟這個專案（或把素材重新拖進來）就會好。	Reopening the project (or dropping the files in again) fixes it.
 開啟失敗：	Open failed: 
@@ -1076,9 +1075,6 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 清空本軌	Clear this track
 此軌目前沒有字幕，按「＋ 一句」開始新增。	This track has no subtitles. Press Add cue to begin.
 確定要刪掉本軌的	Delete all cues on this track:
-圖層順序（誰蓋在誰上面）	Layer order (what covers what)
-往上一層	Bring forward
-往下一層	Send backward
 目前 L	Currently L
 ，可調的共	, of
 層，數字越大越顯示在前方。	adjustable layers; a higher number shows in front.
@@ -1108,4 +1104,76 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 開了循環的話只辨識第一輪，不會跑出重複的句子。	If the track loops, only the first pass is transcribed, so you will not get duplicate lines.
 找不到那一條音軌（可能已經被刪掉了）	That audio track is gone — it may have been deleted
 解不出「	Could not decode “
-」的聲音	”`;
+」的聲音	”
+＋ 動畫效果	+ Animation effects
+圖層已加入 —— 可在「動畫效果」軌左右拖、兩端拉長縮短	Animation effect added — drag it along the Animation effect track, or drag its edges to resize
+先選一個動畫效果	Select an animation effect first
+播放頭不在這個動畫效果上，或太靠近邊緣	The playhead is not on this animation effect, or too close to its edge
+動畫效果已分割	Animation effect split
+動畫效果	Animation effects
+這一軌的圖片會疊在影片上方 —— 按上面「＋ 動畫效果」	Images on this track sit on top of the video — use "+ Animation effect" above
+圖片請用「＋ 圖片」或「＋ 動畫效果」加入	Use "+ Image" or "+ Animation effect" to add pictures
+方塊也可以直接在「動畫效果」軌上拖，兩端拉長縮短。	You can also drag the block on the Animation effect track, or drag its edges to resize.
+移除這張動畫效果	Remove this animation effect
+層，數字越大越前面。動畫效果永遠在影片之上、標題之下。	 — a higher number is nearer the front. Animation effects always sit above the video and below titles.
+先加入影片或圖片，再放動畫效果	Add a video or image before adding an animation effect
+動畫效果=	animation effects=
+✂ 分割動畫效果	✂ Split animation effect
+刪除動畫效果	Delete animation effect
+在播放頭切開目前選取的動畫效果（快捷鍵 S）	Split the selected animation effect at the playhead (shortcut: S)
+GIF 動畫會循環播放至動畫效果結束，預覽與匯出同步。	GIF animation loops until the animation effect ends, in sync with preview and export.
+勾起來就能讓動畫效果在畫面上移動、縮放或轉動 —— 緩慢推鏡（Ken Burns）就是這樣做的。	Tick this to move, zoom or rotate the animation effect on screen — a slow Ken Burns push is exactly this.
+上軌空白會露出下軌，兩軌都空白時是黑底；動畫效果、標題與配樂仍按原定時間播放。	An upper-track gap reveals the lower track. Gaps on both tracks show black; animation effects, titles and music follow their own timing.
+標題與動畫效果共用同一條，所以標題也可以拉到動畫效果後面。	Titles and animation effects share one axis, so a title can also go behind an animation effect.
+動畫效果與標題共用同一條，所以動畫效果也可以拉到標題前面。	Animation effects and titles share one axis, so an animation effect can also go in front of a title.
+✂ 動畫效果切割	✂ Split animation effect
+動畫效果素材庫	Animation effects library
+內建 240 組動畫效果。點選預覽，再加入目前播放頭位置。	240 built-in effects. Preview an effect, then add it at the playhead.
+搜尋動畫效果…	Search effects…
+搜尋動畫效果	Search effects
+素材包	Effect pack
+全部素材包	All packs
+效果分類	Effect category
+全部分類	All categories
+上一頁	Previous
+下一頁	Next
+動畫預覽	Animation preview
+重新載入	Retry
+加入時間軸	Add to timeline
+匯入自己的 GIF／圖片	Import your GIF / image
+選一個效果，預覽後加入時間軸。	Select an effect to preview it and add it to the timeline.
+沒有符合的動畫效果	No matching effects
+載入動畫預覽中…	Loading animation preview…
+預覽會循環播放。加入後可調整位置、大小、旋轉、透明度與關鍵偵。	The preview loops. After adding, adjust position, size, rotation, opacity and keyframes.
+素材載入失敗。請重試；本機使用時請把 animation-effects 資料夾放在 HTML 旁邊。	Could not load this effect. Retry; for local use, keep the animation-effects folder beside the HTML file.
+專案已改變，請重新選擇動畫效果	The project changed. Please select the effect again.
+加入動畫效果中…	Adding animation effect…
+動畫無法加入，請查看提示或選擇其他效果。	Could not add this animation. Check the notification or choose another effect.
+動畫效果已加入 —— 可在時間軸左右拖、兩端拉長縮短	Animation effect added — drag to move; drag its edges to resize.
+表情與慶祝 · 40	Reactions & celebration · 40
+常用效果 · 50	Everyday effects · 50
+短影音效果 · 100	Short video effects · 100
+誇張效果 · 50	Bold effects · 50
+互動提示	Interaction prompts
+光效	Light effects
+動態特效	Motion effects
+字卡與標題	Titles & text
+強調反應	Emphasis & reactions
+慶祝與情感	Celebration & feelings
+慶祝裝飾	Celebration decorations
+手勢指引	Gestures & pointers
+指引標記	Arrows & markers
+提示與特效	Prompts & effects
+故障數位	Digital glitches
+數據與計時	Data & timers
+爆裂衝擊	Explosions & impacts
+相框裝飾	Frames & decorations
+社群介面	Social media
+粒子自然	Particles & nature
+華麗慶祝	Festive celebrations
+表情反應	Expressions & reactions
+誇張反應	Bold reactions
+誇張文字	Bold text
+轉場遮罩	Transition masks
+速度動感	Speed & motion
+邊框轉場	Borders & transitions`;

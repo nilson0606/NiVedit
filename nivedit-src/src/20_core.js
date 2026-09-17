@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -858,21 +858,21 @@ function activeTracksAt(T){const L=layout();return [0,1,IMG_TRACK].map(t=>active
 
 /* ── 圖層（L 編號）──────────────────────────────────────────
    v10.2 起 L 編號是【固定】的，由軌道種類與軌道順序決定，
-   不再隨物件數量增減。三張疊圖全部都是同一號。
+   不再隨物件數量增減。三張動畫效果全部都是同一號。
 
        L1  影片底層 ＋ 底層字幕（字幕畫在自己那一軌的影片前面）
        L2  影片頂層 ＋ 頂層字幕　　整組蓋住 L1
-       L3  ↑ 圖片／疊圖／標題三軌，依目前的軌道順序取號，
+       L3  ↑ 圖片／動畫效果／標題三軌，依目前的軌道順序取號，
        L4  │ 用時間軸左側的 ▲▼ 換順序就換號碼，
        L5  ↓ L3 是地板 —— 換不進 L1／L2。音軌不取號。
 
-   數字越大越顯示在前方。同一號之內（例如三張疊圖都是 L4），
+   數字越大越顯示在前方。同一號之內（例如三張動畫效果都是 L4），
    時間軸上【起始時間較後的蓋住較前的】。
 
    字幕綁在自己的影片軌（subTrack），跟那一軌是同一層、一起上下，
    不能單獨拉層級。那一軌當下沒有片段（中間留白）時字幕照畫。
 
-   舊版的 per-object z 軸已經拿掉：那正是「每加一個疊圖就多一號」的成因。
+   舊版的 per-object z 軸已經拿掉：那正是「每加一個動畫效果就多一號」的成因。
    舊專案裡殘留的 z 欄位讀進來會被忽略，不影響外觀。 */
 
 /** 可移動的三軌，順序即層級。影片組固定佔 L1／L2，所以從 L3 起跳。 */
@@ -922,7 +922,7 @@ async function addAnyFiles(files){
   if (vi.length) await addVideoFiles(vi);
   // 拖放這條路只收影片與聲音。圖片仍然要先挑出來（不然 .png 會落進 vi 被當成影片去解碼，
   // 得到的是「瀏覽器無法解碼這個檔案」這種看不懂的錯），挑出來之後明說要走哪個按鈕。
-  if (im.length) toast('圖片請用「＋ 圖片」或「＋ 疊圖」加入', true);
+  if (im.length) toast('圖片請用「＋ 圖片」或「＋ 動畫效果」加入', true);
   for (const f of au) await addMusicFile(f);
   for (const f of sr) await importSRT(f);
   if (pj.length && typeof projImportFile === 'function') await projImportFile(pj[0]);
@@ -1049,12 +1049,16 @@ async function addImageFiles(files, secs){
 /** 疊在畫面上的圖層：底下影片照播，圖片浮在前面 */
 async function addOverlayFiles(files){
   const list = [...files].filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name));
-  if (!list.length){ toast('沒有偵測到圖片檔', true); return; }
-  pushUndo();
+  if (!list.length){ toast('沒有偵測到圖片檔', true); return 0; }
+  let added = 0;
+  const epoch = _gifEpoch;
   const tot = totalDur();
   for (const f of list){
+    if (epoch !== _gifEpoch) break;
     try {
       const { im, url, gif } = await loadOverlayImage(f);
+      if (epoch !== _gifEpoch){ URL.revokeObjectURL(url); break; }
+      if (!added){ if (gif) gif.pending = true; pushUndo(); }
       const st = clamp(A.playhead, 0, Math.max(0, tot - 0.5));
       const o = {
         id: uid(), name: f.name, file: f, url, img: im, _gif: gif, gifOffset: 0,
@@ -1064,12 +1068,13 @@ async function addOverlayFiles(files){
         fadeIn: 0, fadeOut: 0, thumb: imgThumb(im)
       };
       if (o.end - o.start < 0.5) o.end = o.start + 3;
-      A.overlays.push(o); regMedia(o);
+      A.overlays.push(o); regMedia(o); added++;
       A.sel = { type: 'overlay', id: o.id };
     } catch(e){ toast(`「${f.name}」載入失敗：${e.message}`, true); }
   }
   render(); refreshProp();
-  toast('圖層已加入 —— 可在「疊圖」軌左右拖、兩端拉長縮短');
+  if (added) toast('動畫效果已加入 —— 可在時間軸左右拖、兩端拉長縮短');
+  return added;
 }
 
 /* ── 字幕 ──────────────────────────────────────────────────── */
@@ -1175,7 +1180,7 @@ async function addMusicFile(file){
 function addTitle(startAt){
   /* v11.4：以前這裡沒有 pushUndo()，於是「＋ 標題」既不能 Ctrl+Z 復原、
      也不算「未存的改動」（關分頁不會提醒）。其他每一種新增
-     ——影片、圖片、疊圖、音軌、字幕——都有，只有標題漏掉。
+     ——影片、圖片、動畫效果、音軌、字幕——都有，只有標題漏掉。
      一定要在動 A.titles 之前呼叫，pushUndo 拍的是「動之前」的狀態。 */
   pushUndo();
   const s = Math.max(0, startAt === undefined ? A.playhead : startAt);
@@ -1244,13 +1249,13 @@ function splitSub(){
   toast('字幕已分割');
 }
 
-/** 在播放頭把疊圖切成兩段 */
+/** 在播放頭把動畫效果切成兩段 */
 function splitOverlay(){
   const _u = () => pushUndo();
   const o = A.overlays.find(x => x.id === A.sel.id);
-  if (!o){ toast('先選一個疊圖', true); return; }
+  if (!o){ toast('先選一個動畫效果', true); return; }
   const T = A.playhead;
-  if (T <= o.start + 0.2 || T >= o.end - 0.2){ toast('播放頭不在這個疊圖上，或太靠近邊緣', true); return; }
+  if (T <= o.start + 0.2 || T >= o.end - 0.2){ toast('播放頭不在這個動畫效果上，或太靠近邊緣', true); return; }
   _u();
   const right = { ...o, id: uid(), start: T, fadeIn: 0 };
   kfSplit(o, right, T);                  // 動態也要切開（順便把共用的 kf 拆乾淨）
@@ -1260,11 +1265,11 @@ function splitOverlay(){
   A.overlays.push(right);
   A.sel = { type:'overlay', id: right.id };
   render(); refreshProp();
-  toast('疊圖已分割');
+  toast('動畫效果已分割');
 }
 
 /** 在播放頭把音軌切成兩塊，切完各自可以移動、刪除、調音量 */
-/* ── 影片／疊圖／標題的動態（v7.6，v8.1 加入影片）────────────────
+/* ── 影片／動畫效果／標題的動態（v7.6，v8.1 加入影片）────────────────
    obj.kf = { x:[{t,v,e}], y:[…], scale:[…], opacity:[…], rot/motionRot:[…] }
 
    兩個刻意的設計：
@@ -1297,7 +1302,7 @@ function kfWin(obj){
   return [clamp(Math.min(w[0], w[1]), 0, 1), clamp(Math.max(w[0], w[1]), 0, 1)];
 }
 
-/** 動態物件在總時間軸上的起訖。疊圖／標題自己有 start/end；
+/** 動態物件在總時間軸上的起訖。動畫效果／標題自己有 start/end；
     影片片段的位置由 layout() 依 track/at 與各軌接法決定。 */
 function kfBounds(obj){
   if (obj && Number.isFinite(obj.start) && Number.isFinite(obj.end)) return [obj.start, obj.end];
