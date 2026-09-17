@@ -57,7 +57,7 @@ function renderMusicLibrary(){
     button.dataset.id=entry.id;button.disabled=MU.busy;button.setAttribute('aria-pressed',String(MU.selected===entry.id));
     const title=document.createElement('strong');title.dataset.nt='';title.textContent=musicName(entry);
     const instruments=document.createElement('span');instruments.dataset.nt='';instruments.textContent=musicInstruments(entry);
-    const detail=document.createElement('small');detail.dataset.nt='';detail.textContent='25 s · '+entry.bpm+' BPM';
+    const detail=document.createElement('small');detail.dataset.nt='';detail.textContent=entry.duration+' s · '+entry.bpm+' BPM';
     button.append(title,instruments,detail);button.onclick=()=>selectMusic(entry);grid.append(button);
   }
   if(!list.length){const p=document.createElement('p');p.textContent='沒有符合的音樂';grid.append(p);}
@@ -114,7 +114,8 @@ function initMusicLibrary(){
   $('#muRetry').onclick=()=>selectMusic(MUSIC_CATALOG.find(e=>e.id===MU.selected));
   $('#muAdd').onclick=addSelectedMusic;
   $('#muImport').onclick=()=>{closeMusicLibrary();$('#fileAudio').click();};
-  $('#muPackDownload').href=new URL('NiVedit_Music_40_25s_v1.zip',_musicBase).href;
+  $('#muPackDownload').href=new URL(MUSIC_PACK.zip,_musicBase).href;
+  $('#muPackDownload').download=MUSIC_PACK.zip;
   $('#muDialog').addEventListener('cancel',e=>{if(MU.busy)e.preventDefault();});
   $('#muDialog').addEventListener('close',()=>{clearMusicSelection();MU.focus?.focus();});
 }

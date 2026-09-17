@@ -1,12 +1,15 @@
 {
   "version": "12.4",
-  "html_sha256": "516fa1bc5317ea1b155c53844fa1f088f6b955bb1395a866acd0dad50cc67251",
-  "html_bytes": 1177972,
+  "html_sha256": "7928955acfa76db541b77dcaf80d6dfefb8299d2c340b09bab5d21cfa7939210",
+  "html_bytes": 1177751,
   "built_in_effects": 240,
   "built_in_music": 40,
   "music_categories": 4,
-  "music_seconds": 25,
+  "music_seconds": 40,
   "example_video_resolution": "1280x720",
   "example_preserved_on_save": true,
-  "verification": "Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change."
+  "music_pack": "v2",
+  "music_zip": "NiVedit_Music_40_40s_v2.zip",
+  "music_verification": "64 music/example checks and 41 i18n checks passed; all 40 stereo tracks decode at 40 seconds; real MP4/AAC export completed. Existing example audio and all v1 MP3s unchanged. Unrelated editor regression suites not rerun for this asset refresh.",
+  "previous_full_regression": "Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change."
 }

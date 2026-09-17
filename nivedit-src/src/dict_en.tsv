@@ -1211,3 +1211,10 @@ Lo-fi 爵士	Lo-fi & jazz
 範例載入失敗。請關閉後重試；本機使用時，請保留 HTML 旁的 example-project 資料夾。	Could not load the example. Close and retry; for local use, keep the example-project folder beside the HTML.
 
 不必先新建專案。第一次按「儲存」或「另存」時，請選擇位置與檔名，存成自己的 .nvproj；之後按「儲存」會更新自己的檔案，內建範例不會被修改。	No need to create a new project first. The first Save or Save As lets you choose a location and filename for your own .nvproj. Later saves update your file; the built-in example stays unchanged.
+新版配樂 v2：40 首，每首 40 秒。以旋律、節奏與段落變化為主，無人聲。	Music pack v2: 40 tracks, 40 seconds each. Melodic instrumental arrangements with varied rhythms and sections.
+搜尋曲名或風格…	Search titles or styles…
+搜尋曲名或風格	Search titles or styles
+輕快日常	Cheerful everyday
+悠閒舒服	Easygoing
+活力律動	Groove & energy
+溫暖故事	Warm stories

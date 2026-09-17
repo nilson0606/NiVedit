@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/mrbumpy409/GeneralUser-GS",
+  "commit": "684543d5e5efaef08d02be50dcda8d552478fa60",
+  "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+  "renderer": "tinysoundfont 0.3.7 (MIT)",
+  "renderer_url": "https://pypi.org/project/tinysoundfont/0.3.7/",
+  "music_pack": "v2",
+  "duration_seconds": 40,
+  "tracks": 40
+}
