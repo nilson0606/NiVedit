@@ -1,10 +1,12 @@
 from pathlib import Path
-import json,base64,html
+import json,base64,html,re
 ROOT=Path(__file__).resolve().parent.parent
+VERSION=re.search(r"const VER = '([^']+)'", (ROOT/'nivedit-src/src/20_core.js').read_text(encoding='utf-8')).group(1)
+MANUAL_DATE='2026-09-18'
 chapters=json.loads((ROOT/'manual/chapters.json').read_text(encoding='utf-8'))
 def screenshot(theme):
     path=ROOT/('manual/images/subtitles-'+theme+'.png')
-    return '<img class="shot-'+theme+'" width="760" height="391" alt="字幕編輯器已選字幕上軌，僅列出上軌的兩句字幕" src="data:image/png;base64,'+base64.b64encode(path.read_bytes()).decode()+'">'
+    return '<img class="shot-'+theme+'" width="760" height="391" alt="字幕編輯器已選字幕頂層，僅列出頂層的兩句字幕" src="data:image/png;base64,'+base64.b64encode(path.read_bytes()).decode()+'">'
 picture=screenshot('dark')+screenshot('light')
 nav=''.join('<a class="chapter-link" data-chapter="'+c['id']+'" href="#'+c['id']+'"><span>'+str(i+1).zfill(2)+'</span>'+html.escape(c['title'])+'</a>' for i,c in enumerate(chapters))
 cards=''.join('<a class="chapter-card" data-chapter="'+c['id']+'" href="#'+c['id']+'"><span class="card-no">'+str(i+1).zfill(2)+'</span><h3>'+html.escape(c['title'])+'</h3><p>'+html.escape(c['desc'])+'</p><span class="card-arrow" aria-hidden="true">↗</span></a>' for i,c in enumerate(chapters))
@@ -63,17 +65,18 @@ figure{margin:28px 0}figure img{display:block;width:100%;height:auto;max-width:7
 @media(max-width:500px){.cards{grid-template-columns:1fr}.brand{font-size:18px}.version{display:none}.top-actions .primary{display:none}.two-up{grid-template-columns:1fr}.workspace-map{grid-template-columns:1fr}.workspace-map .map-timeline{grid-column:auto}h1{font-size:36px}table{font-size:12px}th,td{padding:9px}td:first-child{min-width:80px}.chapter-footer{font-size:12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 @media print{@page{margin:18mm}html{scroll-padding-top:0}body{background:#fff;color:#111;font-size:11pt}aside,.topbar,.quick-links,.chapter-footer,.skip,#home .cards,#home .toc-title,button{display:none!important}.layout{display:block;padding:0}.hero{padding:0}h1{font-size:30pt}.chapter{break-before:page;margin-top:0;padding-top:0;border:0}.chapter-heading h2{font-size:23pt}h2,h3,summary{break-after:avoid}.note,table,figure,.two-up{break-inside:avoid}.note,.workspace-map>div,.track-stack>div{background:#f3f6f4;color:#111}.note strong,.eyebrow,th,a{color:#14594d}th,td{border-color:#bbb}.chapter-heading>p,.hero>p,figcaption,.chapter details p,footer{color:#444}.shot-dark{display:none!important}.shot-light{display:block!important}figure img{max-width:650px}.chapter details{break-inside:avoid}kbd,code{color:#111;background:#eee}}
-@media print{#home,.chapter{display:block!important}}\n</style></head>
+@media print{#home,.chapter{display:block!important}}
+</style></head>
 <body>
 <a class="skip" href="#home">跳到手冊內容</a>
-<div class="topbar"><div class="topinner"><a class="brand" href="#home">Ni<span>Vedit</span> <span style="font-size:13px;font-weight:500;color:var(--muted)">操作手冊</span></a><span class="version">電腦版・更新至 v12.5</span><div class="top-actions"><a href="#home">首頁目錄</a><button id="theme" type="button" aria-pressed="false">切換模式</button><button id="print" type="button">列印 / PDF</button><a class="primary" id="editorLink" href="NiVedit.html" target="_blank" rel="noopener">開啟編輯器 ↗</a></div></div><div id="reading" aria-hidden="true"></div></div>
+<div class="topbar"><div class="topinner"><a class="brand" href="#home">Ni<span>Vedit</span> <span style="font-size:13px;font-weight:500;color:var(--muted)">操作手冊</span></a><span class="version">電腦版・更新至 {{VERSION}}</span><div class="top-actions"><a href="#home">首頁目錄</a><button id="theme" type="button" aria-pressed="false">切換模式</button><button id="print" type="button">列印 / PDF</button><a class="primary" id="editorLink" href="NiVedit.html" target="_blank" rel="noopener">開啟編輯器 ↗</a></div></div><div id="reading" aria-hidden="true"></div></div>
 <div class="layout">
-<aside><details open id="toc"><summary>章節導覽</summary><div class="search-wrap"><input id="search" type="search" aria-label="搜尋手冊章節" placeholder="搜尋：上軌、GIF、匯出…"><button id="clearSearch" type="button" aria-label="清除搜尋">×</button></div><p id="searchStatus" role="status">16 章・點選開啟該章</p><a class="home-link" href="#home">首頁與完整目錄</a><nav class="side-list" aria-label="操作手冊章節">{{NAV}}</nav><p class="aside-note">目前版本：v12.5<br>新增影片相容工具<br>更新：2026 年 9 月 17 日<br>本手冊可單檔離線閱讀。</p></details></aside>
+<aside><details open id="toc"><summary>章節導覽</summary><div class="search-wrap"><input id="search" type="search" aria-label="搜尋手冊章節" placeholder="搜尋：頂層、GIF、匯出…"><button id="clearSearch" type="button" aria-label="清除搜尋">×</button></div><p id="searchStatus" role="status">16 章・點選開啟該章</p><a class="home-link" href="#home">首頁與完整目錄</a><nav class="side-list" aria-label="操作手冊章節">{{NAV}}</nav><p class="aside-note">目前版本：{{VERSION}}<br>全章操作已核對<br>更新：2026 年 9 月 18 日<br>本手冊可單檔離線閱讀。</p></details></aside>
 <main id="content">
-<section id="home"><div class="hero"><div class="eyebrow">DESKTOP EDITOR · USER GUIDE</div><h1>從第一段素材，<small>到完成影片。</small></h1><p>NiVedit 電腦版操作手冊。從目錄選一章，開啟你需要的操作章節；第一次使用可以從「第一次剪片」開始。</p><div class="hero-meta"><span>操作指南 v12.5</span><span>Windows・Chrome / Edge</span><span>16 個操作章節</span><span>繁體中文</span></div><div class="quick-links"><a href="#quickstart">開始第一支影片 →</a><a href="#subtitles">我要新增上軌字幕 →</a><a href="#export">匯出與儲存 →</a></div></div>
+<section id="home"><div class="hero"><div class="eyebrow">DESKTOP EDITOR · USER GUIDE</div><h1>從第一段素材，<small>到完成影片。</small></h1><p>NiVedit 電腦版操作手冊。從目錄選一章，開啟你需要的操作章節；第一次使用可以從「第一次剪片」開始。</p><div class="hero-meta"><span>操作指南 {{VERSION}}</span><span>Windows・Chrome / Edge</span><span>16 個操作章節</span><span>繁體中文</span></div><div class="quick-links"><a href="#quickstart">開始第一支影片 →</a><a href="#subtitles">我要新增頂層字幕 →</a><a href="#export">匯出與儲存 →</a></div></div>
 <div class="toc-title"><h2>今天想做什麼？</h2><span>點章節卡片即可跳轉</span></div><div class="cards">{{CARDS}}</div></section>
 {{SECTIONS}}
-<footer>NiVedit 操作手冊｜適用編輯器 v9.7｜動畫效果／配樂／範例更新 2026-09-17<br>手冊中的截圖為測試示範。實際可用功能以目前編輯器版本與裝置支援為準。<br><a href="#home">回到首頁目錄 ↑</a></footer>
+<footer>NiVedit 操作手冊｜適用編輯器 {{VERSION}}｜逐章核對更新 {{MANUAL_DATE}}<br>手冊中的截圖為測試示範。實際可用功能以目前編輯器版本與裝置支援為準。<br><a href="#home">回到首頁目錄 ↑</a></footer>
 </main></div>
 <script>
 (function(){
@@ -114,6 +117,7 @@ addEventListener('afterprint',()=>document.querySelectorAll('.chapter details').
 })();
 </script></body></html>'''
 page=page.replace('{{NAV}}',nav).replace('{{CARDS}}',cards).replace('{{SECTIONS}}','\n'.join(sections))
+page=page.replace('{{VERSION}}',VERSION).replace('{{MANUAL_DATE}}',MANUAL_DATE)
 out=ROOT/'NiVedit_操作手冊.html'
 out.write_bytes(page.encode('utf-8'))
 (ROOT/'nivedit-src/manual.html').write_bytes(page.encode('utf-8'))

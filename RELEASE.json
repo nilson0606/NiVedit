@@ -27,7 +27,11 @@
   "manual": {
     "chapters": 16,
     "new_tab": true,
-    "filename": "manual.html"
+    "filename": "manual.html",
+    "revision": "2026-09-18",
+    "sha256": "c621cdc009fe18fcea6b770d8e7de6c6b3d476b7d2e05688cdeacba82d6d827f",
+    "audited_chapters": 16,
+    "browser_checks": 38
   },
   "targeted_regression": {
     "dual-track": 45,
