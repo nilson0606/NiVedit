@@ -1,4 +1,4 @@
-# NiVedit v12.3
+# NiVedit v12.4
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,11 +12,15 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-The new **Animation effects** library includes 240 GIFs: reactions and celebration (40), everyday effects (50), short-video effects (100), and bold effects (50). Search or filter, preview one effect, then add it to the timeline. **Import your GIF / image** still lets you choose your own local creations.
+**Background music library:** choose from 40 original instrumental cues, 25 seconds each, in four equal categories: Calm & relaxing, Bright & everyday, Lo-fi & jazz, and Cinematic atmosphere. Each cue uses a different combination of synthesized instruments. Select a track and press Play to audition, then Add music track. **Import audio from computer** keeps your own audio available.
 
-Effects load on demand from this site; no separate pack download is needed. Once added, their GIF bytes are saved inside the project. The former Overlay controls now say Animation effects, including the split action. Two original GIFs had duplicate headers before their last frames; the bundled copies preserve the pixels and timing while correcting those headers for Edge.
+[Download all 40 MP3 tracks](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_40_25s_v1.zip) includes four category folders and an offline listening page. Music loads on demand; selected tracks are embedded in saved projects.
 
-Validation: 65 library checks, including file and website paths, plus integrity and frame/timing checks for all 240 assets. Existing regression: 729/730 on Edge 154, plus the GIF suite. The one title-pixel export tolerance failure is identical on the unchanged v12.2 baseline (84 preview pixels / 67 decoded pixels); the threshold was not relaxed.
+**Open example:** the project panel offers a complete editable sample with video, title, subtitles, animation and music. Its video is 720p for faster loading; your own projects can be configured up to 4K. The reminder appears before loading. No new project is needed first: the first Save or Save As asks for your own file, later saves update that file, and the built-in example stays unchanged. Loading another example warns when current work has unsaved changes.
+
+The **Animation effects** library still includes 240 GIFs and imports your own GIFs/images. Video, audio, and project processing remain local to your browser.
+
+Validation: Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change.
 
 ## Features
 
@@ -37,7 +41,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.3 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include the docs/animation-effects/ folder in every deployment. For local use, keep the HTML and its adjacent animation-effects folder together. The source already contains generated assets; Pillow is only needed to regenerate them from the original packs.
+The checked-in HTML is the verified v12.4 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/animation-effects/, docs/background-music/, and docs/example-project/ in every deployment. For local use, keep all three asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music needs NumPy and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 

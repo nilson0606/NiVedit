@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.4';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -1161,19 +1161,36 @@ function applySubPreset(id,track=subtitleTargetTrack()){
 }
 
 async function addMusicFile(file){
-  const url = URL.createObjectURL(file);
-  const a = document.createElement('audio');
-  a.src = url; a.preload = 'auto';
-  await new Promise((res, rej) => { a.onloadedmetadata = res; a.onerror = () => rej(new Error('無法讀取音檔')); });
-  const m = { id: uid(), name:file.name, file, url, el:a, dur:a.duration, buf:null,
-              offset:0, startAt:0, len:Math.max(0.5, totalDur() || a.duration), autoLen:true,
-              vol:0.5, fadeIn:1, fadeOut:1, loop:true, xfade:1.5, vk:[] };
-  pushUndo();
-  A.musics.push(m); regMedia(m);
-  $('#videoPool').appendChild(a);
-  A.sel = { type:'music', id:m.id };
-  render(); refreshProp();
-  toast(`音軌 ${A.musics.length} 已加入 —— 可以左右拖，兩端可拉長縮短`);
+  const epoch = _gifEpoch, url = URL.createObjectURL(file);
+  const a = document.createElement('audio'); a.preload = 'auto';
+  let timer;
+  try {
+    try {
+      await new Promise((res, rej) => {
+        timer = setTimeout(() => rej(new Error(L('讀取音檔逾時，請重試'))), 20000);
+        a.onloadedmetadata = res;
+        a.onerror = () => rej(new Error(L('無法讀取音檔')));
+        a.src = url;
+      });
+    } finally {
+      clearTimeout(timer); a.onloadedmetadata = null; a.onerror = null;
+    }
+    if (epoch !== _gifEpoch) throw new Error(L('專案已切換，音檔載入已取消。'));
+    if (!Number.isFinite(a.duration) || a.duration <= 0) throw new Error(L('無法讀取音檔'));
+    const m = { id: uid(), name:file.name, file, url, el:a, dur:a.duration, buf:null,
+                offset:0, startAt:0, len:Math.max(0.5, totalDur() || a.duration), autoLen:true,
+                vol:0.5, fadeIn:1, fadeOut:1, loop:true, xfade:1.5, vk:[] };
+    pushUndo(); A.musics.push(m); regMedia(m);
+    $('#videoPool').appendChild(a);
+    A.sel = { type:'music', id:m.id };
+    render(); refreshProp();
+    toast('音軌 ' + A.musics.length + ' 已加入 —— 可以左右拖，兩端可拉長縮短');
+    return m;
+  } catch(e){
+    a.pause(); a.removeAttribute('src'); a.load(); URL.revokeObjectURL(url);
+    toast('「' + file.name + '」載入失敗：' + e.message, true);
+    return null;
+  }
 }
 
 /* ── 新增標題 ──────────────────────────────────────────────── */

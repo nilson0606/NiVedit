@@ -11,12 +11,12 @@
 """
 import re, os, json, sys, tempfile
 SRC=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'src')
-FILES=['00_head.html','10_body.html','20_core.js','27_effect_library.js','30_render.js','40_ui.js','45_decode.js','47_project.js','49_asr.js','50_export.js']
+FILES=['00_head.html','10_body.html','20_core.js','27_effect_library.js','29_music_library.js','46_example.js','30_render.js','40_ui.js','45_decode.js','47_project.js','49_asr.js','50_export.js']
 CJK=re.compile(r'[㐀-鿿豈-﫿\uD840-\uD87F　-〿＀-￯]')
 HAN=re.compile(r'[㐀-鿿豈-﫿]')
 
 def strip_comments(s, isjs):
-    if not isjs: 
+    if not isjs:
         return re.sub(r'<!--.*?-->', '', s, flags=re.S)
     out=[];i=0;n=len(s)
     mode=None  # None, 'line','block','sq','dq','tpl','re'

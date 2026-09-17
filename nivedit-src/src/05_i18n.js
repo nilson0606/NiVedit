@@ -169,6 +169,7 @@ function setLang(l){
   i18nSweep(document.body);
   try { if (typeof render === 'function') render(); } catch (e) {}
   if (document.querySelector('#fxDialog')?.open) renderEffectGrid();
+  if (document.querySelector('#muDialog')?.open) renderMusicLibrary();
 }
 
 function i18nInit(){

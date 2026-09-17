@@ -404,6 +404,33 @@ select option.miss{color:var(--fg3)}
  #fxGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fx-filters{flex-wrap:wrap}
  .fx-filters input{flex-basis:100%}.fx-filters select{max-width:none;width:calc(50% - 5px)}}
 @media(max-width:480px){.fx-body{grid-template-columns:1fr}.fx-stage{width:140px;align-self:center}}
+
+/* Music library and optional sample project use the editor's theme tokens. */
+#muDialog,#demoDialog{max-width:94vw;max-height:90vh;padding:20px;border:1px solid var(--line);
+ border-radius:16px;background:var(--bg2);color:var(--fg);overflow:auto}
+#muDialog{width:min(1040px,94vw)}#demoDialog{width:440px}
+#muDialog::backdrop,#demoDialog::backdrop{background:rgba(0,0,0,.7)}
+.mu-body{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:22px}
+.mu-browse{min-width:0}
+#muGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:54vh;overflow:auto;padding:3px}
+.mu-card{text-align:left;display:flex;flex-direction:column;gap:8px;white-space:normal;padding:14px;
+ background:var(--bg3);color:var(--fg);border:1px solid var(--line);min-height:110px}
+.mu-card strong{font-size:16px}.mu-card span{font-size:12px;color:var(--fg2);line-height:1.5}
+.mu-card small{font-size:12px;color:var(--fg2)}
+.mu-card[aria-pressed=true]{outline:2px solid var(--acc);border-color:var(--acc)}
+.mu-detail{display:flex;flex-direction:column;gap:13px;min-width:0}
+.mu-symbol{height:90px;border-radius:12px;background:var(--bg3);color:var(--acc);font-size:60px;line-height:90px;text-align:center}
+#muName{font-size:19px;min-height:28px}#muInstruments{font-size:13px;margin:0;min-height:38px;color:var(--fg2)}
+#muAudio{width:100%;height:48px}
+#muStatus{font-size:13px;line-height:1.6;color:var(--fg2);min-height:50px;margin:0;overflow-wrap:anywhere}
+#muCount{font-size:12px;color:var(--fg2)}
+#muPackDownload{color:var(--acc);text-align:center;font-size:13px;cursor:pointer}
+#muDialog [hidden]{display:none}
+#demoDialog p{color:var(--fg2);line-height:1.7}
+#demoDialog .demo-notice{background:var(--bg3);color:var(--fg);border-left:4px solid var(--acc);padding:12px;border-radius:6px;font-size:15px}
+@media(max-width:760px){.mu-body{grid-template-columns:minmax(0,1fr) 240px;gap:12px}
+ #muGrid{grid-template-columns:1fr}.mu-card{min-height:95px}}
+@media(max-width:520px){.mu-body{grid-template-columns:1fr}#muGrid{max-height:32vh}.mu-symbol{display:none}}
 </style>
 </head>
 <body>

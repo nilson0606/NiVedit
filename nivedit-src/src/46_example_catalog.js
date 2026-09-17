@@ -1,0 +1,1 @@
+const EXAMPLE_PROJECT = {"stem": "example-f5260fdfdc38", "bytes": 17401078, "sha256": "f5260fdfdc3803d891d75937a2480ff606d04eee248cdf86f9ec93eee8252c64", "name": "NiVedit_範例練習", "originalBytes": 124463771, "originalSha256": "a10967d1acc2bf03194a26b16e330ab52cfe9d353c408bf35e4f6553db549eff", "counts": {"clips": 1, "titles": 1, "subs": 2, "overlays": 1, "musics": 1}};

@@ -24,6 +24,7 @@
           <button class="gh" id="btnProjSave" title="儲存到瀏覽器（連素材一起）">儲存…</button>
           <button class="gh" id="btnProjSaveAs" title="另存成新的專案">另存</button>
         </div>
+        <button class="gh" id="btnExample" style="width:100%;margin-top:6px" title="載入附帶的示範專案，參考影片、字幕、動畫與配樂的搭配">開啟範例</button>
       </div>
       <div class="ph">片段 <span class="spacer"></span><span id="clipCount" style="font-weight:400">0</span></div>
       <div class="pb">
@@ -130,6 +131,38 @@
     </div>
   </div>
 </div>
+
+<dialog id="muDialog" aria-labelledby="muTitle">
+  <div class="fx-heading"><h3 id="muTitle">背景音樂素材庫</h3><button id="muClose" class="gh">關閉</button></div>
+  <p class="hint">四類各 10 首，共 40 首。每首 25 秒，無人聲，採原創編曲與合成樂器。</p>
+  <div class="fx-filters">
+    <input id="muSearch" type="search" placeholder="搜尋曲名或樂器…" aria-label="搜尋曲名或樂器">
+    <select id="muCategory" aria-label="音樂分類"><option value="">全部分類</option></select>
+  </div>
+  <div class="mu-body">
+    <div class="mu-browse"><div id="muGrid"></div>
+      <div class="fx-pagination"><button id="muPrev" class="gh">上一頁</button><span id="muCount" data-nt></span><button id="muNext" class="gh">下一頁</button></div>
+    </div>
+    <aside class="mu-detail">
+      <div class="mu-symbol" aria-hidden="true">♫</div>
+      <strong id="muName" data-nt></strong><p id="muInstruments" data-nt></p>
+      <audio id="muAudio" controls preload="metadata" aria-label="音樂試聽"></audio>
+      <p id="muStatus" role="status" aria-live="polite">選擇曲目後，按播放鍵試聽。</p>
+      <button id="muRetry" class="gh" hidden>重新載入</button>
+      <button id="muAdd" class="pri" disabled>加入音軌</button>
+      <button id="muImport" class="gh">匯入電腦音檔</button>
+      <a id="muPackDownload" download="NiVedit_Music_40_25s_v1.zip">下載 40 首 MP3 素材包</a>
+    </aside>
+  </div>
+</dialog>
+<dialog id="demoDialog" aria-labelledby="demoTitle">
+  <h3 id="demoTitle">開啟 720p 範例</h3>
+  <p class="demo-notice"><strong>此範例採用 720p 影片素材，方便快速載入；正式專案最高可設定為 4K。</strong></p>
+  <p>範例包含影片、標題、字幕、動畫效果與配樂，可自由修改後另存練習。</p>
+  <p>不必先新建專案。第一次按「儲存」或「另存」時，請選擇位置與檔名，存成自己的 .nvproj；之後按「儲存」會更新自己的檔案，內建範例不會被修改。</p>
+  <p id="demoStatus" role="status" aria-live="polite"></p>
+  <div style="display:flex;justify-content:flex-end;gap:10px"><button id="demoCancel" class="gh">關閉</button><button id="demoStart" class="pri">載入範例</button></div>
+</dialog>
 
 <dialog id="fxDialog" aria-labelledby="fxTitle">
   <div class="fx-heading"><h3 id="fxTitle">動畫效果素材庫</h3><button id="fxClose" class="gh">關閉</button></div>

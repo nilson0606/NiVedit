@@ -1,7 +1,12 @@
 {
-  "version": "12.3",
-  "html_sha256": "31f12449e19323252e415c1a62d97d1f1fb5fc870c09c6d33d05bf64f783bd37",
-  "html_bytes": 1140800,
+  "version": "12.4",
+  "html_sha256": "516fa1bc5317ea1b155c53844fa1f088f6b955bb1395a866acd0dad50cc67251",
+  "html_bytes": 1177972,
   "built_in_effects": 240,
-  "verification": "Windows Edge 154: 65 library checks plus exact hashes, frame counts and durations for all 240 GIFs. Existing suites 729/730 plus GIF suite; one title-pixel tolerance failure is identical on unchanged v12.2 (84 preview / 67 decoded). Two i18n diagnostics completed."
+  "built_in_music": 40,
+  "music_categories": 4,
+  "music_seconds": 25,
+  "example_video_resolution": "1280x720",
+  "example_preserved_on_save": true,
+  "verification": "Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change."
 }

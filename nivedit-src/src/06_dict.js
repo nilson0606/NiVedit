@@ -1176,4 +1176,38 @@ GIF 動畫會循環播放至動畫效果結束，預覽與匯出同步。	GIF an
 誇張文字	Bold text
 轉場遮罩	Transition masks
 速度動感	Speed & motion
-邊框轉場	Borders & transitions`;
+邊框轉場	Borders & transitions
+背景音樂素材庫	Background music library
+四類各 10 首，共 40 首。每首 25 秒，無人聲，採原創編曲與合成樂器。	Four categories, 10 tracks each. Original instrumental compositions with synthesized instruments, 25 seconds per track.
+搜尋曲名或樂器…	Search titles or instruments…
+搜尋曲名或樂器	Search titles or instruments
+音樂分類	Music category
+音樂試聽	Music preview
+選擇曲目後，按播放鍵試聽。	Select a track, then press Play to preview.
+加入音軌	Add music track
+匯入電腦音檔	Import audio from computer
+下載 40 首 MP3 素材包	Download all 40 MP3 tracks
+沒有符合的音樂	No matching music
+載入音樂中…	Loading music…
+按播放鍵試聽；喜歡再按「加入音軌」。	Press Play to preview, then choose Add music track.
+音樂載入失敗，請重試。本機使用時，請保留 HTML 旁的 background-music 資料夾。	Could not load music. Retry; for local use, keep the background-music folder beside the HTML.
+專案已改變，請重新選擇音樂	The project changed. Please select the music again.
+加入音軌中…	Adding music track…
+音樂無法加入，請查看提示或選擇其他曲目。	Could not add music. Check the notification or select another track.
+讀取音檔逾時，請重試	Audio loading timed out. Please retry.
+專案已切換，音檔載入已取消。	The project changed; audio import was cancelled.
+療癒放鬆	Calm & relaxing
+輕快生活	Bright & everyday
+Lo-fi 爵士	Lo-fi & jazz
+電影氛圍	Cinematic atmosphere
+開啟範例	Open example
+載入範例	Load example
+開啟 720p 範例	Open 720p example
+此範例採用 720p 影片素材，方便快速載入；正式專案最高可設定為 4K。	This example uses 720p video for faster loading. Your own projects can be set up to 4K.
+載入附帶的示範專案，參考影片、字幕、動畫與配樂的搭配	Load the included project to explore video, captions, animations and music.
+範例包含影片、標題、字幕、動畫效果與配樂，可自由修改後另存練習。	The example includes video, a title, captions, an animated effect and music. Edit it and save your own practice copy.
+目前有未儲存的修改。載入範例會取代目前時間軸，請先關閉此視窗並儲存，或按載入範例繼續。	You have unsaved changes. Loading the example replaces the timeline. Close this dialog and save first, or choose Load example to continue.
+載入後可自由調整時間軸，並另存為自己的練習專案。	After loading, edit the timeline and save your own practice project.
+正在載入範例，請稍候…	Loading the example, please wait…
+範例載入失敗。請關閉後重試；本機使用時，請保留 HTML 旁的 example-project 資料夾。	Could not load the example. Close and retry; for local use, keep the example-project folder beside the HTML.
+不必先新建專案。第一次按「儲存」或「另存」時，請選擇位置與檔名，存成自己的 .nvproj；之後按「儲存」會更新自己的檔案，內建範例不會被修改。	No need to create a new project first. The first Save or Save As lets you choose a location and filename for your own .nvproj. Later saves update your file; the built-in example stays unchanged.`;

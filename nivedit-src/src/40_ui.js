@@ -1924,7 +1924,9 @@ function initUI(){
     const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   });
-  $('#btnAddMusic').onclick = () => $('#fileAudio').click();
+  $('#btnAddMusic').onclick = openMusicLibrary;
+  initMusicLibrary();
+  initExampleProject();
   $('#btnAddImage').onclick = () => { if (!A.clips.length && !confirm('目前還沒有影片，要直接用圖片開始嗎？')) return; $('#fileImage').click(); };
   $('#btnAddOverlay').onclick = openEffectLibrary;
   initEffectLibrary();
@@ -2096,7 +2098,7 @@ function initUI(){
   document.addEventListener('keydown', e => {
     const el = document.activeElement;
     if (A.exporting) return;
-    if ($('#fxDialog').open){
+    if ($('#fxDialog').open || $('#muDialog').open || $('#demoDialog').open){
       // Prevent native undo from editing the last search field while a card/button has focus.
       if (!inTextField(el) && (e.ctrlKey || e.metaKey) && /^[zy]$/i.test(e.key)) e.preventDefault();
       return;

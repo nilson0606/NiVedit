@@ -1,6 +1,22 @@
-# NiVedit v12.3 原始碼
+# NiVedit v12.4 原始碼
 
 NiVedit 是瀏覽器端影音編輯器。主程式為 NiVedit.html，內建動畫素材位於旁邊的 animation-effects/；影片、音訊、字幕與專案都在使用者電腦處理，不上傳。
+
+## 背景音樂與範例專案（v12.4，2026-09-17）
+
+「＋ 音軌」開啟素材庫：40 首原創器樂曲，每首約 25 秒，四類各 10 首（療癒放鬆、輕快生活、Lo-fi 爵士、電影氛圍）。使用合成樂器自行編曲，沒有歌聲、外部歌曲或取樣；不是實體樂器錄音。每首有不同旋律、伴奏與配器。支援分類、曲名／樂器搜尋、試聽、加入音軌、整包 MP3 下載，以及「匯入電腦音檔」。試聽不增加時間軸物件，關閉／換曲會停止並釋放預覽；加入後沿用音量、循環、淡入淡出、音量曲線、復原重做及專案保存。
+
+28_music_catalog.js 是公開索引，29_music_library.js 是選單與按需載入。music-assets/ 含 40 份 MP3 位元組 JS 及 ZIP，正常建置複製至 HTML 旁的 background-music/。音樂快取至多三份 File；真正加入後由既有音軌系統管理。tools/build_music_pack.py 用 NumPy 與 ffmpeg 重產音樂；一般建置不需要這兩項。原始 MP3、編曲事件、音訊檢查紀錄及離線試聽頁在 assets/music_pack_40_v1/；ZIP 在 assets/NiVedit_Music_40_25s_v1.zip。MP3 44.1 kHz／立體聲／160 kbps，解碼約 25.00025 秒（MP3 padding），整體音量約 −20 LUFS。
+
+左側「開啟範例」先顯示說明，再按「載入範例」才下載；不會在進站時取代使用者專案。範例影片素材為 720p，明確提醒正式專案最高可設定為 4K；升高解析度不會把 720p 素材變成原生 4K 細節。使用者授權公開的 example.nvproj 原檔保持 4K、完全不改；公開副本由 tools/build_example_project.py 轉成約 16.6 MiB，保留原時間軸、標題、兩句字幕、GIF、配樂與專案設定。只有影片素材轉碼為 1280×720。
+
+46_example_catalog.js 與 46_example.js 載入 example-assets/ 的 JS payload，build.py 複製至 example-project/。下載完成後先驗 SHA-256，再交既有 projImportFile。開啟的是沒有 writable handle 的 File 副本（_fh=null），所以首次「儲存」與「另存」都要求使用者選新檔案；預設名稱 NiVedit_範例練習.nvproj。存好後只更新使用者檔案，內建範例從不作為寫入目標。重新開啟範例仍是原始內容。不必先新建專案。已有未存修改時，載入前提醒先儲存；取消不動時間軸。
+
+本機與 Pages 都需要 HTML 旁的 animation-effects/、background-music/、example-project/ 三個資料夾。不可只發布主 HTML；素材按需載入，已加入專案的音樂／GIF 都嵌入 .nvproj，可離線重開。v12.2 重要還原點不動。
+
+本次新功能 62／62、動畫效果 65／65；既有計數回歸 729／730，另有 GIF 與兩支語系診斷完成。唯一失敗仍為 Edge 154 的標題像素容差（預覽 84／解碼 67），與原封 v12.2 相同，未放寬閾值。
+
+驗證紀錄在 qa-v12.4/：新增 music-example.e2e.cjs 驗證 file:// 與網站子路徑、音樂試聽／匯入／重試、40 首實際解碼、範例首次儲存／再次儲存／另存／重開原始範例及使用者存檔。儲存選擇器以測試 handle 取代，實際跑序列化、寫入、暫存與素材重接；未自動操作 Windows 原生檔名視窗。另實際匯出含內建音樂的 MP4，AAC 音訊非靜音且無削波。
 
 ## 動畫效果素材庫（v12.3）
 

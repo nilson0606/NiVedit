@@ -14,15 +14,18 @@ parts = [read('src/00_head.html'), read('src/10_body.html')]
 for name in ['mp4-muxer.js', 'webm-muxer.js', 'mp4box.js']:
     parts.extend(['<script>\n', read('vendor/' + name), '\n</script>\n'])
 for name in ['06_dict.js', '05_i18n.js', '07_theme.js', '20_core.js',
-             '25_gif.js', '26_effect_catalog.js', '27_effect_library.js', '30_render.js', '40_ui.js', '45_decode.js', '47_project.js',
+             '25_gif.js', '26_effect_catalog.js', '27_effect_library.js', '28_music_catalog.js', '29_music_library.js', '30_render.js', '40_ui.js', '45_decode.js', '46_example_catalog.js', '46_example.js', '47_project.js',
              '48_s2t.js', '49_asr.js', '50_export.js']:
     parts.extend(['<script>\n', read('src/' + name), '\n</script>\n'])
 parts.append('</body></html>\n')
-assets = ROOT / 'effect-assets'
-if not assets.is_dir():
-    raise SystemExit('Missing effect-assets: restore the complete source archive.')
 OUT.parent.mkdir(parents=True, exist_ok=True)
-shutil.copytree(assets, OUT.parent / 'animation-effects', dirs_exist_ok=True)
+for source_name, output_name in [('effect-assets', 'animation-effects'),
+                                 ('music-assets', 'background-music'),
+                                 ('example-assets', 'example-project')]:
+    assets = ROOT / source_name
+    if not assets.is_dir():
+        raise SystemExit('Missing ' + source_name + ': restore the complete source archive.')
+    shutil.copytree(assets, OUT.parent / output_name, dirs_exist_ok=True)
 
 tmp = OUT.with_suffix(OUT.suffix + '.tmp')
 tmp.write_bytes(''.join(parts).encode('utf-8'))
