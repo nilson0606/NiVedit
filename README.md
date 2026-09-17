@@ -1,4 +1,4 @@
-# NiVedit v12.1
+# NiVedit v12.2
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,13 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-Fixed: after running AI subtitles once, saving the project and pressing Done would also pop open the subtitle editor. The progress dialog is shared between exporting, saving and transcription, and transcription was leaving its own Done handler behind for whoever used the dialog next.
+Three fixes from a manual pass over the editor, all rooted in who records an undo step.
 
-The release before this one taught AI subtitles to transcribe an audio track. The "Scope" dropdown lists your audio tracks alongside the video clips, so a narration you recorded separately can become subtitles. Only the part you can actually hear is transcribed, and the result goes on the bottom subtitle track.
+Undo and redo were losing their place. Any click inside the properties panel recorded a step, which discarded the redo stack — so after undoing something, clicking anywhere on the right made Redo go dark. A step is now recorded only once something actually changes. Dragging a clip's edge behaves the same way, and Ctrl+Z now works while a checkbox or slider has focus.
+
+Editing a number in the properties panel no longer loses the caret. The panel redraws as you type, and the field you were typing into was being replaced along with it — which meant the next Backspace was read as "delete the selected item" and removed the whole audio track.
+
+Selecting an image no longer offers to "split clip"; it says image.
 
 ## Features
 
@@ -35,7 +39,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v12.2 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -47,6 +51,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v12.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v12.2 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。

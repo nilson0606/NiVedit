@@ -162,6 +162,32 @@ const http = require('http'), fs = require('fs');
   const d = await dl;
   const size = fs.statSync(await d.path()).size;
   chk('匯出成功 ' + size + ' bytes', size > 1000);
+  /* ── 在屬性欄打字時，重畫不可以把焦點弄丟（v12.2）──────────────
+     refreshProp() 會整塊重畫 #prop，正在打字的欄位連節點一起被換掉。
+     焦點掉回 <body> 之後，下一個 Backspace 就落到全域快捷鍵 ——
+     Backspace／Delete ＝ 刪除選取項目，整條音軌當場消失。
+     使用者實測 L04 是 NG：「按 backspace/delete 2~3 次，跳到專案畫面，音軌消失」。 */
+  {
+    await p.evaluate(() => { setLang('zh');
+                             $('#mask').classList.remove('on');   // 前面的測試可能留著進度視窗
+                             A.sel = { type:'music', id:A.musics[0].id };
+                             A.musics[0].offset = 2; render(); refreshProp(); });
+    await p.waitForTimeout(250);
+    chk('前置：音軌面板上有「從音檔第幾秒取用」', await p.locator('#mOff').count() === 1);
+    /* 一定要【點進去再把游標移到尾巴】。單純 focus() 的話游標停在第 0 個字，
+       Backspace 什麼都沒刪 → 不會觸發 input → 面板不重畫 → 這一段變成白測。
+       使用者是真的在改數字，所以要照那個樣子做。 */
+    await p.click('#mOff');
+    await p.keyboard.press('End');
+    chk('前置：欄位拿得到焦點', await p.evaluate(() => document.activeElement.id) === 'mOff');
+    for (let i = 0; i < 4; i++){ await p.keyboard.press('Backspace'); await p.waitForTimeout(120); }
+    const st = await p.evaluate(() => ({ n:A.musics.length, sel:A.sel.type,
+                                         focus:document.activeElement.id }));
+    chk('連按 Backspace 不會把音軌刪掉', st.n === 1);
+    chk('連按 Backspace 不會跳回專案面板', st.sel === 'music');
+    chk('重畫之後焦點還在原本那個欄位', st.focus === 'mOff');
+  }
+
   chk('無 JS 錯誤 ' + errs.slice(0, 2).join(' | '), errs.length === 0);
 
   console.log('通過 ' + ok.length + ' / ' + (ok.length + bad.length));

@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -409,10 +409,48 @@ function snapshot(){
 let _unsaved = false;
 
 function pushUndo(){
+  commitUndo();                 // 屬性欄那筆待定的先結算，順序才不會亂
   _unsaved = true;
   const s = snapshot();
   if (_undo.length && _undo[_undo.length - 1] === s) return;
   _undo.push(s);
+  if (_undo.length > UNDO_MAX) _undo.shift();
+  _redo.length = 0;
+  pruneGifMedia();
+  updateUndoBtns();
+}
+
+/* ── 屬性欄：先記著，真的改到才算一步（v12.2）──────────────────
+   右側面板的滑桿與數字欄是連續觸發 input 的，沒辦法在每個 handler 裡
+   各記一次復原點，所以 #prop 上掛了 pointerdown／keydown 的 capture 監聽，
+   一律「動之前先記一筆」。
+
+   問題是【只是點一下】也會記一筆，而 pushUndo() 會把重做堆疊清空 ——
+   於是「Ctrl+Z 之後在右側面板點一下，Ctrl+Y 就沒東西可重做了」。
+   使用者實測 M02／M03 都是 NG，備註「沒有可重做的」。
+
+   改法：pointerdown／keydown 先把當下狀態放進 _pending，等到真的有變動
+   才推進 _undo。結算時機有三個 —— 下一次要動到堆疊的時候
+   （pushUndo／undo／redo），以及一個收尾計時器，免得使用者改完就不動了，
+   那一筆永遠落不了地。
+
+   跟時間軸上那些拖曳是同一個道理（startMusicDrag 早就是「真的動了才記」），
+   只是面板這邊沒辦法靠 mousemove 判斷，只能比對前後狀態。 */
+let _pending = null, _pendTimer = 0;
+function pendUndo(){
+  commitUndo();
+  _pending = snapshot();
+  clearTimeout(_pendTimer);
+  _pendTimer = setTimeout(commitUndo, 600);
+}
+function commitUndo(){
+  if (_pendTimer){ clearTimeout(_pendTimer); _pendTimer = 0; }
+  if (_pending === null) return;
+  const before = _pending;
+  _pending = null;
+  if (snapshot() === before) return;          // 只是點一下，什麼都沒改
+  _unsaved = true;
+  _undo.push(before);
   if (_undo.length > UNDO_MAX) _undo.shift();
   _redo.length = 0;
   pruneGifMedia();
@@ -435,12 +473,14 @@ function applySnapshot(json){
   render(); refreshProp(); updateUndoBtns();
 }
 function undo(){
+  commitUndo();                 // 剛在面板改完就按 Ctrl+Z，那一筆也要算進去
   if (!_undo.length){ toast('沒有可以復原的動作'); return; }
   _redo.push(snapshot());
   applySnapshot(_undo.pop());
   toast(`已復原（還可復原 ${_undo.length} 步）`);
 }
 function redo(){
+  commitUndo();
   if (!_redo.length){ toast('沒有可以重做的動作'); return; }
   _undo.push(snapshot());
   applySnapshot(_redo.pop());

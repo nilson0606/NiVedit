@@ -206,9 +206,13 @@ function render(){
   $('#clipCount').textContent = A.clips.length ? A.clips.length + ' 段' : '0';
   $('#empty').classList.toggle('hide', A.clips.length > 0);
   sizePreview();
-  // 讓按鈕直接說出等一下會切到誰，不用猜
+  /* 讓按鈕直接說出等一下會切到誰，不用猜。
+     v12.2：圖片也是 A.clips 的成員（sel.type === 'clip'），以前一律寫「影片」，
+     選了圖片按鈕還是說「✂ 分割影片」「刪除影片」。使用者在 J08 回報。 */
+  const selClip = A.sel.type === 'clip' ? A.clips.find(x => x.id === A.sel.id) : null;
   const what = A.sel.type === 'music' ? '音軌' : A.sel.type === 'title' ? '標題'
-             : A.sel.type === 'overlay' ? '疊圖' : A.sel.type === 'sub' ? '字幕' : '影片';
+             : A.sel.type === 'overlay' ? '疊圖' : A.sel.type === 'sub' ? '字幕'
+             : (selClip && isImg(selClip)) ? '圖片' : '影片';
   const sb = $('#btnSplit');
   if (sb){
     sb.textContent = `✂ 分割${what}`;
@@ -715,13 +719,19 @@ function startClipTrim(e, c, i){
   render(); refreshProp();
   if (!h) return startClipReorder(e, c);            // 抓中間＝拖曳換順序
   e.preventDefault();
-  pushUndo();
   const mode = h.classList.contains('l') ? 'L' : 'R';
   if (isImg(c) && mode === 'L'){ toast('圖片請拖右緣調整停留長度'); return; }
   const x0 = e.clientX, in0 = c.inP, out0 = c.outP, at0=c.at;
   const L0=layout(),q0=L0[i],floor=q0.prev<0?0:L0[q0.prev].end;
+  /* v12.2：真的動了才記復原點。以前一按下把手就 pushUndo()，只是點一下也算。
+     那不只多存一筆，pushUndo() 會【清空重做堆疊】—— 於是「Ctrl+Z 之後
+     點一下片段，Ctrl+Y 就沒東西可重做了」。使用者實測 M02／M03 都是 NG。
+     startMusicDrag、startTitleDrag、startOverlayDrag 早就改成這樣了，
+     這裡跟 startSubDrag 是漏網的兩條。 */
+  let dirty = false;
   const mv = ev => {
     const d = (ev.clientX - x0) / A.pps;
+    if (!dirty){ dirty = true; pushUndo(); }
     if (mode === 'L'){
       c.inP=clamp(in0+d,Math.max(0,in0+floor-at0),c.outP-0.1);
       if (Number.isFinite(at0)) c.at=Math.max(0,at0+c.inP-in0);
@@ -771,11 +781,13 @@ function startSubDrag(e, c){
   A.sel = { type:'sub', id:c.id };
   const h = e.target.closest('.hd');
   render(); refreshProp();
-  e.preventDefault(); pushUndo();
+  e.preventDefault();
   const mode = h ? (h.classList.contains('l') ? 'L' : 'R') : 'M';
   const x0 = e.clientX, s0 = c.start, e0 = c.end;
+  let dirty = false;                       // 真的動了才記復原點，理由見 startClipTrim
   const mv = ev => {
     const d = (ev.clientX - x0) / A.pps;
+    if (!dirty){ dirty = true; pushUndo(); }
     if (mode === 'M'){
       const len=e0-s0;c.start=Math.max(0,s0+d);c.end=c.start+len;
       const t0=c.track;
@@ -1189,7 +1201,7 @@ function clipCropProps(c){
   return [];
 }
 
-function refreshProp(){
+function refreshPropRaw(){
   const p = $('#prop'), s = A.sel;
   if (s.type === 'clip'){
     const c = A.clips.find(x => x.id === s.id);
@@ -1825,6 +1837,39 @@ function refreshProp(){
     });
   }
 }
+
+/* v12.2：refreshProp() 會把 #prop 整塊 innerHTML 重畫，正在打字的欄位
+   【連節點一起被換掉】，焦點就掉回 <body>。
+
+   使用者踩到的樣子（L04 NG）：在音軌的「從音檔第幾秒取用」按 Backspace ——
+   第一下觸發 input 事件 → 重畫 → 焦點沒了；第二下就落到全域快捷鍵，
+   而 Backspace／Delete ＝ 刪除選取項目，整條音軌當場消失，畫面跳回專案面板。
+   他的描述是「功能是正常，按 backspace/delete 2~3 次，跳到專案畫面，音軌消失」。
+
+   與其去每個 handler 拿掉 refreshProp()（那些 refreshProp 是有用的，
+   面板上的長度、循環提示都要跟著變），不如讓重畫自己把焦點放回去：
+   記住焦點在哪個 id、游標在第幾個字，畫完再還原。
+
+   只認 #prop 裡面有 id 的表單元素 —— 其他東西本來就不會在重畫中途被打字。 */
+function refreshProp(){
+  const a = document.activeElement, box = $('#prop');
+  let keep = null;
+  if (a && a.id && box && box.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)){
+    keep = { id: a.id, s: null, e: null };
+    // type=number 在部分瀏覽器讀 selectionStart 會丟例外，拿不到就算了
+    try { keep.s = a.selectionStart; keep.e = a.selectionEnd; } catch(err){}
+  }
+  refreshPropRaw();
+  if (!keep) return;
+  const n = $('#' + keep.id);
+  if (!n) return;
+  try {
+    n.focus({ preventScroll: true });
+    if (keep.s !== null && typeof n.setSelectionRange === 'function')
+      n.setSelectionRange(keep.s, keep.e);
+  } catch(err){}
+}
+
 function bind(id, ev, fn){ const el = $('#' + id); if (el) el.addEventListener(ev, e => fn(el.value, el)); }
 
 /** 疊圖／標題的「目前在第幾層」說明。
@@ -1929,8 +1974,10 @@ function initUI(){
   $('#btnUndo').onclick = undo;
   $('#btnRedo').onclick = redo;
   // 屬性面板上任何一次「開始操作」都先記一個復原點（內容沒變就不會重複記）
-  $('#prop').addEventListener('pointerdown', pushUndo, true);
-  $('#prop').addEventListener('keydown', e => { if (!e.ctrlKey && !e.metaKey) pushUndo(); }, true);
+  /* v12.2：改成 pendUndo —— 先記著，真的改到才算一步。理由見 20_core.js
+     那一段註解（只是點一下也記一筆的話，重做堆疊會被清掉）。 */
+  $('#prop').addEventListener('pointerdown', pendUndo, true);
+  $('#prop').addEventListener('keydown', e => { if (!e.ctrlKey && !e.metaKey) pendUndo(); }, true);
   // 屬性面板上任何一個控制項動了都重畫，免得漏掉某個沒呼叫 render() 的路徑
   $('#prop').addEventListener('input',  () => markDirty(300), true);
   $('#prop').addEventListener('change', () => markDirty(300), true);
@@ -2036,18 +2083,39 @@ function initUI(){
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   });
 
+  /* 焦點在「會打字的欄位」裡嗎？核取方塊、滑桿、下拉、顏色都不算 ——
+     那些東西沒有文字可以復原。 */
+  const TEXT_INPUT = /^(|text|search|url|tel|email|password|number|date|time|datetime-local|month|week)$/;
+  const inTextField = el => !el ? false
+    : el.isContentEditable ? true
+    : el.tagName === 'TEXTAREA' ? true
+    : el.tagName === 'INPUT' ? TEXT_INPUT.test((el.getAttribute('type') || '').toLowerCase())
+    : false;
+
   document.addEventListener('keydown', e => {
-    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    const el = document.activeElement;
     if (A.exporting) return;
     if ($('#gmask').classList.contains('on')){        // 預覽選單開著時，鍵盤先給它
       if (e.key === 'Escape') closePicker();
       return;
     }
+    /* Ctrl+Z／Ctrl+Y 只在【會打字的欄位】裡讓給瀏覽器自己的文字復原。
+       v12.2 以前這裡一律讓給所有表單元素，於是「勾一下核取方塊再按 Ctrl+Z」
+       是沒有作用的 —— 以前看起來有用，純粹是因為 refreshProp() 會把焦點弄丟；
+       v12.2 讓焦點留住（修 L04 那條刪音軌的 bug）之後，這個洞就露出來了。
+       兩支既有測試當場變紅，那是真的抓到東西，不是測試寫壞。 */
     if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')){
+      if (inTextField(el)) return;
       e.preventDefault(); return e.shiftKey ? redo() : undo();
     }
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')){ e.preventDefault(); return redo(); }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')){
+      if (inTextField(el)) return;
+      e.preventDefault(); return redo();
+    }
     if (e.ctrlKey || e.metaKey) return;
+    /* 其他快捷鍵照舊讓給任何表單元素：空白鍵要能勾核取方塊、
+       左右鍵要能拉滑桿、Backspace 要能刪字。 */
+    if (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
     if (e.code === 'Space'){ e.preventDefault(); if (A.clips.length) setPlaying(!A.playing); }
     if (e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); delSelected(); }
     if (e.key === 's' || e.key === 'S'){ e.preventDefault(); splitAtPlayhead(); }

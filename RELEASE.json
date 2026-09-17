@@ -1,6 +1,6 @@
 {
-  "version": "12.1",
-  "html_sha256": "38d24367f747bab3ca20c875fc0612ef5ba98d9820a3303692d69cd8f0d9155a",
-  "html_bytes": 1022321,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 709 checks passed across sixteen suites, plus the GIF suite. Three are new, and were confirmed to fail without the fix."
+  "version": "12.2",
+  "html_sha256": "a2b8429973d40c6fb509b993bd3ec7dc6890e1c205ac4eb198a222e87621dcb8",
+  "html_bytes": 1028220,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 730 checks passed across sixteen suites, plus the GIF suite. Twenty-one are new, and every one was confirmed to fail with its fix removed."
 }

@@ -258,6 +258,100 @@ const HTML=process.env.NIVEDIT_HTML,CHROME=process.env.NIVEDIT_CHROME,FIX=proces
   chk('到底：被擋住時有說明',/擋住/.test(bl.toast));
 }
 
+/* ── 選了圖片，按鈕不該說「影片」（v12.2）───────────────────────
+   圖片也住在 A.clips 裡（sel.type === 'clip'），以前按鈕一律寫「影片」。
+   使用者在 J08 備註：「圖片分割 目前仍顯示分割影片，要修」。 */
+{
+  await p.evaluate(()=>{setLang('zh');const im=A.clips.find(isImg);
+    A.sel={type:'clip',id:im.id};render();refreshProp();});
+  await p.waitForTimeout(200);
+  const img={split:(await p.textContent('#btnSplit')).trim(),del:(await p.textContent('#btnDel')).trim()};
+  await p.evaluate(()=>{const v=A.clips.find(c=>!isImg(c));
+    A.sel={type:'clip',id:v.id};render();refreshProp();});
+  await p.waitForTimeout(200);
+  const vid={split:(await p.textContent('#btnSplit')).trim(),del:(await p.textContent('#btnDel')).trim()};
+  chk('選圖片時按鈕說「圖片」',img.split==='✂ 分割圖片'&&img.del==='刪除圖片');
+  chk('選影片時按鈕還是說「影片」',vid.split==='✂ 分割影片'&&vid.del==='刪除影片');
+}
+
+/* ── 只是點一下片段，不該清掉重做堆疊（v12.2）──────────────────
+   startClipTrim 以前一按下把手就 pushUndo()，而 pushUndo() 會把 _redo 清空。
+   於是「Ctrl+Z 之後點一下片段，Ctrl+Y 就沒東西可重做」。
+   使用者實測 M02／M03 都是 NG，備註「沒有可重做的」。 */
+{
+  await p.evaluate(()=>{resetClips();A.titles=[];_undo.length=0;_redo.length=0;
+    $('#mask').classList.remove('on');addTitle();});
+  await p.waitForTimeout(250);
+  await p.click('#btnUndo');await p.waitForTimeout(300);
+  const r0=await p.evaluate(()=>_redo.length);
+  chk('前置：復原之後確實有東西可以重做',r0===1);
+
+  const box=await p.locator('#trkVideo .blk, #tl .blk').first().boundingBox();
+  await p.mouse.click(box.x+3, box.y+box.height/2);        // 點左緣把手，完全不拖
+  await p.waitForTimeout(300);
+  const r1=await p.evaluate(()=>({redo:_redo.length,dis:$('#btnRedo').disabled}));
+  chk('點一下片段把手不會清掉重做堆疊',r1.redo===1);
+  chk('「↷ 重做」按鈕也還是亮的',r1.dis===false);
+
+  // 按鈕變灰的時候不能硬點（Playwright 會卡住三十秒然後整支中斷），
+  // 但下面那一項照樣要跑 —— 壞掉的時候要看到它紅，不是看到測試崩潰。
+  if (!r1.dis){ await p.click('#btnRedo'); await p.waitForTimeout(300); }
+  chk('重做真的做得回來',await p.evaluate(()=>A.titles.length)===1);
+
+  // 真的拖過才要記一筆：拖完 undo 堆疊要長出東西
+  const b2=await p.locator('#trkVideo .blk, #tl .blk').first().boundingBox();
+  const u0=await p.evaluate(()=>_undo.length);
+  await p.mouse.move(b2.x+b2.width-3, b2.y+b2.height/2);
+  await p.mouse.down();await p.mouse.move(b2.x+b2.width-30, b2.y+b2.height/2,{steps:5});
+  await p.mouse.up();await p.waitForTimeout(300);
+  chk('真的拖過才記復原點',await p.evaluate(()=>_undo.length)===u0+1);
+
+  /* 焦點在核取方塊上時，Ctrl+Z 應該是「復原編輯動作」，不是被瀏覽器吃掉。
+     v12.2 以前這裡是讓給所有表單元素的；會過只是因為 refreshProp()
+     每次都把焦點弄丟。焦點留住之後這個洞就露出來了（motion 兩項當場紅）。 */
+  await p.evaluate(()=>{resetClips();A.clips[1].muted=false;render();
+    A.sel={type:'clip',id:A.clips[1].id};refreshProp();});
+  await p.waitForTimeout(250);
+  await p.click('#cMute');await p.waitForTimeout(250);
+  const ck=await p.evaluate(()=>({muted:A.clips[1].muted,focus:document.activeElement.id}));
+  chk('前置：勾了靜音，而且焦點停在核取方塊上',ck.muted===true&&ck.focus==='cMute');
+  await p.keyboard.press('Control+z');await p.waitForTimeout(300);
+  chk('焦點在核取方塊上時 Ctrl+Z 照樣復原得了',await p.evaluate(()=>A.clips[1].muted)===false);
+
+  /* 但在會打字的欄位裡就要讓給瀏覽器自己的文字復原，不能搶走。 */
+  await p.evaluate(()=>{A.sel={type:'clip',id:A.clips[1].id};refreshProp();});
+  await p.waitForTimeout(200);
+  const nBefore=await p.evaluate(()=>_undo.length);
+  await p.click('#cIn');await p.keyboard.press('End');
+  await p.keyboard.press('Control+z');await p.waitForTimeout(250);
+  chk('在數字欄位裡按 Ctrl+Z 不會去動專案的復原堆疊',
+      await p.evaluate(()=>_undo.length)===nBefore);
+
+  /* 真正咬到使用者的是這條：#prop 上掛了 pointerdown 的 capture 監聽，
+     以前一律 pushUndo()，所以【在右側面板點一下】就把重做堆疊清光。
+     v12.2 改成先記著、真的改到才算一步。 */
+  await p.evaluate(()=>{resetClips();A.titles=[];_undo.length=0;_redo.length=0;
+    $('#mask').classList.remove('on');addTitle();});
+  await p.waitForTimeout(250);
+  await p.evaluate(()=>{A.sel={type:'clip',id:A.clips[1].id};refreshProp();});
+  await p.waitForTimeout(200);
+  await p.click('#btnUndo');await p.waitForTimeout(300);
+  chk('前置：復原之後有東西可以重做（面板這條）',await p.evaluate(()=>_redo.length)===1);
+  await p.click('#cIn');await p.waitForTimeout(400);      // 只是點進欄位，什麼都沒改
+  const pk=await p.evaluate(()=>({redo:_redo.length,undo:_undo.length,dis:$('#btnRedo').disabled}));
+  chk('在屬性欄點一下不會清掉重做堆疊',pk.redo===1);
+  chk('在屬性欄點一下也不會多記一筆復原',pk.undo===0);
+  chk('「↷ 重做」按鈕沒有因此變灰',pk.dis===false);
+
+  // 但真的改了值，還是要記一步 —— 別把功能修掉了
+  const u1=await p.evaluate(()=>_undo.length);
+  await p.locator('#cOut').fill('3');await p.locator('#cOut').dispatchEvent('input');
+  await p.waitForTimeout(800);                            // 等收尾計時器結算
+  chk('真的改了屬性欄的值，照樣記得起來',await p.evaluate(()=>_undo.length)===u1+1);
+  await p.click('#btnUndo');await p.waitForTimeout(350);
+  chk('屬性欄改完可以復原回去',Math.abs(await p.evaluate(()=>A.clips[1].outP)-3)>0.01);
+}
+
  chk('no page errors',errors.length===0);
  fs.writeFileSync(path.join(OUT,'clip-options-results.json'),JSON.stringify({count:n,bad,errors,facts},null,2));
  console.log('通過 '+(n-bad.length)+' / '+n);if(bad.length){console.log(bad,JSON.stringify(facts));process.exitCode=1}
