@@ -5078,7 +5078,12 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 在播放頭的位置生一個字幕方塊，右側面板可以直接打字	Puts a subtitle block at the playhead; type into the panel on the right
 讀進 .srt／.vtt，整批變成字幕	Reads an .srt or .vtt file and turns it into subtitles
 字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字	Subtitle added at the playhead — drag it along the subtitle track, drag its edges to resize, and type into the panel on the right
-新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句	Add one subtitle, or import an SRT file; double-clicking empty space on a subtitle track also adds one`;
+新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句	Add one subtitle, or import an SRT file; double-clicking empty space on a subtitle track also adds one
+只辨識這條音軌在時間軸上聽得到的那一段，產生的字幕放在字幕底層。	Only the part of this audio track you can hear on the timeline is transcribed, and the subtitles go on the bottom subtitle track.
+開了循環的話只辨識第一輪，不會跑出重複的句子。	If the track loops, only the first pass is transcribed, so you will not get duplicate lines.
+找不到那一條音軌（可能已經被刪掉了）	That audio track is gone — it may have been deleted
+解不出「	Could not decode “
+」的聲音	”`;
 
 </script>
 <script>
@@ -5301,7 +5306,7 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v11.9';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'v12.0';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/17';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -12455,9 +12460,45 @@ function asrKillWorker(){
    Whisper 只吃 16kHz mono。這裡刻意「不管靜音、不管音量、不管淡入淡出」：
    那些是給觀眾聽的設定，辨識要聽的是原始講話。
    位置用 layout()，所以字幕時間跟剪完的影片對得上。 */
+const ASR_MUSIC_PREFIX = 'music:';
+/** 範圍是不是某一條音軌。影片片段與音軌的 id 都是 uid()，光看值分不出來，
+    所以下拉的 value 給音軌加前綴。 */
+const asrMusicOf = scopeId => (typeof scopeId === 'string' && scopeId.startsWith(ASR_MUSIC_PREFIX))
+  ? A.musics.find(m => m.id === scopeId.slice(ASR_MUSIC_PREFIX.length)) || null : null;
+
 async function asrExtract16k(scopeId, onProg){
   const SR = 16000;
   const L = layout();
+
+  /* ── 音軌（v12.0）───────────────────────────────────────────
+     拖進來的 mp3／wav 是 A.musics，不在 A.clips 裡，以前完全辨識不到。
+     用途是「影片配上另外錄的旁白」。
+
+     只辨識【聽得到的那一段】：從檔案的 m.offset 開始，長度取
+     min(m.len, musicSeg(m))。理由有兩個 ——
+       · 超過 m.len 的部分時間軸上根本不播，給它字幕等於憑空多出句子；
+       · 開了循環時後面是同一段重播，整段辨識會產生一模一樣的重複字幕。
+     所以循環的音軌只辨識第一輪，這是刻意的。 */
+  if (typeof scopeId === 'string' && scopeId.startsWith(ASR_MUSIC_PREFIX) && !asrMusicOf(scopeId))
+    throw new Error('找不到那一條音軌（可能已經被刪掉了）');
+  const mus = asrMusicOf(scopeId);
+  if (mus){
+    const d = Math.max(0.1, Math.min(mus.len, musicSeg(mus)));
+    if (d > 3 * 3600) throw new Error('超過 3 小時，記憶體會爆，請分段處理');
+    const oc = new OfflineAudioContext(1, Math.ceil(d * SR), SR);
+    if (onProg) onProg(`解碼「${mus.name}」…`);
+    const buf = await getClipAudio(mus, oc);       // music 也有 .file／.name，同一條路
+    if (!buf) throw new Error(`解不出「${mus.name}」的聲音`);
+    const src = oc.createBufferSource();
+    src.buffer = buf;
+    src.connect(oc.destination);
+    src.start(0, Math.min(mus.offset, Math.max(0, buf.duration - 0.05)),
+              Math.min(d, Math.max(0, buf.duration - mus.offset)));
+    if (onProg) onProg('混音中…');
+    const out = await oc.startRendering();
+    return { pcm: out.getChannelData(0), offset: mus.startAt, dur: d };
+  }
+
   let t0 = 0, t1 = totalDur();
   let list = A.clips.map((c, i) => ({ c, i }));
   if (scopeId && scopeId !== 'all'){
@@ -12674,7 +12715,11 @@ async function asrRun(){
 
     mProg(96, '整理字幕…');
     const cues = asrToCues(chunks, offset, dur, { tw: ASR.tw, split: ASR.split });
-    cues.forEach(c=>c.track=clipTrack(A.clips.find(x=>x.id===ASR.scope)));
+    /* 落在哪一條字幕軌：影片片段跟著它自己那一軌；
+       音軌沒有對應的影片軌，一律放底層（clipTrack(undefined) 也是 0，
+       但這裡寫清楚，免得下次看到以為是漏掉的分支）。 */
+    cues.forEach(c => c.track = asrMusicOf(ASR.scope)
+      ? 0 : clipTrack(A.clips.find(x => x.id === ASR.scope)));
     if (!cues.length){ mDone('沒有聽到內容', '', '這段聲音裡沒有辨識出任何句子。可以換大一點的模型再試。'); return; }
 
     pushUndo();
@@ -12784,10 +12829,25 @@ function asrUpdateState(){
 function asrPanel(){
   const box = $('#asrbox');
   if (!box) return;
+  /* 選好的範圍被刪掉了就落回「整支影片」。不歸位的話下拉會顯示第一個選項，
+     ASR.scope 卻還指著不存在的東西 —— 看起來選了 A，按下去辨識 B。 */
+  if (ASR.scope && ASR.scope !== 'all'
+      && !(asrMusicOf(ASR.scope) || A.clips.some(c => c.id === ASR.scope)))
+    ASR.scope = 'all';
   const clipOpts = ['<option value="all">整支影片（時間軸全部）</option>']
-    .concat(A.clips.map((c, i) => `<option value="${c.id}"${ASR.scope === c.id ? ' selected':''}>第 ${i+1} 段：${esc(c.name)}</option>`)).join('');
+    .concat(A.clips.map((c, i) => `<option value="${c.id}"${ASR.scope === c.id ? ' selected':''}>第 ${i+1} 段：${esc(c.name)}</option>`))
+    .concat(A.musics.length
+      ? ['<optgroup label="音軌">'].concat(A.musics.map((m, i) =>
+          /* 用破折號不用全形冒號：翻譯是逐詞比對的，「音軌」有詞條、「：」沒有，
+             用冒號的話英文會變成「Audio 1：name」，中間卡一個全形冒號。 */
+          `<option value="${ASR_MUSIC_PREFIX}${m.id}"${ASR.scope === ASR_MUSIC_PREFIX + m.id ? ' selected':''}>音軌 ${i+1} — ${esc(m.name)}</option>`))
+          .concat(['</optgroup>'])
+      : []).join('');
   box.innerHTML = `
     <div class="row"><label>範圍</label><div class="f"><select id="asrScope" style="flex:1">${clipOpts}</select></div></div>
+    ${asrMusicOf(ASR.scope) ? `<div class="hint" style="margin:-3px 0 7px">
+      只辨識這條音軌在時間軸上聽得到的那一段，產生的字幕放在字幕底層。<br>
+      開了循環的話只辨識第一輪，不會跑出重複的句子。</div>` : ''}
     <div class="row"><label>模型</label><div class="f"><select id="asrModel" style="flex:1">
       ${ASR_MODELS.map(m => `<option value="${m.id}"${ASR.model === m.id ? ' selected':''}>${esc(m.name)}</option>`).join('')}
     </select></div></div>
@@ -12825,7 +12885,8 @@ function asrPanel(){
       <button class="gh" id="asrCache" style="flex:1">已下載的…</button>
     </div>`;
 
-  bind('asrScope','change', v => { ASR.scope = v; });
+  // 重畫是為了讓音軌那段說明跟著出現／消失；asrPanel 會把 selected 補回去。
+  bind('asrScope','change', v => { ASR.scope = v; asrPanel(); });
   bind('asrModel','change', v => { ASR.model = v; });
   bind('asrLang','change',  v => { ASR.lang = v; });
   const ck = (id, k) => { const e = $('#'+id); if (e) e.onchange = () => { ASR[k] = e.checked; }; };

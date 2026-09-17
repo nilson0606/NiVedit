@@ -126,6 +126,59 @@ chk('＋字幕：英文介面下選項也翻譯了',dlgEn.includes('Type one')&&
 await p.keyboard.press('Escape');await p.waitForTimeout(150);
 await p.evaluate(()=>setLang('zh'));await p.waitForTimeout(120);
 
+/* ── AI 字幕的「範圍」可以選音軌（v12.0）──────────────────────
+   拖進來的 mp3／wav 是 A.musics，不在 A.clips 裡，以前完全辨識不到。
+   模型下載要連外網，容器裡不跑；這裡驗的是【辨識以外】的每一段：
+   下拉有沒有那個選項、抽音訊抽對範圍沒、字幕落在哪一軌、刪掉之後會不會亂指。 */
+await p.setInputFiles('#fileAny',process.env.NIVEDIT_FIX+'/tone440.wav');
+await p.waitForFunction(()=>A.musics.length===1,null,{timeout:30000});
+await p.waitForTimeout(250);
+const scope=await p.evaluate(()=>{
+  const sel=$('#asrScope');
+  return {opts:[...sel.querySelectorAll('option')].map(o=>o.textContent.trim()),
+          groups:[...sel.querySelectorAll('optgroup')].map(g=>g.label),
+          val:'music:'+A.musics[0].id};
+});
+chk('AI 字幕：範圍下拉多出音軌選項',scope.opts.some(t=>/^音軌 1 —/.test(t)));
+chk('AI 字幕：音軌獨立成一個群組',scope.groups.includes('音軌'));
+
+await p.selectOption('#asrScope',scope.val);
+await p.waitForTimeout(200);
+chk('AI 字幕：選了音軌之後 ASR.scope 跟著變',await p.evaluate(()=>ASR.scope)===scope.val);
+chk('AI 字幕：選了音軌會出現那段說明',
+    await p.evaluate(()=>/聽得到的那一段/.test($('#asrbox').textContent)));
+
+/* 抽音訊：範圍要等於「時間軸上聽得到的那一段」，offset 要等於音軌的起點。 */
+const ex=await p.evaluate(async()=>{
+  const m=A.musics[0];
+  m.startAt=1.5; m.autoLen=false; m.len=2; m.offset=0.5; m.loop=true; render();
+  const r=await asrExtract16k('music:'+m.id,()=>{});
+  return {offset:+r.offset.toFixed(3),dur:+r.dur.toFixed(3),
+          secs:+(r.pcm.length/16000).toFixed(2),
+          seg:+Math.min(m.len,musicSeg(m)).toFixed(3)};
+});
+chk('AI 字幕：音軌抽音訊的長度＝聽得到的那一段',Math.abs(ex.dur-ex.seg)<0.02&&Math.abs(ex.secs-ex.dur)<0.05);
+chk('AI 字幕：循環的音軌只抽第一輪，不是整條時間軸',ex.dur<=2.001);
+chk('AI 字幕：字幕時間以音軌的起點為基準',Math.abs(ex.offset-1.5)<0.01);
+
+const bad1=await p.evaluate(async()=>{try{await asrExtract16k('music:nope',()=>{});return ''}catch(e){return e.message}});
+chk('AI 字幕：音軌不見時錯誤訊息講的是音軌，不是「找不到那一段影片」',/找不到那一條音軌/.test(bad1));
+
+await p.evaluate(()=>setLang('en'));await p.waitForTimeout(150);
+const en=await p.evaluate(()=>({
+  group:[...$('#asrScope').querySelectorAll('optgroup')].map(g=>g.label),
+  hint:$('#asrbox').textContent}));
+chk('AI 字幕：音軌群組名有翻譯',en.group.includes('Audio'));
+chk('AI 字幕：音軌說明有翻譯',/bottom subtitle track/i.test(en.hint)&&!/聽得到的那一段/.test(en.hint));
+await p.evaluate(()=>setLang('zh'));await p.waitForTimeout(150);
+
+/* 選好的音軌被刪掉：範圍要自己落回「整支影片」，不能還指著不存在的東西。 */
+await p.evaluate(()=>{A.musics=[];render();});
+await p.waitForTimeout(250);
+chk('AI 字幕：音軌被刪掉後範圍落回整支影片',await p.evaluate(()=>ASR.scope)==='all');
+chk('AI 字幕：音軌沒了就不再有音軌群組',
+    await p.evaluate(()=>$('#asrScope').querySelectorAll('optgroup').length)===0);
+
 chk('no page errors',errors.length===0);
 fs.writeFileSync(path.join(OUT,'subtitle-scope-results.json'),JSON.stringify({count,bad,errors},null,2));
 console.log('subtitle-scope: '+(count-bad.length)+' / '+count);if(bad.length){console.log(bad);process.exitCode=1}

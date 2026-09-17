@@ -1,6 +1,6 @@
 {
-  "version": "11.9",
-  "html_sha256": "a1eb2af4e3e1c07dd6d0c9ef22ace5550d3cdd245bd96e15eb7534fec8d3be17",
-  "html_bytes": 1017238,
-  "verification": "Chromium 153 (H.264 available, no AAC encoder): 694 checks passed across sixteen suites, plus the GIF suite. Twelve of those are new and cover the subtitle button's two-way prompt, including that cancelling opens nothing at all."
+  "version": "12.0",
+  "html_sha256": "444aaf6765bffd1754eeecb00b3b08492e55ac1559d81ac1b983e6601f937362",
+  "html_bytes": 1021486,
+  "verification": "Chromium 153 (H.264 available, no AAC encoder): 706 checks passed across sixteen suites, plus the GIF suite. Twelve of those are new. Model downloads need the network, so they cover everything around the transcription itself: the new scope option, the audio it extracts, where the subtitles land, and what happens when the chosen track is deleted."
 }

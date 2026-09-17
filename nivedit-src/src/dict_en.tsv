@@ -1106,3 +1106,8 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 讀進 .srt／.vtt，整批變成字幕	Reads an .srt or .vtt file and turns it into subtitles
 字幕加在播放頭位置，可在字幕軌左右拖、兩端拉長縮短；右側面板直接打字	Subtitle added at the playhead — drag it along the subtitle track, drag its edges to resize, and type into the panel on the right
 新增一句字幕，或匯入 SRT 字幕檔；在字幕軌雙擊空白處也可以新增一句	Add one subtitle, or import an SRT file; double-clicking empty space on a subtitle track also adds one
+只辨識這條音軌在時間軸上聽得到的那一段，產生的字幕放在字幕底層。	Only the part of this audio track you can hear on the timeline is transcribed, and the subtitles go on the bottom subtitle track.
+開了循環的話只辨識第一輪，不會跑出重複的句子。	If the track loops, only the first pass is transcribed, so you will not get duplicate lines.
+找不到那一條音軌（可能已經被刪掉了）	That audio track is gone — it may have been deleted
+解不出「	Could not decode “
+」的聲音	”
