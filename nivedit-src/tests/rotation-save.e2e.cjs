@@ -299,6 +299,31 @@ await p.waitForTimeout(250);
 chk('清理素材的空訊息有解釋清楚',/只清瀏覽器儲存/.test(await p.textContent('#toast')));
 await p.evaluate(()=>{$('#pmask').classList.remove('on');});
 
+/* ── 進度視窗的「完成」按鈕不可以把上一輪的收尾動作留給下一輪（v12.1）──
+   匯出、存專案、AI 字幕共用同一個 #mask 與同一顆 #mClose。AI 字幕跑完會把
+   mClose 換成「關掉之後順便開字幕編輯器」，以前換完不還原 —— 於是跑過一次
+   AI 字幕，之後每次存專案按「完成」都會跳出字幕編輯器。
+   使用者實測回報：「加了這些字幕後要存專案，會跳出字幕這個窗」。 */
+{
+  await p.evaluate(()=>{
+    $('#emask').classList.remove('on');
+    mShow('AI 字幕','');mDone('字幕產生完成','','');
+    // asrRun 收尾時做的事，原封不動照抄
+    $('#mClose').onclick=()=>{$('#mask').classList.remove('on');openSubEditor();};
+  });
+  await p.click('#mClose');await p.waitForTimeout(200);
+  chk('前置：AI 字幕那一輪按「完成」的確會開字幕編輯器',
+      await p.evaluate(()=>$('#emask').classList.contains('on')));
+  await p.evaluate(()=>{$('#emask').classList.remove('on');});
+
+  await p.evaluate(()=>{mShow('儲存到資料夾','');mDone('已儲存','','');});
+  await p.click('#mClose');await p.waitForTimeout(200);
+  const after=await p.evaluate(()=>({sub:$('#emask').classList.contains('on'),
+                                     mask:$('#mask').classList.contains('on')}));
+  chk('下一輪（存專案）按「完成」不會跳出字幕編輯器',after.sub===false);
+  chk('下一輪（存專案）按「完成」照樣關得掉視窗',after.mask===false);
+}
+
 chk('no page errors',errors.length===0);
 fs.writeFileSync(path.join(OUT,'rotation-save-results.json'),JSON.stringify({count,bad,errors,facts,nativeDialog:'OS overwrite/rename dialog delegated to showSaveFilePicker; adapter tests use real OPFS streams, not native-dialog automation.'},null,2));
 console.log('rotation-save: '+(count-bad.length)+' / '+count);if(bad.length){console.log(bad,facts);process.exitCode=1}

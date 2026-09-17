@@ -33,6 +33,16 @@ function drain(enc, max){
   return (async () => { while (enc.encodeQueueSize > max) await yieldNow(); })();
 }
 
+/* 這個進度視窗是【共用】的：匯出、存專案、AI 字幕都用它，連「完成」那顆按鈕
+   也是同一個 DOM 節點。誰都可以在自己那一輪把 mClose.onclick 換掉做收尾動作
+   （AI 字幕就會換成「關掉之後順便開字幕編輯器」）。
+
+   v12.1：問題是換掉之後沒人還原。使用者跑過一次 AI 字幕，之後每一次存專案
+   按「完成」都會把字幕編輯器叫出來 —— 他的話是「加了這些字幕後要存專案，
+   會跳出字幕這個窗」。
+
+   解法放在 mShow：每次開視窗都先把 onclick 歸回「只關掉」。歸位要在開頭做，
+   不是在關閉的時候做 —— 使用者也可能點遮罩或按 Esc 離開，那條路不會經過按鈕。 */
 function mShow(title, sub){
   $('#mask').classList.add('on');
   $('#mTitle').textContent = title;
@@ -42,6 +52,7 @@ function mShow(title, sub){
   $('#mCancel').classList.remove('hide');
   $('#mClose').classList.add('hide');
   $('#mClose').textContent = '完成';
+  $('#mClose').onclick = () => $('#mask').classList.remove('on');
 }
 function mProg(pct, log){
   $('#mBar').style.width = clamp(pct, 0, 100).toFixed(1) + '%';

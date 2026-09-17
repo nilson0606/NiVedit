@@ -1,4 +1,4 @@
-# NiVedit v12.0
+# NiVedit v12.1
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,9 +12,9 @@ Use Microsoft Edge on a desktop computer. Import your own videos, images, GIF ov
 
 ## Latest update
 
-AI subtitles can now transcribe an audio track. The "Scope" dropdown lists your audio tracks alongside the video clips, so a narration you recorded separately and dropped onto the timeline can become subtitles. Only the part you can actually hear is transcribed — a looping track is transcribed once, not once per repeat — and the result goes on the bottom subtitle track.
+Fixed: after running AI subtitles once, saving the project and pressing Done would also pop open the subtitle editor. The progress dialog is shared between exporting, saving and transcription, and transcription was leaving its own Done handler behind for whoever used the dialog next.
 
-The release before this one changed the "+ Subtitle" button to ask what you want: type one subtitle yourself, or import an SRT file. Typing one puts a block on the subtitle track at the playhead and selects it, ready to type into.
+The release before this one taught AI subtitles to transcribe an audio track. The "Scope" dropdown lists your audio tracks alongside the video clips, so a narration you recorded separately can become subtitles. Only the part you can actually hear is transcribed, and the result goes on the bottom subtitle track.
 
 ## Features
 
@@ -35,7 +35,7 @@ Python 3 is required only to rebuild the single-file editor:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.0 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
+The checked-in HTML is the verified v12.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically.
 
 ## Projects and storage
 
@@ -47,6 +47,6 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v12.0 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v12.1 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
