@@ -3,8 +3,8 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/17';
+const VER = 'v12.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/18';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -972,7 +972,7 @@ function addVideo(file){
         inP: 0, outP: v.duration, muted: false, vol: 1,
         x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
         track: 0, at: null, transMode: 'overlap', fadeIn: 0, fadeOut: 0, fadeAudio: true,
-        cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
+        cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
         rot: 0,                    // 使用者自己再轉的角度（0/90/180/270），跟檔案本身的矩陣無關
         trans:    { type: A.clips.length ? 'dissolve' : 'none', dur: 0.6 },
         transOut: { type: 'none', dur: 0.6 },     // 離開這一段時的轉場（轉到黑），聲音一起淡出
@@ -1043,7 +1043,7 @@ async function addImageFiles(files, secs){
         inP: 0, outP: d, muted: true, vol: 0,
         x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
         track: 0, at: null, transMode: 'overlap', fadeIn: 0, fadeOut: 0, fadeAudio: true,
-        cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
+        cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
         trans:    { type: A.clips.length ? 'dissolve' : 'none', dur: 0.6 },
         transOut: { type: 'none', dur: 0.6 },     // 離開這一段時的轉場（轉到黑），聲音一起淡出
         grade: { ...GRADE0 },

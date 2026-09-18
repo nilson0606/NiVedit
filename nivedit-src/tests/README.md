@@ -459,3 +459,7 @@ music-example.e2e.cjs：68 項（配樂 v2），涵蓋本機／網站、曲目�
 ## v12.5 compatibility
 
 compat.e2e.cjs: 52 checks; compat-extras.e2e.cjs: 18 checks. Set NIVEDIT_HTML, NIVEDIT_CHROME (Chrome), NIVEDIT_COMPAT_OUT. Both launch with GPU/video acceleration disabled. Synthetic fixtures in fixtures/ are generated test patterns, not user media. Tests include real WASM HEVC conversion, failed loader retry, cancel, retained edits/keyframes, undo/redo, embedded project reopen, real MP4 export, HDR/silent portrait, oversized input, and manual navigation in a new tab.
+
+## v12.6 框外裁切驗證（2026-09-18）
+
+crop.e2e.cjs 擴充至 62 項：框內／框外互補像素、圓形 0 直徑、滿框矩形、關鍵幀及變形、雙軌／圖片／轉場透明洞、暫停更新、復原重做、保存與舊專案預設、四種 MP4 實際匯出解碼像素比對。Windows Edge 全部通過；另驗證 dual-track 45 與 i18n 41 項，共 148 項。此為針對性驗證，未重跑全部測試庫。

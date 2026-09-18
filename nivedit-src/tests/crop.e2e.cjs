@@ -42,12 +42,13 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
    };
    window.cropReset=()=>{
      const c=A.clips[0];
-     Object.assign(c,{x:.5,y:.5,scale:1,opacity:1,motionRot:0,rot:0,cropShape:'none',
+     Object.assign(c,{x:.5,y:.5,scale:1,opacity:1,motionRot:0,rot:0,cropShape:'none',cropKeep:'inside',
        cropX:.5,cropY:.5,cropW:1,cropH:1,cropSize:1,kf:null,kfT:null});
      return c;
    };
  });
  await p.selectOption('#cCropShape','rect');
+ chk('crop keep defaults inside',await p.inputValue('#cCropKeep')==='inside');
  chk('rectangle UI',await p.locator('#cCropcropW').count()===1&&await p.locator('#cCropcropH').count()===1);
  await p.click('#cKf');
  chk('rectangle endpoint UI',await p.locator('#cKcropW').count()===1&&await p.locator('#cKmotionRot').count()===1);
@@ -115,29 +116,72 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
  await p.click('#btnRedo');await p.waitForTimeout(150);
  chk('crop slider redo',await p.evaluate(()=>A.clips[0].cropW===.01));
 
+
+ // Keep-outside uses a transparent hole, including zero-diameter and full-frame boundaries.
+ await p.evaluate(()=>{const c=cropReset();c.cropShape='rect';c.cropW=.5;c.cropH=.5;A.sel={type:'clip',id:c.id};A.playhead=.5;render();refreshProp();});
+ await p.waitForTimeout(350);const insidePreview=await p.locator('#preview').screenshot();
+ await p.locator('#cCropKeep').focus();await p.locator('#cCropKeep').press('End');
+ await p.waitForTimeout(350);
+ chk('outside selector redraws paused preview',await p.inputValue('#cCropKeep')==='outside'&&!insidePreview.equals(await p.locator('#preview').screenshot()));
+ await p.click('#btnUndo');chk('keep area undo',await p.evaluate(()=>A.clips[0].cropKeep==='inside'));
+ await p.click('#btnRedo');chk('keep area redo',await p.evaluate(()=>A.clips[0].cropKeep==='outside'));
+ await p.evaluate(()=>setLang('zh'));await p.waitForTimeout(80);
+ chk('keep area Chinese',await p.locator('#cCropKeep option[value="outside"]').textContent()==='保留框外');
+ await p.evaluate(()=>setLang('en'));await p.waitForTimeout(80);
+ chk('keep area English',await p.locator('#cCropKeep option[value="outside"]').textContent()==='Keep outside');
+ for(const theme of ['dark','light']){
+   await p.evaluate(t=>setTheme(t),theme);
+   chk('keep area visible '+theme,await p.locator('#cCropKeep').isVisible());
+ }
+ const outsideMetrics=await p.evaluate(()=>{
+   const c=cropReset(),full=cropShot(.5).n,result={full};
+   for(const shape of ['rect','circle']){
+     Object.assign(c,{cropShape:shape,cropKeep:'inside',cropW:.5,cropH:.5,cropSize:.5});
+     const inside=cropShot(.5).n;c.cropKeep='outside';const outside=cropShot(.5).n;
+     result[shape]={inside,outside};
+   }
+   Object.assign(c,{cropShape:'circle',cropSize:0,cropKeep:'outside'});result.zeroOutside=cropShot(.5).n;
+   c.cropKeep='inside';result.zeroInside=cropShot(.5).n;
+   Object.assign(c,{cropShape:'rect',cropW:1,cropH:1,cropKeep:'outside'});result.fullHole=cropShot(.5).n;
+   Object.assign(c,{cropShape:'circle',cropSize:.2,kf:{cropSize:[{t:1,v:.8,e:'linear'}]},kfT:[.25,.75]});
+   result.anim=[cropShot(0).n,cropShot(.4).n,cropShot(1.6).n,cropShot(1.99).n];
+   // A moved, rotated, scaled mask remains complementary to its inside variant.
+   Object.assign(c,{kf:null,kfT:null,scale:.6,x:.4,y:.6,motionRot:37,cropShape:'none'});
+   result.transformedFull=cropShot(.5).n;
+   Object.assign(c,{cropShape:'rect',cropW:.3,cropH:.6,cropKeep:'inside'});result.transformedInside=cropShot(.5).n;
+   c.cropKeep='outside';result.transformedOutside=cropShot(.5).n;
+   cropReset();return result;
+ });
+ for(const shape of ['rect','circle'])chk(shape+' inside/outside complementary pixel areas',Math.abs(outsideMetrics[shape].inside+outsideMetrics[shape].outside-outsideMetrics.full)<500);
+ chk('circle diameter zero outside preserves source',outsideMetrics.zeroOutside===outsideMetrics.full);
+ chk('circle diameter zero inside hides source',outsideMetrics.zeroInside===0);
+ chk('full rectangle outside hides source',outsideMetrics.fullHole===0);
+ chk('outside crop keyframes grow hole and hold endpoints',outsideMetrics.anim[0]>outsideMetrics.anim[2]&&outsideMetrics.anim[0]===outsideMetrics.anim[1]&&outsideMetrics.anim[2]===outsideMetrics.anim[3]);
+ chk('outside follows combined transform',Math.abs(outsideMetrics.transformedInside+outsideMetrics.transformedOutside-outsideMetrics.transformedFull)<500);
  const split=await p.evaluate(()=>{
-   const c=cropReset();c.cropShape='rect';c.cropW=.2;
+   const c=cropReset();c.cropShape='rect';c.cropKeep='outside';c.cropW=.2;
    c.kf={cropW:[{t:1,v:.8,e:'linear'}],motionRot:[{t:1,v:60,e:'linear'}]};
    A.sel={type:'clip',id:c.id};A.playhead=1;splitClip();
    const a=A.clips[0],b=A.clips[1];
-   return {left:kfAt(a,'cropW',a.cropW,1),right:kfAt(b,'cropW',b.cropW,1),shared:a.kf===b.kf||a.kf.cropW===b.kf.cropW,shape:b.cropShape};
+   return {left:kfAt(a,'cropW',a.cropW,1),right:kfAt(b,'cropW',b.cropW,1),shared:a.kf===b.kf||a.kf.cropW===b.kf.cropW,shape:b.cropShape,keepA:a.cropKeep,keepB:b.cropKeep};
  });
  chk('split crop continuous and independent',Math.abs(split.left-split.right)<1e-6&&!split.shared&&split.shape==='rect');
+ chk('split preserves keep outside',split.keepA==='outside'&&split.keepB==='outside');
  await p.evaluate(()=>undo());
 
  // Actual nvproj binary save/import plus legacy data without crop fields.
  const roundtrip=await p.evaluate(async()=>{
-   const c=cropReset();c.cropShape='circle';c.cropSize=.3;c.cropX=.4;
+   const c=cropReset();c.cropShape='circle';c.cropKeep='outside';c.cropSize=.3;c.cropX=.4;
    c.kf={cropSize:[{t:1,v:.7,e:'linear'}],scale:[{t:1,v:.8,e:'linear'}]};c.kfT=[.2,.8];
    const blob=await buildProjBlob();
    await projImportFile(new File([blob],'crop-roundtrip.nvproj'));
-   const r=A.clips[0];return {shape:r.cropShape,size:r.cropSize,x:r.cropX,end:r.kf.cropSize[0].v,window:r.kfT};
+   const r=A.clips[0];return {keep:r.cropKeep,shape:r.cropShape,size:r.cropSize,x:r.cropX,end:r.kf.cropSize[0].v,window:r.kfT};
  });
- chk('nvproj crop roundtrip',roundtrip.shape==='circle'&&roundtrip.size===.3&&roundtrip.x===.4&&roundtrip.end===.7&&roundtrip.window[0]===.2);
+ chk('nvproj crop roundtrip',roundtrip.keep==='outside'&&roundtrip.shape==='circle'&&roundtrip.size===.3&&roundtrip.x===.4&&roundtrip.end===.7&&roundtrip.window[0]===.2);
  const legacy=await p.evaluate(async()=>{
    const {st,files}=serialize();
-   for(const key of ['cropShape','cropX','cropY','cropW','cropH','cropSize'])delete st.clips[0][key];
-   st.clips[0].kf=null;await deserialize(st,files);return A.clips[0].cropShape==='none'&&A.clips[0].cropW===1;
+   for(const key of ['cropShape','cropKeep','cropX','cropY','cropW','cropH','cropSize'])delete st.clips[0][key];
+   st.clips[0].kf=null;await deserialize(st,files);return A.clips[0].cropShape==='none'&&A.clips[0].cropKeep==='inside'&&A.clips[0].cropW===1;
  });
  chk('old project crop defaults',legacy);
  await p.waitForFunction(()=>A.clips[0].el.readyState>=2);
@@ -164,22 +208,41 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
  chk('cropped image opening transition preserves its mask',imageAndTransition.hasTransition&&imageAndTransition.transition.n>5000&&imageAndTransition.transition.n<16000);
  chk('crop mask does not leak to next draw',imageAndTransition.noLeak.n===320*180);
 
+
+ const composite=await p.evaluate(()=>{
+   const base=cropReset(),red=document.createElement('canvas');red.width=320;red.height=180;
+   red.getContext('2d').fillStyle='red';red.getContext('2d').fillRect(0,0,320,180);
+   const upper={...base,id:uid(),at:0,track:1,exportSrc:red,cropShape:'circle',cropKeep:'outside',cropSize:.6,trans:{type:'none',dur:.6}};
+   A.clips.push(upper);
+   function sample(T){
+     const cv=document.createElement('canvas');cv.width=320;cv.height=180;renderFrame(cv.getContext('2d'),T,320,180);
+     const ctx=cv.getContext('2d');return {center:Array.from(ctx.getImageData(160,90,1,1).data),corner:Array.from(ctx.getImageData(10,10,1,1).data)};
+   }
+   const video=sample(.5);upper.kind='image';const image=sample(.5);
+   upper.trans={type:'dissolve',dur:1};const transition=sample(.5);
+   A.clips.length=1;return {video,image,transition};
+ });
+ for(const kind of ['video','image','transition']){
+   const v=composite[kind];
+   chk(kind+' hole reveals lower layer',v.center[2]>150&&v.center[0]<10);
+   chk(kind+' outside still visible',v.corner[0]>50);
+ }
  // Export both shapes; decode the MP4 and compare its pixels with preview.
  const FMT=await expectedFormat(p);
- for(const shape of ['rect','circle']){
-   await p.evaluate(shape=>{
-     const c=cropReset();Object.assign(c,{cropShape:shape,cropW:.3,cropH:.6,cropSize:.3,x:.3,scale:.7,outP:2});
+ for(const shape of ['rect','circle'])for(const keep of ['inside','outside']){
+   await p.evaluate(({shape,keep})=>{
+     const c=cropReset();Object.assign(c,{cropShape:shape,cropKeep:keep,cropW:.3,cropH:.6,cropSize:.3,x:.3,scale:.7,outP:2});
      c.kf={cropW:[{t:1,v:.6,e:'linear'}],cropSize:[{t:1,v:.8,e:'linear'}],
        x:[{t:1,v:.65,e:'linear'}],scale:[{t:1,v:.9,e:'linear'}],opacity:[{t:1,v:.5,e:'linear'}],
        motionRot:[{t:1,v:45,e:'linear'}]};
      A.playhead=0;render();refreshProp();
-   },shape);
+   },{shape,keep});
    const expected=await p.evaluate(()=>[.25,1,1.75].map(t=>cropShot(t)));
    const [d]=await Promise.all([p.waitForEvent('download',{timeout:120000}),p.click('#btnExport')]);
    await p.waitForFunction(()=>!A.exporting);
    await p.click('#mClose');
    const file=await d.path();
-   const outputDir=path.dirname(HTML);await d.saveAs(path.join(outputDir,'crop-'+shape+'.mp4'));
+   const outputDir=path.dirname(HTML);await d.saveAs(path.join(outputDir,'crop-'+shape+'-'+keep+'.mp4'));
    const payload=fs.readFileSync(file).toString('base64');
    const decoded=await p.evaluate(async payload=>{
      const bytes=Uint8Array.from(atob(payload),c=>c.charCodeAt(0));
@@ -196,13 +259,13 @@ const FIX=process.env.NIVEDIT_FIX||'/tmp/tv';
    },payload);
    // H.264 chroma subsampling spreads blue into edge pixels; compare integrated
    // brightness, not the average of a threshold-selected region.
-   chk(shape+' exports '+FMT,d.suggestedFilename().endsWith('.'+FMT)&&fs.statSync(file).size>1000);
-   chk(shape+' export crop matches preview pixels',decoded.every((m,i)=>Math.abs(m.cx-expected[i].cx)<.015&&Math.abs(m.cy-expected[i].cy)<.015&&Math.abs(m.n/expected[i].n-1)<.13&&Math.abs(m.n*m.avg/(expected[i].n*expected[i].avg)-1)<.08&&Math.abs(m.w-expected[i].w)<=4&&Math.abs(m.h-expected[i].h)<=4));
+   chk(shape+' '+keep+' exports '+FMT,d.suggestedFilename().endsWith('.'+FMT)&&fs.statSync(file).size>1000);
+   chk(shape+' '+keep+' export crop matches preview pixels',decoded.every((m,i)=>Math.abs(m.cx-expected[i].cx)<.015&&Math.abs(m.cy-expected[i].cy)<.015&&Math.abs(m.n/expected[i].n-1)<.13&&Math.abs(m.n*m.avg/(expected[i].n*expected[i].avg)-1)<.08&&Math.abs(m.w-expected[i].w)<=4&&Math.abs(m.h-expected[i].h)<=4));
  }
  chk('no page errors',errors.length===0);
  console.log('通過 '+(count-bad.length)+' / '+count);
  if(bad.length)console.log('失敗:\n'+bad.join('\n')+'\n'+JSON.stringify(metrics,null,2));
- fs.writeFileSync(path.join(path.dirname(HTML),'crop-results.json'),JSON.stringify({count,bad,metrics,errors},null,2));
+ fs.writeFileSync(path.join(path.dirname(HTML),'crop-results.json'),JSON.stringify({count,bad,metrics,outsideMetrics,composite,errors},null,2));
  if(bad.length)process.exitCode=1;
  }finally{await browser.close();await new Promise(r=>srv.close(r));}
 })().catch(e=>{console.error(e);process.exit(1);});

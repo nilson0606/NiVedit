@@ -367,15 +367,23 @@ function paintClip(ctx, ref, W, H){
     const val = (key, base, min) => clamp(kfAt(c, key,
       Number.isFinite(c[key]) ? c[key] : base, T), min, 1);
     const d = Math.min(vw, vh) * val('cropSize', 1, 0);
-    if(c.cropShape==='circle'&&d===0){ctx.restore();return;}
+    const outside = c.cropKeep === 'outside'; // Missing/unknown fields keep legacy inside behavior.
+    if(!outside && c.cropShape==='circle' && d===0){ctx.restore();return;}
     const cw = c.cropShape === 'circle' ? d : vw * val('cropW', 1, 0.01);
     const ch = c.cropShape === 'circle' ? d : vh * val('cropH', 1, 0.01);
     const cx = clamp((val('cropX', 0.5, 0) - 0.5) * vw, -(vw-cw)/2, (vw-cw)/2);
     const cy = clamp((val('cropY', 0.5, 0) - 0.5) * vh, -(vh-ch)/2, (vh-ch)/2);
     ctx.beginPath();
-    if (c.cropShape === 'circle') ctx.arc(cx, cy, d / 2, 0, TAU);
-    else ctx.rect(cx - cw / 2, cy - ch / 2, cw, ch);
-    ctx.clip();
+    // The outer boundary follows the visible source, so a hole never erases lower layers.
+    // Both paths share the same transform and animated crop dimensions.
+    if (outside) ctx.rect(-vw / 2, -vh / 2, vw, vh);
+    if (c.cropShape === 'circle'){
+      if (d > 0){
+        ctx.moveTo(cx + d / 2, cy); // Separate subpath avoids connecting to the outer rect.
+        ctx.arc(cx, cy, d / 2, 0, TAU);
+      }
+    } else ctx.rect(cx - cw / 2, cy - ch / 2, cw, ch);
+    ctx.clip(outside ? 'evenodd' : 'nonzero');
   }
   ctx.drawImage(B.c, -W / 2, -H / 2);
   ctx.restore();

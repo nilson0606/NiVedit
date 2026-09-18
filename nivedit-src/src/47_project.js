@@ -53,7 +53,7 @@ function serialize(){
     clips: A.clips.map(c => Object.assign(
       pick(c, ['id','kind','name','dur','w','h','inP','outP','muted','vol','rot',
                'transMode','fadeIn','fadeOut','fadeAudio','track','at','x','y','scale','opacity','motionRot',
-               'cropShape','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
+               'cropShape','cropKeep','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
       { mediaKey: reg(c.file, c) })),
     musics: A.musics.map(m => Object.assign(
       pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
@@ -107,13 +107,14 @@ async function deserialize(st, blobs){
     const nc = Object.assign({
       x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
       track: 0, at: null,
-      cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1, kf: null, kfT: null
+      cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1, kf: null, kfT: null
     }, c, {
       file: blobs.get(c.mediaKey), url: u,
       video: isImage ? null : el, el, img: isImage ? el : undefined,
       audioBuf: null, audioTried: isImage,
       grade: Object.assign({}, GRADE0, c.grade || {})     // 舊專案沒有這個欄位
     });
+    nc.cropKeep = nc.cropKeep === 'outside' ? 'outside' : 'inside';
     A.clips.push(nc); regMedia(nc);
   }
   pinLegacyClipTimes(A.clips);

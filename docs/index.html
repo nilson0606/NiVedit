@@ -5144,8 +5144,6 @@ GIF 動畫會循環播放至疊圖結束，預覽與匯出同步。	GIF animatio
 裁切寬度	Crop width
 裁切高度	Crop height
 裁切直徑	Crop diameter
-裁切保留框內畫面；寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。	Keep the area inside the crop. Width and height 1.00 cover the visible frame; circle diameter 1.00 matches its shorter side. Scale, position, opacity and rotation still apply.
-啟用下方動態後，可設定裁切大小與中心的終點；形狀整段固定。	Enable motion below to animate crop size and center. The shape stays the same throughout the clip.
 影片頂層	Top video
 影片底層	Bottom video
 影片軌道	Video track
@@ -5401,7 +5399,12 @@ Lo-fi 爵士	Lo-fi & jazz
 影片沒有可用的影像解碼器	No usable video decoder is available
 等待影片影像逾時	Timed out waiting for a video frame
 操作手冊	User manual
-在新分頁開啟操作手冊	Open the user manual in a new tab`;
+在新分頁開啟操作手冊	Open the user manual in a new tab
+保留範圍	Keep area
+保留框內	Keep inside
+保留框外	Keep outside
+保留框內：只顯示框內；保留框外：挖空框內，顯示其餘畫面。寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。	Keep inside shows the area within the shape; keep outside cuts a hole and shows the rest. Width/height 1.00 covers the visible image; circle diameter 1.00 is its shorter side. Scale, move, fade and rotate after cropping.
+啟用下方動態後，可設定裁切大小與中心的終點；形狀與保留範圍整段固定。	Enable keyframes below to animate crop size and center. Shape and keep area stay fixed for the whole clip.`;
 
 </script>
 <script>
@@ -5626,8 +5629,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.5';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/17';
+const VER = 'v12.6';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/18';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -6595,7 +6598,7 @@ function addVideo(file){
         inP: 0, outP: v.duration, muted: false, vol: 1,
         x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
         track: 0, at: null, transMode: 'overlap', fadeIn: 0, fadeOut: 0, fadeAudio: true,
-        cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
+        cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
         rot: 0,                    // 使用者自己再轉的角度（0/90/180/270），跟檔案本身的矩陣無關
         trans:    { type: A.clips.length ? 'dissolve' : 'none', dur: 0.6 },
         transOut: { type: 'none', dur: 0.6 },     // 離開這一段時的轉場（轉到黑），聲音一起淡出
@@ -6666,7 +6669,7 @@ async function addImageFiles(files, secs){
         inP: 0, outP: d, muted: true, vol: 0,
         x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
         track: 0, at: null, transMode: 'overlap', fadeIn: 0, fadeOut: 0, fadeAudio: true,
-        cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
+        cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1,
         trans:    { type: A.clips.length ? 'dissolve' : 'none', dur: 0.6 },
         transOut: { type: 'none', dur: 0.6 },     // 離開這一段時的轉場（轉到黑），聲音一起淡出
         grade: { ...GRADE0 },
@@ -8213,15 +8216,23 @@ function paintClip(ctx, ref, W, H){
     const val = (key, base, min) => clamp(kfAt(c, key,
       Number.isFinite(c[key]) ? c[key] : base, T), min, 1);
     const d = Math.min(vw, vh) * val('cropSize', 1, 0);
-    if(c.cropShape==='circle'&&d===0){ctx.restore();return;}
+    const outside = c.cropKeep === 'outside'; // Missing/unknown fields keep legacy inside behavior.
+    if(!outside && c.cropShape==='circle' && d===0){ctx.restore();return;}
     const cw = c.cropShape === 'circle' ? d : vw * val('cropW', 1, 0.01);
     const ch = c.cropShape === 'circle' ? d : vh * val('cropH', 1, 0.01);
     const cx = clamp((val('cropX', 0.5, 0) - 0.5) * vw, -(vw-cw)/2, (vw-cw)/2);
     const cy = clamp((val('cropY', 0.5, 0) - 0.5) * vh, -(vh-ch)/2, (vh-ch)/2);
     ctx.beginPath();
-    if (c.cropShape === 'circle') ctx.arc(cx, cy, d / 2, 0, TAU);
-    else ctx.rect(cx - cw / 2, cy - ch / 2, cw, ch);
-    ctx.clip();
+    // The outer boundary follows the visible source, so a hole never erases lower layers.
+    // Both paths share the same transform and animated crop dimensions.
+    if (outside) ctx.rect(-vw / 2, -vh / 2, vw, vh);
+    if (c.cropShape === 'circle'){
+      if (d > 0){
+        ctx.moveTo(cx + d / 2, cy); // Separate subpath avoids connecting to the outer rect.
+        ctx.arc(cx, cy, d / 2, 0, TAU);
+      }
+    } else ctx.rect(cx - cw / 2, cy - ch / 2, cw, ch);
+    ctx.clip(outside ? 'evenodd' : 'nonzero');
   }
   ctx.drawImage(B.c, -W / 2, -H / 2);
   ctx.restore();
@@ -10625,6 +10636,7 @@ function refreshPropRaw(){
     c.opacity = Number.isFinite(c.opacity) ? c.opacity : 1;
     c.motionRot = Number.isFinite(c.motionRot) ? c.motionRot : 0;
     if (!['none','rect','circle'].includes(c.cropShape)) c.cropShape = 'none';
+    c.cropKeep = c.cropKeep === 'outside' ? 'outside' : 'inside';
     for (const [key, base] of Object.entries({cropX:0.5,cropY:0.5,cropW:1,cropH:1,cropSize:1}))
       c[key] = Number.isFinite(c[key]) ? c[key] : base;
     const motionProps = [
@@ -10679,9 +10691,10 @@ function refreshPropRaw(){
         <div class="hint">大小 1.00 代表目前專案的顯示大小；畫面方向仍在下一組設定。</div></div>
        <div class="grp"><h4>${kfOn(c) ? '畫面裁切（起點）' : '畫面裁切'}</h4>
         ${rowSel('cCropShape','裁切形狀',[['none','不裁切'],['rect','矩形'],['circle','圓形']],c.cropShape)}
+        ${c.cropShape !== 'none' ? rowSel('cCropKeep','保留範圍',[['inside','保留框內'],['outside','保留框外']],c.cropKeep) : ''}
         ${clipCropProps(c).map(q => rowRange('cCrop'+q[0],q[1],q[2],q[3],q[4],q[5],q[6])).join('')}
-        <div class="hint">裁切保留框內畫面；寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。</div>
-        <div class="hint">啟用下方動態後，可設定裁切大小與中心的終點；形狀整段固定。</div></div>
+        <div class="hint">保留框內：只顯示框內；保留框外：挖空框內，顯示其餘畫面。寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。</div>
+        <div class="hint">啟用下方動態後，可設定裁切大小與中心的終點；形狀與保留範圍整段固定。</div></div>
        ${kfGroup(c, 'c', motionProps,
          '從起點平滑走到終點；轉場、調色、預覽與匯出會一起套用。')}
        <div class="grp"><h4>畫面方向</h4>
@@ -10803,6 +10816,10 @@ function refreshPropRaw(){
         clipCropProps(c).forEach(q => { if (!kfEnd(c,q[0])) kfSetEnd(c,q[0],q[5],ease); });
       }
       showClip(); renderTimeline(); refreshProp();
+    });
+    bind('cCropKeep','change', v => {
+      c.cropKeep = v === 'outside' ? 'outside' : 'inside';
+      showClip(); renderTimeline(); markDirty(400);
     });
     clipCropProps(c).forEach(q => bind('cCrop'+q[0],'input', v => {
       c[q[0]] = +v; setVal('cCrop'+q[0],(+v).toFixed(2)); showClip();
@@ -12187,7 +12204,7 @@ function serialize(){
     clips: A.clips.map(c => Object.assign(
       pick(c, ['id','kind','name','dur','w','h','inP','outP','muted','vol','rot',
                'transMode','fadeIn','fadeOut','fadeAudio','track','at','x','y','scale','opacity','motionRot',
-               'cropShape','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
+               'cropShape','cropKeep','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
       { mediaKey: reg(c.file, c) })),
     musics: A.musics.map(m => Object.assign(
       pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
@@ -12241,13 +12258,14 @@ async function deserialize(st, blobs){
     const nc = Object.assign({
       x: 0.5, y: 0.5, scale: 1, opacity: 1, motionRot: 0,
       track: 0, at: null,
-      cropShape: 'none', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1, kf: null, kfT: null
+      cropShape: 'none', cropKeep: 'inside', cropX: 0.5, cropY: 0.5, cropW: 1, cropH: 1, cropSize: 1, kf: null, kfT: null
     }, c, {
       file: blobs.get(c.mediaKey), url: u,
       video: isImage ? null : el, el, img: isImage ? el : undefined,
       audioBuf: null, audioTried: isImage,
       grade: Object.assign({}, GRADE0, c.grade || {})     // 舊專案沒有這個欄位
     });
+    nc.cropKeep = nc.cropKeep === 'outside' ? 'outside' : 'inside';
     A.clips.push(nc); regMedia(nc);
   }
   pinLegacyClipTimes(A.clips);

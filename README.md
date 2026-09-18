@@ -1,4 +1,4 @@
-# NiVedit v12.5
+# NiVedit v12.6
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -11,6 +11,12 @@ The guide has 16 chapters with a home index, direct chapter links, search, dark/
 Use Chrome or Microsoft Edge on a desktop computer. HEVC support depends on the browser and hardware; v12.5 includes an optional local software converter. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
 
 ## Latest update
+
+**v12.6 crop keep area:** rectangular and circular crops can keep the inside (default) or outside. Outside cuts a transparent hole so lower layers show through. Animated crop size/center and size, position, opacity and rotation still combine. The selection survives project saves, undo/redo and splitting; old projects keep the inside by default. A zero-diameter outside circle keeps the complete image.
+
+Validation: 148 targeted Edge checks (crop 62, dual-track 45, i18n 41), including four actual MP4 exports decoded and compared with preview. The manual is updated. Earlier v12.5 restore files remain unchanged.
+
+### Previous video compatibility update
 
 **v12.5 video compatibility:** detects video elements without a decoded picture (including audio-only HEVC playback), identifies affected clips, preserves their project data, and stops export instead of silently rendering missing frames. **Convert to compatible format** converts a chosen clip or local file to H.264/AAC MP4 inside a disposable browser Worker. Keep original size, including 4K, or choose up to 1080p. Cancel, retry, download a copy, or apply it to one clip with undo/redo and editing settings retained. Conversion is explicit, not automatic.
 
@@ -51,7 +57,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.4 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/animation-effects/, docs/background-music/, and docs/example-project/ in every deployment. For local use, keep all three asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified v12.6 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 
@@ -63,7 +69,7 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v12.3 的網站與原始碼。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit v12.6 的網站與原始碼。矩形／圓形裁切可選「保留框內」（預設）或「保留框外」，框外模式會挖空框內並露出下方軌道。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
 

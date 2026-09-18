@@ -1214,6 +1214,7 @@ function refreshPropRaw(){
     c.opacity = Number.isFinite(c.opacity) ? c.opacity : 1;
     c.motionRot = Number.isFinite(c.motionRot) ? c.motionRot : 0;
     if (!['none','rect','circle'].includes(c.cropShape)) c.cropShape = 'none';
+    c.cropKeep = c.cropKeep === 'outside' ? 'outside' : 'inside';
     for (const [key, base] of Object.entries({cropX:0.5,cropY:0.5,cropW:1,cropH:1,cropSize:1}))
       c[key] = Number.isFinite(c[key]) ? c[key] : base;
     const motionProps = [
@@ -1268,9 +1269,10 @@ function refreshPropRaw(){
         <div class="hint">大小 1.00 代表目前專案的顯示大小；畫面方向仍在下一組設定。</div></div>
        <div class="grp"><h4>${kfOn(c) ? '畫面裁切（起點）' : '畫面裁切'}</h4>
         ${rowSel('cCropShape','裁切形狀',[['none','不裁切'],['rect','矩形'],['circle','圓形']],c.cropShape)}
+        ${c.cropShape !== 'none' ? rowSel('cCropKeep','保留範圍',[['inside','保留框內'],['outside','保留框外']],c.cropKeep) : ''}
         ${clipCropProps(c).map(q => rowRange('cCrop'+q[0],q[1],q[2],q[3],q[4],q[5],q[6])).join('')}
-        <div class="hint">裁切保留框內畫面；寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。</div>
-        <div class="hint">啟用下方動態後，可設定裁切大小與中心的終點；形狀整段固定。</div></div>
+        <div class="hint">保留框內：只顯示框內；保留框外：挖空框內，顯示其餘畫面。寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。</div>
+        <div class="hint">啟用下方動態後，可設定裁切大小與中心的終點；形狀與保留範圍整段固定。</div></div>
        ${kfGroup(c, 'c', motionProps,
          '從起點平滑走到終點；轉場、調色、預覽與匯出會一起套用。')}
        <div class="grp"><h4>畫面方向</h4>
@@ -1392,6 +1394,10 @@ function refreshPropRaw(){
         clipCropProps(c).forEach(q => { if (!kfEnd(c,q[0])) kfSetEnd(c,q[0],q[5],ease); });
       }
       showClip(); renderTimeline(); refreshProp();
+    });
+    bind('cCropKeep','change', v => {
+      c.cropKeep = v === 'outside' ? 'outside' : 'inside';
+      showClip(); renderTimeline(); markDirty(400);
     });
     clipCropProps(c).forEach(q => bind('cCrop'+q[0],'input', v => {
       c[q[0]] = +v; setVal('cCrop'+q[0],(+v).toFixed(2)); showClip();

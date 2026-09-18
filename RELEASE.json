@@ -1,7 +1,7 @@
 {
-  "version": "12.5",
-  "html_sha256": "773d4c2de69800409fbcc729bcd0e21e46a95176b631a195526cbdcaaf8da594",
-  "html_bytes": 1202653,
+  "version": "12.6",
+  "html_sha256": "cd78893cd07363c2029783a1ad37ae4db311d98a0c6385731d917361ede2b89f",
+  "html_bytes": 1203921,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,16 +28,21 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-18",
-    "sha256": "c621cdc009fe18fcea6b770d8e7de6c6b3d476b7d2e05688cdeacba82d6d827f",
+    "revision": "2026-09-18-crop-keep",
+    "sha256": "1d79863d3bec817fde85517292493dbe7252edbe799429cf461b86c352ce67bd",
     "audited_chapters": 16,
-    "browser_checks": 38
+    "browser_checks": 38,
+    "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
+    "crop": 62,
     "dual-track": 45,
-    "rotation-save": 71,
-    "music-example": 68,
     "i18n": 41
   },
-  "release_verification": "295 targeted checks passed; 49 protected restore artifacts unchanged. Not a full-suite rerun."
+  "release_verification": "148 targeted checks passed: crop 62, dual-track 45, i18n 41; four MP4 crop variants decoded and compared with preview. Not a full-suite rerun.",
+  "crop_keep_options": [
+    "inside",
+    "outside"
+  ],
+  "crop_keep_default": "inside"
 }
