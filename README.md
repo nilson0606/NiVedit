@@ -1,4 +1,4 @@
-# NiVedit v12.6
+# NiVedit v12.7
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -11,6 +11,16 @@ The guide has 16 chapters with a home index, direct chapter links, search, dark/
 Use Chrome or Microsoft Edge on a desktop computer. HEVC support depends on the browser and hardware; v12.5 includes an optional local software converter. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
 
 ## Latest update
+
+**v12.7 music library:** 60 new instrumental cues in 12 styles, added to the unchanged previous 40 tracks and the authorized example music: **101 tracks**, about **40 seconds** each. Acoustic folk, bossa nova, reggae, swing jazz, chillhop, East Asian acoustic, funk, synthwave, house, neo-soul, waltz and cinematic music offer different grooves and arrangements.
+
+Open **+ Music track**, search or audition a cue, then add it. The new cues appear first; searching “New” or “新曲” finds the 60 additions. Importing your own local audio is still available. Four mood categories contain 26 / 25 / 25 / 25 tracks.
+
+[Download all 101 MP3 tracks (v3, approximately 97 MB)](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_101_40s_v3.zip) includes categorized files, an offline listening/search page, composition events and source notices. Music is loaded individually while using the editor.
+
+Validation: 70 music/example checks including all 101 decoded stereo files and SHA256 matches, 9 search/offline-player/actual H.264+AAC export checks, and 41 interface-language checks. All 41 previous audio files remain unchanged. The audio manual chapter is updated; the v12.5 important restore snapshot is preserved. Unrelated editor suites were not rerun.
+
+### Previous crop update
 
 **v12.6 crop keep area:** rectangular and circular crops can keep the inside (default) or outside. Outside cuts a transparent hole so lower layers show through. Animated crop size/center and size, position, opacity and rotation still combine. The selection survives project saves, undo/redo and splitting; old projects keep the inside by default. A zero-diameter outside circle keeps the complete image.
 
@@ -57,7 +67,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.6 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified v12.7 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 
