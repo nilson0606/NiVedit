@@ -1,4 +1,4 @@
-# NiVedit v12.8
+# NiVedit v12.9
 
 A browser-based video editor with English and Traditional Chinese interfaces.
 
@@ -12,25 +12,13 @@ Use Chrome or Microsoft Edge on a desktop computer. HEVC support depends on the 
 
 ## Latest update
 
-**v12.8 music rewrite:** the 60 recent additions are replaced with 60 newly composed mood cues. The previous 40 tracks and authorized example remain unchanged: **101 tracks**, about **40 seconds** each. Saved projects retain their embedded music.
+**v12.9 restores the original 40 + 1 music library**, at the user's request. The current selection contains the original 40 background tracks and the authorized example music: **41 tracks**, about **40 seconds** each. The recent 60-track additions are no longer listed.
 
-Each replacement has its own A/B melodies and section sequence. The collection uses 31 arrangement styles, 4/4, 3/4 and 6/8 meters, alternate lead instruments, instrumental exchanges, breakdowns, buildups and varied returns. Twelve moods cover joy, playfulness, hope, relaxation, romance, nostalgia, confidence, adventure, excitement, melancholy, mystery and epic scenes.
+Open **+ Music track** to search, audition and add music, or import an audio file from your computer. Four categories contain 11 / 10 / 10 / 10 tracks. Existing saved projects retain their embedded audio.
 
-Open **+ Music track** and search a title, mood or style. Search “New” or “新曲” for the 60 replacements. Importing your own audio remains available.
+[Download the original 41 MP3 tracks (approximately 40 MB)](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_41_40s_v2.zip). The original audio files, catalog IDs and ZIP are unchanged. The package includes an offline listening page and instrument-source notices.
 
-[Download all 101 MP3 tracks (v4, approximately 97 MB)](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_101_40s_v4.zip). The ZIP includes four folders, an offline player/search page, original composition events and instrument-source notices. Tracks are individually loaded in the editor.
-
-Validation: 121 targeted checks (70 music/example, 10 mood-search/offline-player/actual MP4+AAC export, 41 i18n); all 101 tracks decode with matching hashes. The original 41 audio files and v12.5 important restore snapshot are unchanged. This is not a full editor regression rerun.
-
-### Previous music update
-
-**v12.7 music library:** 60 new instrumental cues in 12 styles, added to the unchanged previous 40 tracks and the authorized example music: **101 tracks**, about **40 seconds** each. Acoustic folk, bossa nova, reggae, swing jazz, chillhop, East Asian acoustic, funk, synthwave, house, neo-soul, waltz and cinematic music offer different grooves and arrangements.
-
-Open **+ Music track**, search or audition a cue, then add it. The new cues appear first; searching “New” or “新曲” finds the 60 additions. Importing your own local audio is still available. Four mood categories contain 26 / 25 / 25 / 25 tracks.
-
-[Download all 101 MP3 tracks (v3, approximately 97 MB)](https://nilson0606.github.io/NiVedit/background-music/NiVedit_Music_101_40s_v3.zip) includes categorized files, an offline listening/search page, composition events and source notices. Music is loaded individually while using the editor.
-
-Validation: 70 music/example checks including all 101 decoded stereo files and SHA256 matches, 9 search/offline-player/actual H.264+AAC export checks, and 41 interface-language checks. All 41 previous audio files remain unchanged. The audio manual chapter is updated; the v12.5 important restore snapshot is preserved. Unrelated editor suites were not rerun.
+Validation: 68 music/example checks, including all 41 stereo files decoded with matching hashes, and 41 interface-language checks. Current editing features and the v12.5 important restore snapshot remain intact. This is not a full-suite rerun.
 
 ### Previous crop update
 
@@ -79,7 +67,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.8 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified v12.9 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 

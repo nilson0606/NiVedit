@@ -1,16 +1,16 @@
 {
-  "version": "12.8",
-  "html_sha256": "e9d0c2e3842cd8ea748c9e19b24503e41b6492488a5d583c7e5913681ecbc84e",
-  "html_bytes": 1237385,
+  "version": "12.9",
+  "html_sha256": "73eaa5e99845be71e917ac5552e9f4d6925d3ea6ad8a1ea06edcf549334e0862",
+  "html_bytes": 1203926,
   "built_in_effects": 240,
-  "built_in_music": 101,
+  "built_in_music": 41,
   "music_categories": 4,
   "music_seconds": 40,
   "example_video_resolution": "1280x720",
   "example_preserved_on_save": true,
-  "music_pack": "v4",
-  "music_zip": "NiVedit_Music_101_40s_v4.zip",
-  "music_verification": "70 music/example checks including all 101 decoded files with unique matching hashes; 10 mood search/offline listening/actual MP4+AAC export checks; 41 i18n checks. Previous 41 music files unchanged.",
+  "music_pack": "v2",
+  "music_zip": "NiVedit_Music_41_40s_v2.zip",
+  "music_verification": "68 music/example checks including all 41 decoded files with matching original hashes; 41 i18n checks. Original 41 music files and download ZIP unchanged.",
   "previous_full_regression": "Windows Edge 154: 62 music/example checks, 40 distinct stereo tracks decoded at 25 seconds, real MP4/AAC export, and 65 GIF library checks (all 240 assets). Existing counted suites 729/730; GIF suite and two i18n diagnostics completed. One title-pixel tolerance failure remains identical to unchanged v12.2: 84 preview / 67 decoded pixels. No threshold change.",
   "example_start_seconds": 0,
   "video_compatibility": {
@@ -28,29 +28,26 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-18-music-v4",
-    "sha256": "ec62b9f5f189a9d6235cbac8ed8d7574ca18cf3ab3b7a86fe3867146c89892e1",
+    "revision": "2026-09-18-restore-41",
+    "sha256": "255cfb4ec90c7c45648e2471464814543f2fa8cfceebb14b1f9952c8950a08fd",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "music-example": 70,
-    "music-extras": 10,
+    "music-example": 68,
     "i18n": 41
   },
-  "release_verification": "121 targeted checks passed; all 101 stereo tracks decode at 40 seconds. Actual H264+AAC music export verified. Not a full editor suite rerun.",
+  "release_verification": "109 targeted checks passed; original 41-track library restored and decoded at 40 seconds. Not a full editor suite rerun.",
   "crop_keep_options": [
     "inside",
     "outside"
   ],
   "crop_keep_default": "inside",
-  "music_zip_sha256": "c8365278e2f4f64e2617df65c92be93175cb4b1c4b82a192b0ab9c1927b7c234",
-  "music_new_tracks": 60,
+  "music_zip_sha256": "879767f4893c82a0267111d15ae5d0278cf1d69dc41bd41bac6b4b5c8e2a45f3",
+  "music_new_tracks": 0,
   "music_previous_tracks": 40,
   "music_example_tracks": 1,
-  "music_new_genres": 31,
-  "pages_total_bytes": 714240718,
-  "music_moods": 12,
-  "music_replaces_pack": "v3"
+  "pages_total_bytes": 714206924,
+  "music_restored_pack": "v2"
 }
