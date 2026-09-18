@@ -10,13 +10,13 @@
 
 The bundled libraries retain the v9.1 editor versions. This publication does not upgrade dependencies. Downloaded models and runtime dependencies have their own upstream license terms.
 
-## Background music packs v2 and v3
+## Background music packs v2, v3 and v4
 
 The original NiVedit arrangements are rendered with **GeneralUser GS v2.0.3** by S. Christian Collins. Its [license](licenses/GeneralUser-GS.txt) permits music production; the original full terms and provenance notes are also included with the MP3 download. The SoundFont itself is not delivered to the browser.
 
 Production tools: [TinySoundFont / tinysoundfont](https://github.com/nwhitehead/tinysoundfont-pybind) (MIT), NumPy, and ffmpeg. These tools are not bundled into the editor. SoundFont source, pinned commit and checksum are recorded under nivedit-src/tools/music-v2-notices/.
 
-The additional **Cheerful example music** track is the original project audio, explicitly authorized by the user on 2026-09-17. It is preserved byte-for-byte and is separate from the 100 GeneralUser GS arrangements (40 previous plus 60 added in v3); see example-provenance.json in the download.
+The additional **Cheerful example music** track is the original project audio, explicitly authorized by the user on 2026-09-17. It is preserved byte-for-byte and is separate from the 100 GeneralUser GS arrangements (40 original v2 tracks plus the 60 current v4 replacements; historical v3 files remain available at their original URLs); see example-provenance.json in the download.
 
 
 ## Optional video compatibility converter (v12.5)
