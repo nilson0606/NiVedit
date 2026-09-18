@@ -1,7 +1,7 @@
 {
-  "version": "12.9",
-  "html_sha256": "73eaa5e99845be71e917ac5552e9f4d6925d3ea6ad8a1ea06edcf549334e0862",
-  "html_bytes": 1203926,
+  "version": "12.10",
+  "html_sha256": "c6712c187f7ebec2b7690985d6f503973db30131afe6a754036e3f263d13033a",
+  "html_bytes": 1204173,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,17 +28,17 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-18-restore-41",
-    "sha256": "255cfb4ec90c7c45648e2471464814543f2fa8cfceebb14b1f9952c8950a08fd",
+    "revision": "2026-09-18-yt-mp3",
+    "sha256": "1a499825dab508e8ee8ddb9d253e409c49cba7ed692510e4bbf7be91a542deaa",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "music-example": 68,
+    "yt-mp3-integration": 15,
     "i18n": 41
   },
-  "release_verification": "109 targeted checks passed; original 41-track library restored and decoded at 40 seconds. Not a full editor suite rerun.",
+  "release_verification": "56 targeted checks passed; fresh local venv setup passed with existing Node/FFmpeg. Full editor suites and a clean second-PC setup were not rerun.",
   "crop_keep_options": [
     "inside",
     "outside"
@@ -48,6 +48,17 @@
   "music_new_tracks": 0,
   "music_previous_tracks": 40,
   "music_example_tracks": 1,
-  "pages_total_bytes": 714206924,
-  "music_restored_pack": "v2"
+  "pages_total_bytes": 714227742,
+  "music_restored_pack": "v2",
+  "yt_mp3": {
+    "entry": "yt-mp3.html",
+    "new_tab": true,
+    "requires_local_helper": true,
+    "windows_x64": true,
+    "python_minimum": "3.10",
+    "local_port": 19627,
+    "zip": "yt-mp3-tools/NiVedit_YT_MP3_Windows.zip",
+    "zip_sha256": "62e035e07774db68a7bbd5c20714b1d0df187ffc82177332418bd9fa6607d048",
+    "public_package_excludes_private_data": true
+  }
 }

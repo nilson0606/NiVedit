@@ -1264,3 +1264,5 @@ Lo-fi 爵士	Lo-fi & jazz
 保留框外	Keep outside
 保留框內：只顯示框內；保留框外：挖空框內，顯示其餘畫面。寬高 1.00 為整個可見畫面，圓形直徑 1.00 為短邊。裁切後仍可縮放、移動、淡化與旋轉。	Keep inside shows the area within the shape; keep outside cuts a hole and shows the rest. Width/height 1.00 covers the visible image; circle diameter 1.00 is its shorter side. Scale, move, fade and rotate after cropping.
 啟用下方動態後，可設定裁切大小與中心的終點；形狀與保留範圍整段固定。	Enable keyframes below to animate crop size and center. Shape and keep area stay fixed for the whole clip.
+
+在新分頁開啟 YouTube 轉 MP3 工具	Open the YouTube to MP3 tool in a new tab

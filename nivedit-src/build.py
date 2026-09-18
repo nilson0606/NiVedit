@@ -21,13 +21,15 @@ parts.append('</body></html>\n')
 OUT.parent.mkdir(parents=True, exist_ok=True)
 for source_name, output_name in [('effect-assets', 'animation-effects'),
                                  ('music-assets', 'background-music'),
-                                 ('example-assets', 'example-project'), ('compat-assets', 'video-compat')]:
+                                 ('example-assets', 'example-project'), ('compat-assets', 'video-compat'),
+                                 ('yt-mp3-assets', 'yt-mp3-tools')]:
     assets = ROOT / source_name
     if not assets.is_dir():
         raise SystemExit('Missing ' + source_name + ': restore the complete source archive.')
     shutil.copytree(assets, OUT.parent / output_name, dirs_exist_ok=True)
 
 shutil.copyfile(ROOT / 'manual.html', OUT.parent / 'manual.html')
+shutil.copyfile(ROOT / 'yt-mp3.html', OUT.parent / 'yt-mp3.html')
 
 tmp = OUT.with_suffix(OUT.suffix + '.tmp')
 tmp.write_bytes(''.join(parts).encode('utf-8'))

@@ -1,5 +1,14 @@
 # NiVedit v12.9
 
+
+## v12.10 · YouTube to MP3 companion
+
+The header now has a **YT → MP3** link that opens an independent page, next to User manual. Download the Windows tool, run setup.cmd once (Python 3.10+, Windows x64), then launch the VBS file. The local companion downloads and converts audio, offers playback and Save As; import the resulting MP3 using **+ Audio → Import audio from computer**. GitHub Pages hosts the entry and tool package; it cannot run the downloader itself. Each computer must start its own local helper. [Open tool and setup guide](https://nilson0606.github.io/NiVedit/yt-mp3.html).
+
+The public ZIP contains source and setup instructions only. No user audio, session tokens or local configuration is included. The original 41 built-in tracks and existing editing behavior are retained.
+
+Validation: 15 targeted integration checks plus 41 existing i18n checks; fresh local venv setup with existing Node/FFmpeg passed. Earlier standalone downloader tests verified a public short video through MP3 conversion, playback, seek and save. Not a full editor regression or a clean second-PC setup test.
+
 A browser-based video editor with English and Traditional Chinese interfaces.
 
 **Open the editor:** https://nilson0606.github.io/NiVedit/

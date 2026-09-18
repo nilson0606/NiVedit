@@ -1,4 +1,15 @@
-# NiVedit v12.9 原始碼
+# NiVedit v12.10 原始碼
+
+## v12.10：獨立 YT → MP3 入口（2026-09-18）
+
+- 主頁「操作手冊」旁新增「YT → MP3」，開新分頁。独立 Windows 本機下載器支援單支 YouTube、128/192/320 kbps、進度、取消、試聽、另存與日夜模式；完成後從「＋音軌 → 匯入電腦音檔」加入。
+- GitHub Pages 僅提供入口、安裝包與說明；每台電腦需先啟動本機工具。setup.cmd 需 Python 3.10+、Windows x64，建立獨立 venv 並安裝 yt-dlp；Node LTS／FFmpeg 先尋找現有版本，缺少才下載。
+- 本機服務固定 http://127.0.0.1:19627/，GET 首頁注入本次權杖；API 保留 Host／Origin／權杖檢查，不開 CORS。單一服務鎖保護，主頁無跨來源掃描。
+- 本機 NiVedit.cmd 會以 --no-browser 啟動已配置的 yt-mp3-local；直接開 HTML 或網站則依說明啟動工具。公開包只含程式／說明，不含下載音樂、session.json、config.json、本機路徑或第三方二進位。
+- 維護來源：nivedit-src/yt-mp3-helper/、yt-mp3.html、yt-mp3-assets/；build.py 複製入口與工具包。操作手冊音軌章節已更新。
+- Edge 整合 15 項通過（本機 file 與網站子路徑、新分頁、工具 ZIP、MP3 匯入、日夜、來源／權杖保護）；i18n 41/41。新資料夾初始化成功，沿用現有 Node／FFmpeg，未在另一台乾淨 Windows 重測下載分支。
+- 先前獨立工具已實測公開短片下載、MP3 轉檔、播放、跳轉與瀏覽器下載；本次未重跑無關完整剪輯測試。內建曲庫仍為原 40＋1 首；重要還原點仍為 v12.5。
+
 
 ## v12.9：恢復最初 40＋1 首內建配樂（2026-09-18）
 
