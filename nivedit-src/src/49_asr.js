@@ -35,6 +35,7 @@ const ASR = {
   split: true,         // 自動斷句
   scope: 'all',        // all = 整條時間軸，或某個 clip 的 id
   device: 'auto',      // auto / webgpu / wasm
+  segmentMode: 'normal', // normal: original 30s/5s; short: optional 20s/2s retry
   busy: false,
   worker: null,
   cancel: false,
@@ -380,7 +381,8 @@ self.onmessage = async e => {
     stage = '辨識';
 
     // 自己包一層 generate，才知道跑到第幾段（函式庫沒有給進度回呼）
-    const chunkSeconds = 20, strideSeconds = 2, SR = 16000;
+    const shortSegments = m.segmentMode === 'short';
+    const chunkSeconds = shortSegments ? 20 : 30, strideSeconds = shortSegments ? 2 : 5, SR = 16000;
     const WIN = SR * chunkSeconds, JUMP = SR * (chunkSeconds - 2 * strideSeconds);
     const total = Math.max(1, Math.ceil(Math.max(0, m.audio.length - WIN) / JUMP) + 1);
     let done = 0;
@@ -391,7 +393,7 @@ self.onmessage = async e => {
       post('step', { done: ++done, total });
       return r;
     };
-    post('status', { s: '開始辨識（每段 20 秒、重疊 2 秒）…' });
+    post('status', { s: shortSegments ? '開始辨識（短分段：20 秒、重疊 2 秒）…' : '開始辨識（一般：30 秒、重疊 5 秒）…' });
     post('step', { done: 0, total });
 
     const opt = { chunk_length_s: chunkSeconds, stride_length_s: strideSeconds, return_timestamps: true };
@@ -626,6 +628,7 @@ async function asrRun(){
     replace = (a === 'replace');
   }
 
+  const segmentMode = ASR.segmentMode === 'short' ? 'short' : 'normal';
   ASR.busy = true; ASR.cancel = false;
   const t0 = performance.now();
   mShow('AI 字幕產生中', '影片沒有離開你的電腦，只有模型檔會從網路下載');
@@ -654,6 +657,7 @@ async function asrRun(){
     note('模型：' + ASR.model);
     note('辨識範圍：' + (ASR.scope || 'all') + '；聲音長度：' + dur.toFixed(2) + ' 秒');
     note('要求運算裝置：' + device);
+    note(segmentMode === 'short' ? '辨識方式：短分段重試（20 秒／重疊 2 秒）' : '辨識方式：一般（30 秒／重疊 5 秒）');
     const chunks = await new Promise((res, rej) => {
       const w = asrWorker();
       let dlPct = 0, settled = false, lastStage = '等待模型載入';
@@ -710,7 +714,7 @@ async function asrRun(){
       };
       try {
         w.postMessage({ cmd:'run', libs: ASR_LIBS, model: ASR.model, dir,
-                        device, lang: ASR.lang, audio: pcm }, [pcm.buffer]);
+                        device, segmentMode, lang: ASR.lang, audio: pcm }, [pcm.buffer]);
       } catch(e){ fail(e); }
     });
     if (ASR.cancel) return;
@@ -858,6 +862,11 @@ function asrPanel(){
       <option value="en"${ASR.lang==='en'?' selected':''}>英文</option>
       <option value="auto"${ASR.lang==='auto'?' selected':''}>自動判斷</option>
     </select></div></div>
+    <div class="row"><label for="asrSegmentMode" style="flex:0 0 4em;white-space:nowrap">辨識方式</label><div class="f"><select id="asrSegmentMode" style="flex:1">
+      <option value="normal"${ASR.segmentMode!=='short'?' selected':''}>一般（預設）</option>
+      <option value="short"${ASR.segmentMode==='short'?' selected':''}>短分段重試</option>
+    </select></div></div>
+    <div class="hint" style="margin:-3px 0 7px">平常使用「一般」。若停頓後漏掉後面的字幕，可選「短分段重試」再產生；結果仍需校對。</div>
     <label class="ckl"><input type="checkbox" id="asrTW"${ASR.tw?' checked':''}> 轉成台灣正體（軟體／影片／滑鼠）</label>
     <label class="ckl"><input type="checkbox" id="asrSplit"${ASR.split?' checked':''}> 太長的句子自動斷句</label>
     <button class="pri" id="asrRun" style="width:100%;margin-top:8px">產生字幕</button>
@@ -891,6 +900,7 @@ function asrPanel(){
   bind('asrScope','change', v => { ASR.scope = v; asrPanel(); });
   bind('asrModel','change', v => { ASR.model = v; });
   bind('asrLang','change',  v => { ASR.lang = v; });
+  bind('asrSegmentMode','change', v => { ASR.segmentMode = v === 'short' ? 'short' : 'normal'; });
   const ck = (id, k) => { const e = $('#'+id); if (e) e.onchange = () => { ASR[k] = e.checked; }; };
   ck('asrTW','tw'); ck('asrSplit','split');
   on('asrPickDir', async () => {
@@ -934,7 +944,7 @@ async function asrPrime(){
       (dir ? `程式庫與 wasm 引擎已經存成 <b>${esc(asrDirName() || '')}\\asr\\lib\\</b> 裡的真實檔案。<br>`
            : '程式庫與 wasm 引擎已經存在瀏覽器裡。<br>') +
       `<span style="color:var(--fg3)">之後不用網路也開得起來。模型檔要等第一次按「產生字幕」才會抓
-       （看你選哪一個，40MB～800MB），也會存進同一個地方。</span>`);
+       （大小依模型與運算方式而定，最準 GPU 版約 1.6GB），也會存進同一個地方。</span>`);
   } catch(e){
     mDone('離線準備失敗', '', `<span style="color:var(--danger)">${esc(e.message || e)}</span><br>
       <span style="color:var(--fg3)">現在連不到 CDN。等網路通了再按一次。</span>`);
