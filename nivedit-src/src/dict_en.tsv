@@ -1266,3 +1266,5 @@ Lo-fi 爵士	Lo-fi & jazz
 啟用下方動態後，可設定裁切大小與中心的終點；形狀與保留範圍整段固定。	Enable keyframes below to animate crop size and center. Shape and keep area stay fixed for the whole clip.
 
 在新分頁開啟 YouTube 轉 MP3 工具	Open the YouTube to MP3 tool in a new tab
+
+最準（large-v3-turbo，GPU 約 1.6GB）	Most accurate (large-v3-turbo, about 1.6GB on GPU)
