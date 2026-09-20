@@ -3,8 +3,8 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'v12.12';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/19';
+const VER = 'V13';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/20';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -534,7 +534,7 @@ function syncAutoLens(){
   }
 }
 
-/* track 0 = 影片底層（舊專案叫下軌），1 = 影片頂層（舊稱上軌），2 = 圖片軌。三軌各自串接。
+/* track 0 = 影片底層（舊專案叫下軌），1 = 影片頂層（舊稱上軌），2 = 圖片軌。影片各軌串接，圖片可同軌重疊。
    v10.6 只換了畫面上的字：底層＝track 0＝L1，頂層＝track 1＝L2，存檔格式沒動。
 
    圖片一律回 2，不看存檔裡寫什麼 —— v10.2 以前圖片是排在影片軌上的片段，
@@ -598,10 +598,12 @@ function clipEdges(c){
   return {add,head,tail,span:d+(add?head+tail:0)};
 }
 function layout(){
-  const L=[],prev=[-1,-1,-1];        // 影片下軌／影片上軌／圖片軌，各自串接
+  const L=[],prev=[-1,-1,-1];        // 影片串接；圖片有明確 at 時可重疊
   A.clips.forEach((c,i)=>{
     const track=clipTrack(c),pi=prev[track],edge=clipEdges(c),dur=clipDur(c);
-    const startAt=Math.max(pi<0?0:L[pi].end,Number.isFinite(c.at)?c.at:0);
+    const startAt=track===IMG_TRACK
+      ? Math.max(0,Number.isFinite(c.at)?c.at:L.reduce((end,q)=>q.track===IMG_TRACK?Math.max(end,q.end):end,0))
+      : Math.max(pi<0?0:L[pi].end,Number.isFinite(c.at)?c.at:0);
     const start=startAt+(edge.add?edge.head:0),end=startAt+edge.span;
     L.push({startAt,start,end,span:edge.span,dur,track,prev:pi,mode:clipMode(c),
       add:edge.add,inDur:edge.head,outDur:edge.tail,tr:edge.head,trAt:startAt});
@@ -614,12 +616,13 @@ function nextClipIndex(i, L){
   L = L || layout();
   return L.findIndex(q => q.prev === i);
 }
-/** 放進指定影片軌與時間。同軌按先後串接，不產生第三層重疊。 */
+/** 圖片可同軌重疊；影片仍按先後串接。 */
 function placeClip(c,track,at){
   track = isImg(c) ? IMG_TRACK : (track===1 ? 1 : 0);   // 圖片只住圖片軌
   pinFreeClips();
   const L=layout(),i=A.clips.indexOf(c);if(i<0)return;
   at=Math.max(0,Number.isFinite(at)?at:L[i].startAt);
+  if(track===IMG_TRACK){c.track=track;c.at=at;return;}
   const peers=A.clips.filter(x=>x!==c&&clipTrack(x)===track),span=clipEdges(c).span;
   for(const x of peers){
     const q=L[A.clips.indexOf(x)];
@@ -635,6 +638,7 @@ function pinFreeClips(){
 }
 /** 屬性裁切保持時間軸起點；向右延長不能覆蓋同軌下一段。 */
 function clipRoom(c){
+  if(isImg(c))return Infinity;
   const L=layout(),i=A.clips.indexOf(c),ni=nextClipIndex(i,L);
   return ni<0 ? Infinity : Math.max(.1,L[ni].startAt-L[i].start-(L[i].add?L[i].outDur:0));
 }
@@ -843,19 +847,31 @@ function activeAt(T,track=0,L=layout()){
   let i=-1;
   for(let k=0;k<L.length;k++){
     const q=L[k];
-    if(q.track===track&&T>=q.startAt-1e-9&&T<q.end)i=k;
+    if(q.track===track&&T>=q.startAt-1e-9&&T<q.end
+       &&(i<0||q.startAt>=L[i].startAt))i=k;
   }
   const total=L.reduce((end,q)=>Math.max(end,q.end),0);
   if(i<0&&Math.abs(T-total)<1e-6)i=L.findIndex(q=>q.track===track&&Math.abs(q.end-total)<1e-6);
   if(i<0)return null;
-  const c=A.clips[i],q=L[i],held=q.add&&(T<q.start||T>=q.start+q.dur);
+  return clipActivityAt(i,T,L);
+}
+/** 共用單一片段的轉場與素材時間計算，圖片的每一層都走同一套。 */
+function clipActivityAt(i,T,L){
+  const c=A.clips[i],q=L[i],track=q.track,held=q.add&&(T<q.start||T>=q.start+q.dur);
   const a={clip:c,t:c.inP+clamp(T-q.start,0,Math.max(0,q.dur-.0001)),T,hold:held};
   const entering=q.inDur>0&&T<q.startAt+q.inDur;
   const w=outWindow(i,L),out=w&&T>=w.start?{type:w.type,p:clamp((T-w.start)/w.dur,0,1)}:null;
   return {a,b:null,p:0,type:null,idx:i,track,
     intro:entering?{type:c.trans.type,p:clamp((T-q.startAt)/q.inDur,0,1)}:null,out};
 }
-function activeTracksAt(T){const L=layout();return [0,1,IMG_TRACK].map(t=>activeAt(T,t,L)).filter(Boolean);}
+function activeTracksAt(T){
+  const L=layout(),total=L.reduce((end,q)=>Math.max(end,q.end),0);
+  const images=L.map((q,i)=>({q,i})).filter(({q})=>q.track===IMG_TRACK
+    &&((T>=q.startAt-1e-9&&T<q.end)||(Math.abs(T-total)<1e-6&&Math.abs(q.end-total)<1e-6)))
+    .sort((a,b)=>a.q.startAt-b.q.startAt||a.i-b.i)
+    .map(({i})=>clipActivityAt(i,T,L));
+  return [...[0,1].map(t=>activeAt(T,t,L)).filter(Boolean),...images];
+}
 
 /* ── 圖層（L 編號）──────────────────────────────────────────
    v10.2 起 L 編號是【固定】的，由軌道種類與軌道順序決定，
@@ -889,7 +905,7 @@ function layerOfTrack(k){
 }
 
 /** L3 以上要畫的東西，已經排好順序：先比 L 編號，同號比起始時間。
-    圖片軌是一整條接龍（有轉場），所以它在清單裡是一個整體，不是逐張圖。 */
+    圖片軌在清單裡佔一層；renderFrame 逐張合成同時有效的圖片，片頭較晚的在前。 */
 function layerPlan(){
   const rows = [{ layer: layerOfTrack('img'), kind: 'imgtrack', obj: null, start: -Infinity }];
   const ov = layerOfTrack('over'), ti = layerOfTrack('title');

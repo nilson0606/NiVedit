@@ -523,11 +523,19 @@ function renderTimeline(zoomOnly){
 
   const LZ = layerLabels();          // 這一輪重繪共用同一份 L 編號
   const L = layout();
+  // 同軌重疊圖片分列顯示，保留每張的拖曳把手；分列不改 L 編號。
+  const imageEnds=[],imageRows=new Map();
+  A.clips.map((c,i)=>({c,i})).filter(({c})=>isImg(c))
+    .sort((a,b)=>L[a.i].startAt-L[b.i].startAt||a.i-b.i).forEach(({c,i})=>{
+      let row=imageEnds.findIndex(end=>L[i].startAt>=end-1e-6);
+      if(row<0)row=imageEnds.length;
+      imageEnds[row]=L[i].end;imageRows.set(c.id,row);
+    });
   A.clips.forEach((c, i) => {
     const tv = isImg(c) ? imgTrack : clipTrack(c) === 1 ? $('#videoUpper') : $('#videoLower');
     const b = document.createElement('div');
     b.dataset.clipId=c.id;
-    b.style.top = isImg(c) ? '5px' : '11px';   // 圖片軌是獨立一條，不用讓出影片軌的上下留白
+    b.style.top = isImg(c) ? (imageRows.get(c.id)*ROW+5)+'px' : '11px';   // 圖片軌是獨立一條，不用讓出影片軌的上下留白
     b.className = 'blk' + (A.sel.type === 'clip' && A.sel.id === c.id ? ' sel' : '');
     b.style.left = (L[i].startAt * pps) + 'px';
     b.style.width = Math.max(14, L[i].span * pps) + 'px';
@@ -545,7 +553,7 @@ function renderTimeline(zoomOnly){
     const ow = outWindow(i, L);
     if (ow){
       const y = document.createElement('div');
-      y.className = 'trx out'; y.style.top = isImg(c) ? '5px' : '11px';
+      y.className = 'trx out'; y.style.top = b.style.top;
       y.style.left = (ow.start * pps) + 'px';
       y.style.width = (ow.dur * pps) + 'px';
       const nm2 = (TRANSITIONS.find(t => t.id === ow.type) || {}).name || '';
@@ -554,7 +562,7 @@ function renderTimeline(zoomOnly){
     }
     if (L[i].tr > 0){
       const x = document.createElement('div');
-      x.className = 'trx'; x.style.top = isImg(c) ? '5px' : '11px';
+      x.className = 'trx'; x.style.top = b.style.top;
       x.style.left = (L[i].trAt * pps) + 'px';
       x.style.width = (L[i].tr * pps) + 'px';
       const nm = (TRANSITIONS.find(t => t.id === c.trans.type) || {}).name || '';
@@ -591,7 +599,7 @@ function renderTimeline(zoomOnly){
     to.appendChild(b);
   });
   to.style.height = (A.overlays.length ? Math.max(ROW, olanes.length * ROW + 2) : ROW_EMPTY) + 'px';
-  imgTrack.style.height = (A.clips.some(isImg) ? ROW : ROW_EMPTY) + 'px';
+  imgTrack.style.height = (imageEnds.length ? Math.max(ROW,imageEnds.length*ROW+2) : ROW_EMPTY) + 'px';
 
   // 固定上下字幕軌；同軌重疊仍分列，便於選取。
   const ts=$('#trkSub');ts.style.display='none';ts.classList.remove('trk');

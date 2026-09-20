@@ -1542,8 +1542,7 @@ function renderFrame(ctx, T, W, H){
   // L3 以上：圖片軌／疊圖／標題，依 L 編號，同號依起始時間（後面的蓋前面的）
   for (const row of layerPlan()){
     if (row.kind === 'imgtrack'){
-      const act = acts.find(a => a.track === IMG_TRACK);
-      if (act) drawVideoTrack(ctx, act, T, W, H);
+      for (const act of acts.filter(a => a.track === IMG_TRACK)) drawVideoTrack(ctx, act, T, W, H);
     }
     else if (row.kind === 'overlay') drawOverlay(ctx, row.obj, T, W, H);
     else drawTitle(ctx, row.obj, T, W, H);

@@ -1,7 +1,7 @@
 {
-  "version": "12.10",
-  "html_sha256": "c6712c187f7ebec2b7690985d6f503973db30131afe6a754036e3f263d13033a",
-  "html_bytes": 1204173,
+  "version": "13",
+  "html_sha256": "0f052758e506ff38d0f9923a3814c36fb5cc88e366699e783c1edd363a3c3a90",
+  "html_bytes": 1209072,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,17 +28,16 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-18-yt-mp3",
-    "sha256": "1a499825dab508e8ee8ddb9d253e409c49cba7ed692510e4bbf7be91a542deaa",
+    "revision": "2026-09-20-V13-overlap",
+    "sha256": "e7ea780112ed67d05fd7dba7f598e6d94990f8f6b7f0b2039882c4077ddea0ba",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "yt-mp3-integration": 15,
-    "i18n": 41
+    "same_track_overlap": 31
   },
-  "release_verification": "56 targeted checks passed; fresh local venv setup passed with existing Node/FFmpeg. Full editor suites and a clean second-PC setup were not rerun.",
+  "release_verification": "31 same-track overlap checks, including actual MP4 decode comparison and project reopen. Prior 17 editor suites: 15 passed; layers title-pixel tolerance and clip-options frame timeout also occur on historical baselines. V13 only renames the verified v12.13 functionality.",
   "crop_keep_options": [
     "inside",
     "outside"
@@ -48,7 +47,7 @@
   "music_new_tracks": 0,
   "music_previous_tracks": 40,
   "music_example_tracks": 1,
-  "pages_total_bytes": 714227742,
+  "pages_total_bytes": 714237832,
   "music_restored_pack": "v2",
   "yt_mp3": {
     "entry": "yt-mp3.html",
@@ -60,5 +59,21 @@
     "zip": "yt-mp3-tools/NiVedit_YT_MP3_Windows.zip",
     "zip_sha256": "62e035e07774db68a7bbd5c20714b1d0df187ffc82177332418bd9fa6607d048",
     "public_package_excludes_private_data": true
+  },
+  "display_version": "V13",
+  "important_release": true,
+  "release_date": "2026-09-20",
+  "previous_targeted_regression": {
+    "yt-mp3-integration": 15,
+    "i18n": 41
+  },
+  "same_track_overlap": {
+    "tracks": [
+      "images",
+      "animation_effects",
+      "titles"
+    ],
+    "front_order": "later timeline start first",
+    "cross_track_order": "L level"
   }
 }

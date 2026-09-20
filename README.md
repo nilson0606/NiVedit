@@ -1,4 +1,10 @@
-# NiVedit v12.12
+# NiVedit V13
+
+## V13 重要大版（2026-09-20）
+
+圖片、動畫效果、標題可各自同軌重疊，片頭時間越晚越在前；透明處露出後方素材，跨軌仍按 L 層級。圖片可拖曳或延長至其他圖片時間，軌內分列方便操作。V13 承接已驗證的 v12.13 功能，依使用者指定升為重要大版。
+
+驗證：同軌重疊專項 31 項通過，包含專案重開及 MP4 匯出解碼。此前 17 支既有回歸中 15 支通過；layers 標題像素容差差異及 clip-options 取幀逾時已有舊版對照，未放寬門檻。
 
 ## v12.12：保留一般辨識，短分段改為選用（2026-09-19）
 
@@ -34,7 +40,7 @@ The guide has 16 chapters with a home index, direct chapter links, search, dark/
 
 Use Chrome or Microsoft Edge on a desktop computer. HEVC support depends on the browser and hardware; v12.5 includes an optional local software converter. Import your own videos, images, GIF overlays, audio and subtitles. Media processing happens in your browser; the editor does not upload your media to a server. AI subtitles download their runtime and model files when needed.
 
-## Latest update
+## Previous music library update
 
 **v12.9 restores the original 40 + 1 music library**, at the user's request. The current selection contains the original 40 background tracks and the authorized example music: **41 tracks**, about **40 seconds** each. The recent 60-track additions are no longer listed.
 
@@ -91,7 +97,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified v12.9 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, and docs/video-compat/ in every deployment. For local use, keep the manual and all four asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified V13 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 
