@@ -1,7 +1,7 @@
 {
-  "version": "13.1",
-  "html_sha256": "26908006d0d0ab8580109b15fe7c8fd8aa7493dd8e52bb301c4c9a581941505d",
-  "html_bytes": 1209311,
+  "version": "13.2",
+  "html_sha256": "c70ffe241d49df2310fc257a6959df5da1f0dfdbfeef517f3853bcad13a6a6ce",
+  "html_bytes": 1212494,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,18 +28,19 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-23-mp4",
-    "sha256": "3e13df2ab56297379994949e0360482906e45efa72d9a388dea5e9683abc978e",
+    "revision": "2026-09-23-webm-audio",
+    "sha256": "503bef048016f01b95bb20320283f65287803b65edc02bf3847c75e3c533f208",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "yt_mp4_backend": 26,
-    "yt_mp4_browser": 23,
+    "webm_audio": 24,
+    "dual_track": 45,
+    "volume_curve": 25,
     "i18n": 41
   },
-  "release_verification": "90 targeted checks passed. Actual public YouTube short downloaded and transcoded to MP4. Backend uses synthetic downloader with real FFmpeg; browser save picker uses a streaming adapter, browser download is real. Full editor suites and clean-PC initialization not rerun.",
+  "release_verification": "135 targeted checks passed. WebM Opus/Vorbis imports, MIME variants, missing duration, project reopen and actual MP4 audio decode tested. V13.1 reproduced four import failures. Full editor regression not rerun.",
   "crop_keep_options": [
     "inside",
     "outside"
@@ -49,7 +50,7 @@
   "music_new_tracks": 0,
   "music_previous_tracks": 40,
   "music_example_tracks": 1,
-  "pages_total_bytes": 714245892,
+  "pages_total_bytes": 714249529,
   "music_restored_pack": "v2",
   "yt_mp3": {
     "entry": "yt-mp3.html",
@@ -62,11 +63,13 @@
     "zip_sha256": "ce7935bba0c75238b5c0393c03d147746882622641b229c0259b204bc8b42965",
     "public_package_excludes_private_data": true
   },
-  "display_version": "V13.1",
+  "display_version": "V13.2",
   "important_release": false,
   "release_date": "2026-09-23",
   "previous_targeted_regression": {
-    "same_track_overlap": 31
+    "yt_mp4_backend": 26,
+    "yt_mp4_browser": 23,
+    "i18n": 41
   },
   "same_track_overlap": {
     "tracks": [
@@ -93,5 +96,11 @@
       "AAC"
     ],
     "helper_version": "V13.1"
+  },
+  "webm_audio_import": {
+    "explicit_audio_picker": true,
+    "track_based_auto_routing": true,
+    "header_read_limit_mib": 2,
+    "missing_duration_decoded": true
   }
 }

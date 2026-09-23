@@ -1,5 +1,9 @@
 # NiVedit 回歸測試
 
+## V13.2 WebM 音訊匯入
+
+`python tests/make-webm-fixtures.py FFMPEG QA_DIRECTORY/fixtures` 產生合成素材；設定 NIVEDIT_WEBM_OUT 為 QA_DIRECTORY 後執行 `node tests/webm-audio.e2e.cjs`。涵蓋音檔選擇器、各種 MIME、Opus／Vorbis、無時長、未知 Segment 長度、有畫面 WebM、拖曳、復原重做、nvproj 重開與真實 MP4 音訊解碼。NIVEDIT_BASELINE=1 可對舊版重現六项基本檢查。
+
 ## V13.1 MP3／MP4 工具
 
 `python tests/yt-mp4.py CONFIG_JSON QA_DIRECTORY --serve`：26 項後端，真實 FFmpeg 與合成下載器，服務以暫用埠隔離。保持運作後跑 `node tests/yt-mp4.e2e.cjs`：23 項 Edge 操作；NIVEDIT_ROOT 可覆寫本機根目錄。MP4 成品匯入確認解碼和時間軸完成。既有 i18n 41/41，真實 YouTube 短片下載另有 QA 紀錄。

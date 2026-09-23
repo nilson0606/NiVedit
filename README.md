@@ -1,4 +1,11 @@
-# NiVedit V13.1
+# NiVedit V13.2
+
+## V13.2：WebM 音檔匯入修正（2026-09-23）
+
+- 「＋音軌 → 匯入電腦音檔」明確接受 .webm 與既有音訊副檔名。左側選檔／拖曳會讀 WebM 的 EBML Tracks：純音訊加入音軌，含影片軌保留為影片；不以系統常誤標的 video/webm 作唯一依據。
+- 只讀前 2 MiB 標頭；標頭不完整、超出範圍或無法判定時沿用既有型別及相容處理，不把不能解碼的影片猜成音訊。缺少總時長的錄音型 WebM 以實際音訊解碼取得秒數，並重用解碼結果。
+- WebM 專項 24/24，含 Opus／Vorbis、四種 MIME、未知 Segment 長度、無時長、左側選檔／拖曳／音軌入口、復原重做、nvproj 重開、MP4 輸出音訊解碼。V13.1 基線重現 4 個失敗。既有雙軌 45/45、音量曲線 25/25、i18n 41/41；共 135 項相關檢查通過，未重跑完整編輯器回歸。
+- 手冊同步。證據 qa-webm-audio-V13.2/；完整来源 archive/NiVedit_原始碼_V13.2.tar.gz。V13 重要還原點保持原樣。
 
 ## V13.1：YT → MP4（2026-09-23）
 
@@ -105,7 +112,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified V13.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified V13.2 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 

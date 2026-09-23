@@ -3,7 +3,7 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'V13.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER = 'V13.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
 const VER_DATE = '2026/09/23';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
@@ -928,10 +928,67 @@ function layerLabels(){
 /* ── 素材匯入 ──────────────────────────────────────────────── */
 /** 一批檔案進來，依副檔名／型別各自送到對的地方。
     左側素材區的點擊、拖曳到視窗，兩條路都走這裡，行為才會一致。 */
+/** WebM 的 MIME 常被系統標成 video/webm，純音訊也不例外。
+    只讀前 2 MiB 的 EBML Tracks，依 TrackType 分流，不靠「解不出畫面」猜音檔。
+    標頭不完整或無法判斷時回 null，沿用既有匯入／相容性處理。
+    格式：https://www.webmproject.org/docs/container/#track */
+async function webmMediaKind(file){
+  if (!/\.webm$/i.test(file.name) && !/^(audio|video)\/webm(?:;|$)/i.test(file.type)) return null;
+  try {
+    const b = new Uint8Array(await file.slice(0, 2*1024*1024).arrayBuffer());
+    function vint(p, keepMarker){
+      if (p>=b.length || !b[p]) throw Error('Invalid EBML integer');
+      let n=1,mask=128;while(!(b[p]&mask)){mask>>=1;n++;}
+      if(n>(keepMarker?4:8)||p+n>b.length)throw Error('Incomplete EBML integer');
+      let value=keepMarker?b[p]:b[p]&(mask-1),unknown=!keepMarker&&value===mask-1;
+      for(let i=1;i<n;i++){value=value*256+b[p+i];unknown=unknown&&b[p+i]===255;}
+      return {value,n,unknown};
+    }
+    function element(p){
+      const id=vint(p,true),size=vint(p+id.n,false),start=p+id.n+size.n;
+      if(!size.unknown&&!Number.isSafeInteger(size.value))throw Error('Invalid EBML size');
+      return {id:id.value,start,end:size.unknown?Infinity:start+size.value};
+    }
+    function trackTypes(start,end){
+      const types=[];
+      for(let p=start;p<end;){
+        const entry=element(p);if(entry.end>end)throw Error('Incomplete track');
+        if(entry.id===0xAE){
+          let type=null;
+          for(let at=entry.start;at<entry.end;){
+            const field=element(at);if(field.end>entry.end)throw Error('Incomplete track field');
+            if(field.id===0x83){
+              if(field.end-field.start<1||field.end-field.start>8)throw Error('Invalid TrackType');
+              type=0;for(let i=field.start;i<field.end;i++)type=type*256+b[i];
+            }
+            at=field.end;
+          }
+          if(type===null)throw Error('Missing TrackType');
+          types.push(type);
+        }
+        p=entry.end;
+      }
+      return types.includes(1)?'video':types.includes(2)&&!types.includes(3)?'audio':null;
+    }
+    if(element(0).id!==0x1A45DFA3)return null;
+    for(let p=0,limit=b.length;p<limit;){
+      const e=element(p);
+      if(e.id===0x18538067){p=e.start;limit=Math.min(limit,e.end);continue;} // Segment may have unknown size.
+      if(e.id===0x1F43B675)return null; // Cluster: do not scan compressed media bytes.
+      if(e.end>limit)return null;
+      if(e.id===0x1654AE6B)return trackTypes(e.start,e.end);
+      p=e.end;
+    }
+  } catch(e){}
+  return null;
+}
+
 async function addAnyFiles(files){
   const fs = [...(files || [])];
   if (!fs.length) return;
-  const au = fs.filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac|opus)$/i.test(f.name));
+  const kinds = await Promise.all(fs.map(webmMediaKind));
+  const au = fs.filter((f,i) => kinds[i] ? kinds[i]==='audio' :
+    f.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|flac|opus)$/i.test(f.name));
   const sr = fs.filter(f => /\.(srt|vtt)$/i.test(f.name));
   const pj = fs.filter(f => /\.nvproj$/i.test(f.name));
   const im = fs.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(f.name));
@@ -1200,10 +1257,18 @@ async function addMusicFile(file){
     } finally {
       clearTimeout(timer); a.onloadedmetadata = null; a.onerror = null;
     }
+    let duration=a.duration, decoded=null;
+    // 錄音／串流型 WebM 可能沒有 Duration；以實際音訊解碼結果補時長並供匯出重用。
+    if ((!Number.isFinite(duration) || duration<=0) &&
+        (/\.webm$/i.test(file.name) || /^(audio|video)\/webm(?:;|$)/i.test(file.type))){
+      const ac=new OfflineAudioContext(2,1,48000);
+      decoded=await ac.decodeAudioData(await file.arrayBuffer());
+      duration=decoded.duration;
+    }
     if (epoch !== _gifEpoch) throw new Error(L('專案已切換，音檔載入已取消。'));
-    if (!Number.isFinite(a.duration) || a.duration <= 0) throw new Error(L('無法讀取音檔'));
-    const m = { id: uid(), name:file.name, file, url, el:a, dur:a.duration, buf:null,
-                offset:0, startAt:0, len:Math.max(0.5, totalDur() || a.duration), autoLen:true,
+    if (!Number.isFinite(duration) || duration <= 0) throw new Error(L('無法讀取音檔'));
+    const m = { id: uid(), name:file.name, file, url, el:a, dur:duration, buf:decoded,
+                offset:0, startAt:0, len:Math.max(0.5, totalDur() || duration), autoLen:true,
                 vol:0.5, fadeIn:1, fadeOut:1, loop:true, xfade:1.5, vk:[] };
     pushUndo(); A.musics.push(m); regMedia(m);
     $('#videoPool').appendChild(a);
