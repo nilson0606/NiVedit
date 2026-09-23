@@ -1,4 +1,12 @@
-# NiVedit V13
+# NiVedit V13.1
+
+## V13.1：YT → MP4（2026-09-23）
+
+- 在 YT → MP3 右側新增 YT → MP4，獨立新分頁。共用本機 Windows 下載器，支援 720p／1080p／4K 上限、影片預覽、跳轉、另存及瀏覽器下載；完成後用「＋影片」匯入。
+- 下載影音後轉成 H.264／AAC MP4，不放大原片畫質。下載與轉檔可取消，一次只處理一項；MP3 舊 API 與音質選項保留。
+- 舊安裝需關閉工具、用新版 ZIP 的程式檔覆蓋，再啟動；保留 config、runtime、deps 和 downloads。公開 ZIP 僅 7 個工具原始檔，不含私人設定或下載媒體。
+- 26 項隔離後端檢查（真實 FFmpeg、合成下載輸入）、23 項 Edge 操作、41 項既有 i18n 通過；公開 19 秒 YouTube 短片實際下載及 MP4 轉檔成功。另存以串流 adapter 及真實瀏覽器下載驗證，未自動操作 Windows 原生儲存視窗；未重跑整套剪輯測試或新電腦初始化。
+- 重要還原點維持 V13。證據 qa-yt-mp4-V13.1/；來源 archive/NiVedit_原始碼_V13.1.tar.gz。部署核對紀錄保存於本機 QA 資料夾。
 
 ## V13 重要大版（2026-09-20）
 
@@ -97,7 +105,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified V13 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified V13.1 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 

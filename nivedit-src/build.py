@@ -30,6 +30,7 @@ for source_name, output_name in [('effect-assets', 'animation-effects'),
 
 shutil.copyfile(ROOT / 'manual.html', OUT.parent / 'manual.html')
 shutil.copyfile(ROOT / 'yt-mp3.html', OUT.parent / 'yt-mp3.html')
+shutil.copyfile(ROOT / 'yt-mp4.html', OUT.parent / 'yt-mp4.html')
 
 tmp = OUT.with_suffix(OUT.suffix + '.tmp')
 tmp.write_bytes(''.join(parts).encode('utf-8'))

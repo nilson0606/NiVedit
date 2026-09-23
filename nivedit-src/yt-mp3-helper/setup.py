@@ -66,7 +66,7 @@ def main():
     temp.write_text(json.dumps(config,indent=2),"utf-8")
     temp.replace(ROOT/"config.json")
     (ROOT/"pythonw.txt").write_text(str(runtime/"Scripts/pythonw.exe"),"utf-8")
-    print("Ready. Double-click the VBS launcher. MP3 files are saved under downloads.",flush=True)
+    print("Ready. Double-click the VBS launcher. MP3 / MP4 files are saved under downloads.",flush=True)
 if __name__=="__main__":
     try:main()
     except Exception as exc:

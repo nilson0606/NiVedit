@@ -1,11 +1,14 @@
-# NiVedit YT → MP3 本機工具
+# NiVedit YT → MP3／MP4 本機工具（V13.1）
 
 Windows 10/11 x64；Python 3.10 以上。
 1. 解壓縮到可寫入的資料夾，先安裝 Python（https://www.python.org/downloads/windows/）。
 2. 雙擊 setup.cmd。下載 yt-dlp、Node（LTS）與 FFmpeg 到本資料夾，需要網路，無須管理員。
 3. 雙擊「啟動下載器.vbs」，在 Edge 操作。
-4. NiVedit 主頁「YT → MP3」開啟獨立說明頁；啟動後可按「開啟本機下載器」。
-5. MP3 在 downloads/，也可另存。回 NiVedit「＋音軌 → 匯入電腦音檔」。
+4. NiVedit 主頁「YT → MP3」或「YT → MP4」開啟獨立說明頁；啟動後可按「開啟本機下載器」。
+5. MP3／MP4 在 downloads/，也可另存。MP3 回 NiVedit「＋音軌 → 匯入電腦音檔」；MP4 回「＋影片」。
+6. MP4 可選 720p、1080p、4K 上限，實際依原片可用畫質下載，不會放大。輸出 H.264／AAC，支援預覽與跳轉；轉檔時仍可取消。
+
+舊工具升級：先用「關閉本機工具」，將新版 ZIP 內的檔案覆蓋到原工具資料夾再啟動。原本的 config.json、runtime、deps、downloads 不須刪除；重新執行 setup.cmd 只更新依賴，不會更新本工具介面／server.py。兩種模式共用同一個服務，一次一項下載。
 
 固定本機位址 http://127.0.0.1:19627/。只監聽 loopback，無 CORS、API 有權杖與來源檢查。
 若連線失敗，先啟動工具。若 19627 埠被其他程式使用，關閉衝突程式後重試。

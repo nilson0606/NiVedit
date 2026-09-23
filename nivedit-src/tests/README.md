@@ -1,5 +1,9 @@
 # NiVedit 回歸測試
 
+## V13.1 MP3／MP4 工具
+
+`python tests/yt-mp4.py CONFIG_JSON QA_DIRECTORY --serve`：26 項後端，真實 FFmpeg 與合成下載器，服務以暫用埠隔離。保持運作後跑 `node tests/yt-mp4.e2e.cjs`：23 項 Edge 操作；NIVEDIT_ROOT 可覆寫本機根目錄。MP4 成品匯入確認解碼和時間軸完成。既有 i18n 41/41，真實 YouTube 短片下載另有 QA 紀錄。
+
 ## v12.13 同軌重疊
 
 overlap.e2e.cjs：31 項，驗證圖片重疊放置／右緣延長／停留長度、三種素材片頭排序、透明裁切洞、淡入與外加转場、軌內分列、復原重做、分割、實際 nvproj 重開、日夜截圖與 MP4 解碼比對。環境沿用 NIVEDIT_HTML／NIVEDIT_CHROME，輸出可設 NIVEDIT_OVERLAP_OUT。

@@ -448,7 +448,7 @@ select option.miss{color:var(--fg3)}
 .compat-actions [hidden]{display:none}
 .compat-dialog a{color:var(--acc)}
 
-#btnManual,#btnYtMp3{white-space:nowrap;color:var(--fg);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}#btnManual:hover,#btnYtMp3:hover{background:var(--bg3)}
+#btnManual,#btnYtMp3,#btnYtMp4{white-space:nowrap;color:var(--fg);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}#btnManual:hover,#btnYtMp3:hover,#btnYtMp4:hover{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -463,6 +463,7 @@ select option.miss{color:var(--fg3)}
     <div class="badge" id="envBadge">檢查瀏覽器支援中…</div>
     <a id="btnManual" href="manual.html" target="_blank" rel="noopener" title="在新分頁開啟操作手冊">操作手冊</a>
     <a id="btnYtMp3" href="yt-mp3.html" target="_blank" rel="noopener" title="在新分頁開啟 YouTube 轉 MP3 工具">YT → MP3</a>
+    <a id="btnYtMp4" href="yt-mp4.html" target="_blank" rel="noopener" title="在新分頁開啟 YouTube 轉 MP4 工具">YT → MP4</a>
     <div class="spacer"></div>
     <div class="tc">總長 <b id="totalDur">00:00.0</b></div>
     <button id="btnExport" class="pri">匯出影片</button>
@@ -5411,7 +5412,8 @@ Lo-fi 爵士	Lo-fi & jazz
 辨識方式	Mode
 一般（預設）	Normal (default)
 短分段重試	Shorter segments
-平常使用「一般」。若停頓後漏掉後面的字幕，可選「短分段重試」再產生；結果仍需校對。	Use Normal for everyday work. If speech after a pause is missing, select Retry with shorter segments and generate again; review the results.`;
+平常使用「一般」。若停頓後漏掉後面的字幕，可選「短分段重試」再產生；結果仍需校對。	Use Normal for everyday work. If speech after a pause is missing, select Retry with shorter segments and generate again; review the results.
+在新分頁開啟 YouTube 轉 MP4 工具	Open YouTube to MP4 in a new tab`;
 
 </script>
 <script>
@@ -5636,8 +5638,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'V13';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/20';
+const VER = 'V13.1';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/23';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。

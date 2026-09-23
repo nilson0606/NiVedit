@@ -4,21 +4,21 @@
 <style>
 :root{color-scheme:dark;--bg:#10141c;--card:#1a2230;--ink:#edf2fc;--muted:#a9b7ce;--line:#33415a;--accent:#a9c6ff}
 :root.light{color-scheme:light;--bg:#f1f5fc;--card:#fff;--ink:#17243b;--muted:#56677f;--line:#ccd7e8;--accent:#245fc7}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI","Microsoft JhengHei",sans-serif}main{max-width:850px;margin:50px auto;padding:0 24px}header{display:flex;justify-content:space-between;align-items:center;gap:12px}.eyebrow{font-size:13px;letter-spacing:2px;color:var(--accent)}h1{font-size:40px;letter-spacing:-1px;margin:8px 0}p{color:var(--muted)}.card{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 15px 40px #0001}label{display:block;font-weight:600;margin-bottom:8px}input,select,button,.button{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 15px;color:var(--ink);background:var(--bg)}input{width:100%;margin-bottom:20px}input:focus-visible,button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}button,.button{cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.45;cursor:default}.primary{background:#477fdf;color:white;border-color:#477fdf;font-weight:700}.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.row label{font-size:14px}.spacer{flex:1}.small{font-size:13px;color:var(--muted)}progress{width:100%;height:12px;accent-color:#71a3ff;margin-top:16px}#status{font-size:19px;font-weight:600;margin:16px 0 4px}#output{overflow-wrap:anywhere}audio{width:100%;margin:18px 0}#name{overflow-wrap:anywhere;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:230px;overflow:auto}details{margin-top:22px;color:var(--muted)}footer{margin:22px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap}.error{color:#f48f94}#result{border-top:1px solid var(--line);padding-top:20px;margin-top:24px}@media(max-width:550px){main{margin:25px auto;padding:0 16px}.card{padding:20px}h1{font-size:32px}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI","Microsoft JhengHei",sans-serif}main{max-width:850px;margin:50px auto;padding:0 24px}header{display:flex;justify-content:space-between;align-items:center;gap:12px}.eyebrow{font-size:13px;letter-spacing:2px;color:var(--accent)}h1{font-size:40px;letter-spacing:-1px;margin:8px 0}p{color:var(--muted)}.card{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 15px 40px #0001}label{display:block;font-weight:600;margin-bottom:8px}input,select,button,.button{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 15px;color:var(--ink);background:var(--bg)}input{width:100%;margin-bottom:20px}input:focus-visible,button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}button,.button{cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.45;cursor:default}.primary{background:#477fdf;color:white;border-color:#477fdf;font-weight:700}.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.row label{font-size:14px}.spacer{flex:1}.small{font-size:13px;color:var(--muted)}progress{width:100%;height:12px;accent-color:#71a3ff;margin-top:16px}#status{font-size:19px;font-weight:600;margin:16px 0 4px}#output{overflow-wrap:anywhere}audio,video{width:100%;max-height:420px;margin:18px 0}#name{overflow-wrap:anywhere;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:230px;overflow:auto}details{margin-top:22px;color:var(--muted)}footer{margin:22px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap}.error{color:#f48f94}#result{border-top:1px solid var(--line);padding-top:20px;margin-top:24px}@media(max-width:550px){main{margin:25px auto;padding:0 16px}.card{padding:20px}h1{font-size:32px}}
 </style>
 <main>
-<header><div><div class="eyebrow">NiVedit · 獨立音訊工具</div><h1>YouTube → MP3</h1></div><button id="theme" type="button">白天模式</button></header>
-<p>貼上影片網址，將聲音存成 MP3。下載與轉檔都在這台電腦進行。</p>
+<header><div><div class="eyebrow">NiVedit · 獨立下載工具</div><h1 id="heading">YouTube → MP3</h1></div><button id="theme" type="button">白天模式</button></header>
+<p id="intro">貼上影片網址，將聲音存成 MP3。下載與轉檔都在這台電腦進行。</p><nav class="row"><a class="button" href="/?format=mp3">YT → MP3</a><a class="button" href="/?format=mp4">YT → MP4</a></nav>
 <section class="card">
 <form id="form"><label for="url">YouTube 影片網址</label><input id="url" type="url" placeholder="https://www.youtube.com/watch?v=…" required autocomplete="off">
-<div class="row"><div><label for="quality">MP3 音質</label><select id="quality"><option value="128">128 kbps · 較小檔案</option><option value="192" selected>192 kbps · 標準</option><option value="320">320 kbps · 較大檔案</option></select></div><div class="spacer"></div><button type="submit" class="primary" id="start">下載 MP3</button><button type="button" id="cancel" disabled>取消</button></div>
-<p class="small">一次下載一支影片。提高位元率不會提升原始音源品質。</p></form>
+<div class="row"><div><label id="qualityLabel" for="quality">MP3 音質</label><select id="quality"><option value="128">128 kbps · 較小檔案</option><option value="192" selected>192 kbps · 標準</option><option value="320">320 kbps · 較大檔案</option></select></div><div class="spacer"></div><button type="submit" class="primary" id="start">下載 MP3</button><button type="button" id="cancel" disabled>取消</button></div>
+<p class="small" id="qualityHint">一次下載一支影片。提高位元率不會提升原始音源品質。</p></form>
 <div id="status" role="status" aria-live="polite">正在連接本機工具…</div><progress id="progress" max="100" value="0" aria-label="下載進度"></progress>
 <div id="output" class="small"></div>
-<div id="result" hidden><div id="name"></div><audio id="player" controls preload="metadata"></audio><div class="row"><button type="button" id="save" class="primary">另存 MP3…</button><a id="download" class="button" download>瀏覽器下載</a></div></div>
+<div id="result" hidden><div id="name"></div><audio id="player" controls preload="metadata"></audio><video id="videoPlayer" controls playsinline preload="metadata" hidden></video><div class="row"><button type="button" id="save" class="primary">另存 MP3…</button><a id="download" class="button" download>瀏覽器下載</a></div></div>
 <details><summary>詳細訊息 / 失敗原因</summary><pre id="logs"></pre></details>
 </section>
-<p class="small">加入剪輯：回 NiVedit，按「＋音軌 → 匯入電腦音檔」，選擇剛存好的 MP3。</p><footer><button id="folder">開啟下載資料夾</button><button id="quit">關閉本機工具</button><span class="small">只連接本機 · 無須輸入帳號</span></footer>
+<p class="small" id="importHint">加入剪輯：回 NiVedit，按「＋音軌 → 匯入電腦音檔」，選擇剛存好的 MP3。</p><footer><button id="folder">開啟下載資料夾</button><button id="quit">關閉本機工具</button><span class="small">只連接本機 · 無須輸入帳號</span></footer>
 <p class="small">首次使用請雙擊「啟動下載器.vbs」，不要直接開啟 HTML。請使用你有權下載的內容。</p>
 </main>
 <script>
@@ -26,8 +26,16 @@ const $=id=>document.getElementById(id);
 const embeddedToken='__LOCAL_TOKEN__';
 const token=location.hash.slice(1)||(embeddedToken.startsWith('__')?'':embeddedToken)||sessionStorage.getItem('yt-local-token')||'';
 sessionStorage.setItem('yt-local-token',token);
-history.replaceState(null,'',location.pathname);
-let lastFile='',fileURL='',fileName='',stopped=false,busy=false;
+history.replaceState(null,'',location.pathname+location.search);
+const mediaFormat=new URLSearchParams(location.search).get('format')==='mp4'?'mp4':'mp3';
+if(mediaFormat==='mp4'){
+ document.title='NiVedit · YT → MP4 本機工具';$('heading').textContent='YouTube → MP4';
+ $('intro').textContent='貼上影片網址，將畫面與聲音存成 MP4。下載與轉檔都在這台電腦進行。';
+ $('qualityLabel').textContent='MP4 畫質上限';$('quality').innerHTML='<option value="720">720p · 較小檔案</option><option value="1080" selected>1080p · 標準</option><option value="2160">4K · 較大檔案</option>';
+ $('start').textContent='下載 MP4';$('qualityHint').textContent='依原片可用畫質下載，不會放大成更高清。轉成相容 MP4 需要時間，4K 檔案較大。';
+ $('importHint').textContent='加入剪輯：回 NiVedit，按「＋影片」，選擇剛存好的 MP4。';
+}
+let lastFile='',fileURL='',fileName='',resultFormat=mediaFormat,stopped=false,busy=false;
 async function api(path,data){
  const response=await fetch('/api/'+path,{method:data===undefined?'GET':'POST',headers:{'X-Local-Token':token,'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)});
  const body=await response.json();if(!response.ok)throw Error(body.error||'連線失敗');return body;
@@ -36,17 +44,17 @@ function error(e){$('status').textContent=e.message;$('status').classList.add('e
 function theme(light){document.documentElement.classList.toggle('light',light);$('theme').textContent=light?'夜間模式':'白天模式';localStorage.setItem('yt-theme',light?'light':'dark')}
 theme(localStorage.getItem('yt-theme')==='light');
 $('theme').onclick=()=>theme(!document.documentElement.classList.contains('light'));
-$('form').onsubmit=async e=>{e.preventDefault();$('start').disabled=true;$('status').classList.remove('error');try{await api('start',{url:$('url').value,quality:$('quality').value});await refresh()}catch(e){error(e);$('start').disabled=false}};
+$('form').onsubmit=async e=>{e.preventDefault();$('start').disabled=true;$('status').classList.remove('error');try{await api('start',{url:$('url').value,quality:$('quality').value,format:mediaFormat});await refresh()}catch(e){error(e);$('start').disabled=false}};
 $('cancel').onclick=async()=>{try{await api('cancel',{});await refresh()}catch(e){error(e)}};
 $('folder').onclick=async()=>{try{await api('folder',{})}catch(e){error(e)}};
 $('quit').onclick=async()=>{try{await api('quit',{});stopped=true;$('status').textContent='本機工具已關閉，可以關閉這個分頁。';document.querySelectorAll('button,input,select').forEach(x=>x.disabled=true)}catch(e){error(e)}};
 $('save').onclick=async()=>{
  if(!window.showSaveFilePicker){$('download').click();return}
  try{
-  const handle=await showSaveFilePicker({suggestedName:fileName,types:[{description:'MP3 音樂',accept:{'audio/mpeg':['.mp3']}}]});
-  const response=await fetch(fileURL);if(!response.ok)throw Error('讀取 MP3 失敗');
+  const handle=await showSaveFilePicker({suggestedName:fileName,types:[{description:resultFormat==='mp4'?'MP4 影片':'MP3 音樂',accept:resultFormat==='mp4'?{'video/mp4':['.mp4']}:{'audio/mpeg':['.mp3']}}]});
+  const response=await fetch(fileURL);if(!response.ok)throw Error('讀取 '+resultFormat.toUpperCase()+' 失敗');
   const writable=await handle.createWritable();await response.body.pipeTo(writable);
-  $('status').textContent='已另存 MP3。';
+  $('status').textContent='已另存 '+resultFormat.toUpperCase()+'。';
  }catch(e){if(e.name!=='AbortError')error(e)}
 };
 async function refresh(){
@@ -56,8 +64,14 @@ async function refresh(){
   $('progress').value=s.progress;$('output').textContent='儲存位置：'+s.output;
   $('start').disabled=s.status==='running';$('cancel').disabled=s.status!=='running';
   $('logs').textContent=s.logs.join('\n');$('result').hidden=!s.file;
-  if(s.file&&s.file!==lastFile){lastFile=s.file;fileName=s.name;fileURL='/audio?token='+encodeURIComponent(token)+'&file='+encodeURIComponent(s.file);$('player').src=fileURL;$('name').textContent=fileName;$('download').href=fileURL+'&download=1'}
-  if(!s.file&&lastFile){$('player').pause();$('player').removeAttribute('src');lastFile=''}
+  if(s.file&&s.file!==lastFile){
+   lastFile=s.file;fileName=s.name;resultFormat=s.format||'mp3';
+   for(const id of ['player','videoPlayer']){$(id).pause();$(id).removeAttribute('src');$(id).load();$(id).hidden=true}
+   fileURL='/media?token='+encodeURIComponent(token)+'&file='+encodeURIComponent(s.file);
+   const player=$(resultFormat==='mp4'?'videoPlayer':'player');player.hidden=false;player.src=fileURL;
+   $('save').textContent='另存 '+resultFormat.toUpperCase()+'…';$('name').textContent=fileName;$('download').href=fileURL+'&download=1';
+  }
+  if(!s.file&&lastFile){for(const id of ['player','videoPlayer']){$(id).pause();$(id).removeAttribute('src');$(id).load()}lastFile=''}
  }catch(e){error(new Error('本機工具未連接。請雙擊「啟動下載器.vbs」重新開啟。'));$('start').disabled=true}
  finally{busy=false}
 }

@@ -1,4 +1,4 @@
-"""Local-only YouTube to MP3 UI. Python 3.12+, yt-dlp, FFmpeg, Node."""
+"""Local-only YouTube to MP3/MP4 UI. Python 3.10+, yt-dlp, FFmpeg, Node."""
 import json, os, re, secrets, shutil, subprocess, sys, threading, time, webbrowser
 from pathlib import Path
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -11,7 +11,7 @@ OUT.mkdir(exist_ok=True)
 CONFIG = json.loads((ROOT / "config.json").read_text("utf-8"))
 TOKEN = secrets.token_urlsafe(32)
 LOCK = threading.RLock()
-STATE = {"status": "idle", "progress": 0, "message": "貼上網址，開始擷取音樂。", "logs": [], "file": None}
+STATE = {"status": "idle", "progress": 0, "message": "貼上網址，開始擷取音樂。", "logs": [], "file": None, "format": "mp3", "version": "V13.1"}
 PROCESS = None
 CANCEL = threading.Event()
 PORT = 0
@@ -43,14 +43,17 @@ def log(line):
     with LOCK:
         STATE["logs"] = (STATE["logs"] + [line])[-60:]
 
-def command(url, quality, folder):
+def command(url, quality, folder, media_format="mp3"):
+    options = ["-f", "bestaudio/best", "-x", "--audio-format", "mp3", "--audio-quality", quality]
+    if media_format == "mp4":
+        # Bound the downloaded resolution; always normalize the final codecs below.
+        options = ["-f", f"bv[height<={quality}]+ba/b[height<={quality}]", "--merge-output-format", "mkv"]
     return [sys.executable, "-m", "yt_dlp", "--ignore-config", "--no-plugin-dirs",
         "--no-playlist", "--no-color", "--newline", "--progress", "--no-quiet", "--windows-filenames",
         "--socket-timeout", "25", "--retries", "2", "--fragment-retries", "2",
         "--no-js-runtimes", "--js-runtimes", "node:" + CONFIG["node"],
         "--ffmpeg-location", CONFIG["ffmpeg"], "--match-filters", "!is_live",
-        "-f", "bestaudio/best", "-x", "--audio-format", "mp3",
-        "--audio-quality", quality, "--embed-metadata", "--no-overwrites",
+        *options, "--embed-metadata", "--no-overwrites",
         "--progress-template", "download:PROGRESS:%(progress._percent_str)s",
         "--print", "after_move:FILE:%(filepath)s", "--no-simulate",
         "-o", str(folder / "%(title).140B [%(id)s].%(ext)s"), "--", url]
@@ -65,7 +68,31 @@ def stop_process():
             else:
                 process.terminate()
 
-def worker(url, quality, folder):
+def convert_mp4(source, folder):
+    """Normalize all downloaded video formats to browser-editable H.264/AAC."""
+    global PROCESS
+    output = folder / (source.stem + " - NiVedit.mp4")
+    partial = output.with_suffix(".mp4.part")
+    args = [CONFIG["ffmpeg"], "-hide_banner", "-nostdin", "-n", "-i", str(source),
+        "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "veryfast",
+        "-crf", "20", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-f", "mp4", str(partial)]
+    with LOCK:
+        if CANCEL.is_set(): return None
+        update(message="正在轉成相容 MP4（H.264 / AAC）…", progress=99)
+        PROCESS = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", creationflags=FLAGS)
+        process = PROCESS
+    for line in process.stdout:
+        if line.strip(): log(line.strip())
+    code = process.wait()
+    if CANCEL.is_set(): return None
+    if code: raise RuntimeError("MP4 轉檔失敗，請查看 FFmpeg 詳細訊息。")
+    partial.replace(output)
+    return output
+
+
+def worker(url, quality, folder, media_format="mp3"):
     global PROCESS
     try:
         env = dict(os.environ, PYTHONPATH=str(ROOT / "deps") if CONFIG.get("use_local_deps", True) else "", PYTHONIOENCODING="utf-8")
@@ -73,7 +100,7 @@ def worker(url, quality, folder):
             if CANCEL.is_set():
                 update(status="cancelled", message="已取消。")
                 return
-            PROCESS = subprocess.Popen(command(url, quality, folder),
+            PROCESS = subprocess.Popen(command(url, quality, folder, media_format),
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True, encoding="utf-8", errors="replace", env=env,
                 creationflags=FLAGS, cwd=ROOT)
@@ -87,7 +114,7 @@ def worker(url, quality, folder):
                 match = re.search(r"([\d.]+)%", line)
                 if match:
                     progress = min(99, float(match[1]))
-                    update(progress=progress, message="下載中…" if progress < 99 else "下載完成，正在轉成 MP3…")
+                    update(progress=progress, message="下載中…" if progress < 99 else "下載完成，正在處理 " + media_format.upper() + "…")
             elif line.startswith("FILE:"):
                 result = Path(line[5:]).resolve()
             else:
@@ -95,10 +122,12 @@ def worker(url, quality, folder):
                 if "[ExtractAudio]" in line:
                     update(message="正在轉成 MP3…")
         code = process.wait()
+        if code == 0 and result and result.is_relative_to(folder.resolve()) and result.is_file() and media_format == "mp4" and not CANCEL.is_set():
+            result = convert_mp4(result, folder)
         if CANCEL.is_set():
             update(status="cancelled", message="已取消下載；未完成檔案留在該次資料夾。")
-        elif code == 0 and result and result.is_relative_to(OUT.resolve()) and result.suffix.lower() == ".mp3" and result.is_file():
-            update(status="done", progress=100, message="MP3 已存到電腦，可以試聽或另存。",
+        elif code == 0 and result and result.is_relative_to(folder.resolve()) and result.suffix.lower() == "." + media_format and result.is_file():
+            update(status="done", progress=100, message=media_format.upper() + " 已存到電腦，可以預覽或另存。",
                    file=str(result.relative_to(OUT.resolve())).replace("\\", "/"), name=result.name)
         else:
             update(status="error", message="下載失敗。請查看詳細訊息；影片限制、網路或 YouTube 驗證都可能造成失敗。")
@@ -107,7 +136,8 @@ def worker(url, quality, folder):
         update(status="error", message="執行失敗，請查看詳細訊息。")
     finally:
         with LOCK:
-            PROCESS = None
+            if PROCESS and PROCESS.poll() is not None:
+                PROCESS = None
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
@@ -145,13 +175,13 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK:
                 snapshot = dict(STATE, output=str(OUT))
             return self.send(200, snapshot)
-        if p.path == "/audio":
+        if p.path in ("/audio", "/media"):
             q = parse_qs(p.query)
             if not secrets.compare_digest(q.get("token", [""])[0], TOKEN):
                 return self.send(403, {"error": "Invalid token"})
             name = q.get("file", [""])[0]
             path = (OUT / name).resolve()
-            if not path.is_relative_to(OUT.resolve()) or path.suffix.lower() != ".mp3" or not path.is_file():
+            if not path.is_relative_to(OUT.resolve()) or path.suffix.lower() not in (".mp3", ".mp4") or not path.is_file():
                 return self.send(404, {"error": "找不到檔案"})
             extra = {}
             if q.get("download"):
@@ -171,7 +201,7 @@ class Handler(BaseHTTPRequestHandler):
                 code = 206
                 extra["Content-Range"] = f"bytes {start}-{end}/{size}"
             self.send_response(code)
-            for key, value in dict(extra, **{"Content-Type": "audio/mpeg", "Content-Length": str(end-start+1),
+            for key, value in dict(extra, **{"Content-Type": "video/mp4" if path.suffix.lower() == ".mp4" else "audio/mpeg", "Content-Length": str(end-start+1),
                 "Accept-Ranges": "bytes", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}).items():
                 self.send_header(key, value)
             self.end_headers()
@@ -200,8 +230,11 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict): raise ValueError("無效的請求。")
             if self.path == "/api/start":
                 url = canonical_url(data.get("url", ""))
-                quality = str(data.get("quality", "192"))
-                if quality not in ("128", "192", "320"): raise ValueError("無效的音質選項。")
+                media_format = data.get("format", "mp3")
+                if media_format not in ("mp3", "mp4"): raise ValueError("無效的下載格式。")
+                quality = str(data.get("quality", "1080" if media_format == "mp4" else "192"))
+                allowed = ("720", "1080", "2160") if media_format == "mp4" else ("128", "192", "320")
+                if quality not in allowed: raise ValueError("無效的畫質／音質選項。")
                 for key in ("ffmpeg", "node"):
                     if not Path(CONFIG[key]).is_file(): raise ValueError(f"找不到 {key}，請檢查 config.json。")
                 with LOCK:
@@ -210,8 +243,8 @@ class Handler(BaseHTTPRequestHandler):
                     folder = OUT / (time.strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3))
                     folder.mkdir()
                     CANCEL.clear()
-                    update(status="running", progress=0, message="正在讀取影片資料…", logs=[], file=None)
-                    threading.Thread(target=worker, args=(url, quality, folder), daemon=True).start()
+                    update(status="running", progress=0, message="正在讀取影片資料…", logs=[], file=None, name=None, format=media_format)
+                    threading.Thread(target=worker, args=(url, quality, folder, media_format), daemon=True).start()
                 return self.send(200, {"ok": True})
             if self.path == "/api/cancel":
                 CANCEL.set()
