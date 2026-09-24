@@ -1,7 +1,7 @@
 {
-  "version": "13.2",
-  "html_sha256": "c70ffe241d49df2310fc257a6959df5da1f0dfdbfeef517f3853bcad13a6a6ce",
-  "html_bytes": 1212494,
+  "version": "13.3",
+  "html_sha256": "0c1260a92df8aef119b679a22898a7ff01e91d59f90d910b2c2871e67cb66fa1",
+  "html_bytes": 1218158,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,19 +28,24 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-23-webm-audio",
-    "sha256": "503bef048016f01b95bb20320283f65287803b65edc02bf3847c75e3c533f208",
+    "revision": "2026-09-24-clipboard",
+    "sha256": "40a5501e707b514f6d34b79877dfd97e7596c19a55278ef5aee59f2e7f48c65c",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "webm_audio": 24,
+    "clipboard": 35,
     "dual_track": 45,
+    "motion": 67,
+    "subtitle_edit": 20,
+    "subtitle_scope": 50,
     "volume_curve": 25,
-    "i18n": 41
+    "rotation_save": 71,
+    "i18n": 41,
+    "gif": 16
   },
-  "release_verification": "135 targeted checks passed. WebM Opus/Vorbis imports, MIME variants, missing duration, project reopen and actual MP4 audio decode tested. V13.1 reproduced four import failures. Full editor regression not rerun.",
+  "release_verification": "370 targeted checks passed. Timeline copy/paste for all six object types with independent settings and media elements; shifted keyframes/GIF phase, subtitle rebinding, audio duration, undo/redo, project reopen, media rebinding and actual MP4 audio decode verified. Full editor regression not rerun.",
   "crop_keep_options": [
     "inside",
     "outside"
@@ -50,7 +55,7 @@
   "music_new_tracks": 0,
   "music_previous_tracks": 40,
   "music_example_tracks": 1,
-  "pages_total_bytes": 714249529,
+  "pages_total_bytes": 714256402,
   "music_restored_pack": "v2",
   "yt_mp3": {
     "entry": "yt-mp3.html",
@@ -63,12 +68,13 @@
     "zip_sha256": "ce7935bba0c75238b5c0393c03d147746882622641b229c0259b204bc8b42965",
     "public_package_excludes_private_data": true
   },
-  "display_version": "V13.2",
+  "display_version": "V13.3",
   "important_release": false,
-  "release_date": "2026-09-23",
+  "release_date": "2026-09-24",
   "previous_targeted_regression": {
-    "yt_mp4_backend": 26,
-    "yt_mp4_browser": 23,
+    "webm_audio": 24,
+    "dual_track": 45,
+    "volume_curve": 25,
     "i18n": 41
   },
   "same_track_overlap": {
@@ -102,5 +108,21 @@
     "track_based_auto_routing": true,
     "header_read_limit_mib": 2,
     "missing_duration_decoded": true
+  },
+  "timeline_clipboard": {
+    "object_types": [
+      "video",
+      "image",
+      "animation",
+      "title",
+      "subtitle",
+      "audio"
+    ],
+    "single_selection": true,
+    "paste_at_playhead": true,
+    "preserve_settings_and_duration": true,
+    "video_collision": "next available position",
+    "scope": "current project",
+    "undo_redo": true
   }
 }

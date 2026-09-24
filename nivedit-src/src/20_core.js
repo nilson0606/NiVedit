@@ -3,8 +3,8 @@
    ========================================================================== */
 'use strict';
 
-const VER = 'V13.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/23';
+const VER = 'V13.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/24';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -530,7 +530,8 @@ function syncAutoLens(){
   const tot = totalDur();
   for (const m of A.musics){
     if (m.autoLen) m.len = Math.max(0.5, (m.loop ? tot : Math.min(musicSeg(m), tot)) - m.startAt);
-    m.len = Math.max(0.3, Math.min(m.len, Math.max(0.3, tot - m.startAt)));
+    // 貼上的配樂固定保留複製時長度，末端超過畫面仍可再延長畫面使用。
+    if (!m.preserveLen) m.len = Math.max(0.3, Math.min(m.len, Math.max(0.3, tot - m.startAt)));
   }
 }
 
@@ -1305,6 +1306,87 @@ function addTitle(startAt){
   seekTo(s + 0.3);                       // 跳到標題上，預覽馬上看得到
   render(); refreshProp();
   toast('標題加在播放頭位置，可在「標題」軌左右拖、兩端拉長縮短');
+}
+
+/* 時間軸剪貼簿：只快照編輯設定；媒體在貼上時建立獨立播放元素。
+   切換專案清空，避免指向已失效的專案切片。 */
+let _timelineClipboard = null, _timelinePasting = false;
+const timelineItems = type => ({clip:A.clips, title:A.titles, overlay:A.overlays,
+  music:A.musics, sub:A.subs}[type]);
+function timelineSelected(){
+  return (timelineItems(A.sel.type) || []).find(o => o.id === A.sel.id);
+}
+function updateClipboardBtns(){
+  const copy = $('#btnCopy'), paste = $('#btnPaste');
+  if (copy) copy.disabled = A.exporting || !timelineSelected();
+  if (paste) paste.disabled = A.exporting || _timelinePasting || !_timelineClipboard;
+}
+function clearTimelineClipboard(){
+  _timelineClipboard = null;
+  updateClipboardBtns();
+}
+function copyTimelineObject(){
+  if (A.exporting) return;
+  const o = timelineSelected();
+  if (!o) return;
+  _timelineClipboard = {type:A.sel.type, data:JSON.parse(JSON.stringify(_strip(o))),
+    file:o.file, thumb:o.thumb};
+  updateClipboardBtns();
+  toast('已複製物件與設定，移動播放頭後按 Ctrl+V 貼上');
+}
+async function pasteTimelineObject(){
+  if (A.exporting || _timelinePasting || !_timelineClipboard) return;
+  const cb = _timelineClipboard, epoch = _gifEpoch;
+  const at = Math.max(0, A.playhead), type = cb.type;
+  const o = {...JSON.parse(JSON.stringify(cb.data)), id:uid()};
+  let url = null, el = null, gif = null, inserted = false;
+  _timelinePasting = true; updateClipboardBtns();
+  if (A.playing) setPlaying(false);
+  try {
+    if (type === 'clip' || type === 'music' || type === 'overlay'){
+      // 儲存覆寫專案會重新綁定檔案：優先用登記表中的最新素材。
+      const file = (MEDIA.get(cb.data.id) || {}).file || cb.file;
+      if (!file || !await fileAlive(file)) throw new Error(L('來源素材已無法讀取，請重新匯入後複製'));
+      if (type === 'overlay'){
+        const loaded = await loadOverlayImage(file);
+        url = loaded.url; el = loaded.im; gif = loaded.gif;
+        Object.assign(o, {img:el, _gif:gif});
+      } else {
+        url = URL.createObjectURL(file);
+        el = await elFor(type === 'music' ? 'audio' : isImg(o) ? 'image' : 'video', url);
+        if (type === 'clip' && !isImg(o) && el.error) throw new Error(L('媒體載入失敗'));
+        Object.assign(o, {el, video:type === 'clip' && !isImg(o) ? el : null,
+          img:type === 'clip' && isImg(o) ? el : undefined, buf:null, audioBuf:null,
+          audioTried:type === 'clip' && isImg(o)});
+      }
+      Object.assign(o, {file, url, thumb:cb.thumb});
+    }
+    if (epoch !== _gifEpoch || A.exporting) return;
+    if (type === 'clip') o.at = at;
+    else if (type === 'music') Object.assign(o, {startAt:at, autoLen:false, preserveLen:true});
+    else { o.end = at + (o.end - o.start); o.start = at; }
+    // 字幕重新綁定貼上位置，不沿用原句的素材時間。
+    if (type === 'sub') tagSub(o);
+    if (gif) gif.pending = true; // pushUndo 清理快取時先保護待加入的畫格
+    pushUndo();
+    timelineItems(type).push(o); inserted = true;
+    if (url) regMedia(o);
+    if (type === 'clip') placeClip(o, clipTrack(o), at);
+    A.sel = {type, id:o.id};
+    render(); refreshProp();
+    toast(type === 'clip' && o.at > at + 1e-6
+      ? '已貼上；影片軌有片段，已順延到可放置的位置' : '已貼上，設定與長度已保留');
+    return o;
+  } catch(e){ toast(L('貼上失敗：') + (e.message || e), true); }
+  finally {
+    if (!inserted){
+      if (!el && url) el = [...$('#videoPool').children].find(e => e.src === url);
+      if (el){ if (el.pause) el.pause(); el.removeAttribute('src'); if (el.load) el.load(); el.remove(); }
+      if (url) URL.revokeObjectURL(url);
+      if (gif){ gif.pending = false; pruneGifMedia(); }
+    }
+    _timelinePasting = false; updateClipboardBtns();
+  }
 }
 
 function delSelected(){

@@ -2,7 +2,7 @@ from pathlib import Path
 import json,base64,html,re
 ROOT=Path(__file__).resolve().parent.parent
 VERSION=re.search(r"const VER = '([^']+)'", (ROOT/'nivedit-src/src/20_core.js').read_text(encoding='utf-8')).group(1)
-MANUAL_DATE='2026-09-23'
+MANUAL_DATE='2026-09-24'
 chapters=json.loads((ROOT/'manual/chapters.json').read_text(encoding='utf-8'))
 def screenshot(theme):
     path=ROOT/('manual/images/subtitles-'+theme+'.png')

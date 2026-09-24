@@ -56,7 +56,7 @@ function serialize(){
                'cropShape','cropKeep','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
       { mediaKey: reg(c.file, c) })),
     musics: A.musics.map(m => Object.assign(
-      pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
+      pick(m, ['id','name','dur','offset','startAt','len','autoLen','preserveLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
       { mediaKey: reg(m.file, m) })),
     overlays: A.overlays.map(o => Object.assign(
       pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT']),   // v10.2 起沒有 per-object z 了

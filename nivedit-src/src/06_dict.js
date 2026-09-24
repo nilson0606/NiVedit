@@ -1269,4 +1269,12 @@ Lo-fi 爵士	Lo-fi & jazz
 一般（預設）	Normal (default)
 短分段重試	Shorter segments
 平常使用「一般」。若停頓後漏掉後面的字幕，可選「短分段重試」再產生；結果仍需校對。	Use Normal for everyday work. If speech after a pause is missing, select Retry with shorter segments and generate again; review the results.
-在新分頁開啟 YouTube 轉 MP4 工具	Open YouTube to MP4 in a new tab`;
+在新分頁開啟 YouTube 轉 MP4 工具	Open YouTube to MP4 in a new tab
+複製選取物件與設定（Ctrl+C）	Copy selected object and settings (Ctrl+C)
+貼到播放頭位置（Ctrl+V）	Paste at playhead (Ctrl+V)
+已複製物件與設定，移動播放頭後按 Ctrl+V 貼上	Object and settings copied. Move the playhead and press Ctrl+V.
+來源素材已無法讀取，請重新匯入後複製	Source media is no longer readable. Import it again before copying.
+已貼上；影片軌有片段，已順延到可放置的位置	Pasted at the next available position on the video track.
+已貼上，設定與長度已保留	Pasted with settings and duration preserved.
+貼上失敗：	Paste failed:
+貼上	Paste`;

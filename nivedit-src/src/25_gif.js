@@ -30,6 +30,7 @@ function pruneGifMedia(){
 }
 
 function clearGifMedia(){
+  clearTimelineClipboard();
   ++_gifEpoch;                         // 取消舊專案尚在解碼的 GIF
   for (const g of _gifAssets) closeGifAsset(g);
   _gifCache = new WeakMap();

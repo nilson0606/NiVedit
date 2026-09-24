@@ -221,6 +221,7 @@ function render(){
   }
   const db = $('#btnDel');
   if (db) db.textContent = A.sel.type === 'proj' ? '刪除' : `刪除${what}`;
+  updateClipboardBtns();
   renderClipList();
   renderTimeline();
 }
@@ -1981,6 +1982,8 @@ function initUI(){
   });
   $('#btnAddTitle').onclick = () => { if (!A.clips.length) return toast('先加入影片再放標題', true); addTitle(); };
   $('#btnProj').onclick = () => { A.sel = { type:'proj', id:null }; render(); refreshProp(); };
+  $('#btnCopy').onclick = copyTimelineObject;
+  $('#btnPaste').onclick = pasteTimelineObject;
   $('#btnDel').onclick = delSelected;
   $('#btnSplit').onclick = splitAtPlayhead;
   $('#playBtn').onclick = () => { if (!A.clips.length) return; setPlaying(!A.playing); };
@@ -2135,6 +2138,15 @@ function initUI(){
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')){
       if (inTextField(el)) return;
       e.preventDefault(); return redo();
+    }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && /^[cv]$/i.test(e.key)){
+      // 輸入欄、可編輯文字與對話框保留瀏覽器原生剪貼簿。
+      if (inTextField(el) || (el && el.tagName === 'SELECT') || $('dialog[open]')) return;
+      if (e.key.toLowerCase() === 'c' && window.getSelection()?.toString()) return;
+      if (e.key.toLowerCase() === 'c' ? !timelineSelected() : !_timelineClipboard) return;
+      e.preventDefault();
+      if (!e.repeat) e.key.toLowerCase() === 'c' ? copyTimelineObject() : pasteTimelineObject();
+      return;
     }
     if (e.ctrlKey || e.metaKey) return;
     /* 其他快捷鍵照舊讓給任何表單元素：空白鍵要能勾核取方塊、

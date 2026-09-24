@@ -1,4 +1,12 @@
-# NiVedit V13.2
+# NiVedit V13.3
+
+## V13.3：時間軸物件複製貼上（2026-09-24）
+
+- 影片、圖片、動畫效果、標題、字幕、音軌皆可用時間軸「複製／貼上」按鈕或 Ctrl+C／Ctrl+V（Mac Command）操作。一次複製一個物件，貼到播放頭，保留原軌；影片碰到同軌片段時順延並提示。
+- 保留複製當下的文字、樣式、構圖、裁切、轉場、動畫、關鍵影格、音量曲線等設定，僅位移時間；副本有獨立設定和影音播放元素，支援復原／重做及 nvproj 保存。GIF 保留裁切相位；字幕重新綁定目標位置，所在軌的共用樣式不變。音軌副本固定複製時長度（preserveLen 保存至專案），可跨過畫面終點，實際播放／輸出仍以畫面總長為界。
+- 文字輸入、contenteditable、對話框保留原生剪貼簿；匯出中禁止貼上，重複載入防重入，失敗清理媒體，切換專案取消載入並清空剪貼簿。剪貼簿僅限目前編輯器專案。
+- 複製貼上專項 35/35；雙軌 45/45、動態關鍵影格 67/67、字幕編輯 20/20、字幕範圍 50/50、音量曲線 25/25、存檔旋轉 71/71、i18n 41/41、GIF 16 項，共 370 項相關檢查通過。包含實際 MP4/AAC 輸出與解碼、新時間發聲、專案重開及素材重綁；未重跑完整編輯器回歸。
+- 手冊與中英文工具列同步。證據 qa-copy-paste-V13.3/；完整來源 archive/NiVedit_原始碼_V13.3.tar.gz。V13 重要還原點保持原樣。
 
 ## V13.2：WebM 音檔匯入修正（2026-09-23）
 
@@ -112,7 +120,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified V13.2 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified V13.3 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 

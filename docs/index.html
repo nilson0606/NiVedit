@@ -110,7 +110,8 @@ aside{background:var(--bg2);display:flex;flex-direction:column;min-height:0}
 #tlgrip:hover::after{background:var(--acc)}
 #tl{height:min(440px,calc(100vh - 330px));background:var(--bg2);border-top:1px solid var(--line);
   display:flex;flex-direction:column;flex:none;user-select:none}
-#tlbar{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--fg2)}
+#tlbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--fg2)}
+@media(max-width:1550px){#tlbar>.hint{display:none}}
 #tlwrap{flex:1;overflow:auto;position:relative;scrollbar-gutter:stable}
 #tlinner{position:relative;min-height:100%;min-width:100%;padding-bottom:4px}
 #ruler{height:18px;position:relative;border-bottom:1px solid var(--line);background:var(--bg3)}
@@ -538,6 +539,8 @@ select option.miss{color:var(--fg3)}
           <span>縮放</span>
           <input type="range" id="zoom" min="2" max="400" value="80" style="width:110px">
           <button class="gh" id="btnFit" title="讓整支影片剛好塞進視窗">符合視窗</button>
+          <button class="gh" id="btnCopy" title="複製選取物件與設定（Ctrl+C）" disabled>複製</button>
+          <button class="gh" id="btnPaste" title="貼到播放頭位置（Ctrl+V）" disabled>貼上</button>
           <button class="gh" id="btnSplit" title="在播放頭切開目前片段">✂ 分割</button>
           <button class="gh" id="btnDel" title="刪除選取項目（Delete）">刪除</button>
         </div>
@@ -5413,7 +5416,15 @@ Lo-fi 爵士	Lo-fi & jazz
 一般（預設）	Normal (default)
 短分段重試	Shorter segments
 平常使用「一般」。若停頓後漏掉後面的字幕，可選「短分段重試」再產生；結果仍需校對。	Use Normal for everyday work. If speech after a pause is missing, select Retry with shorter segments and generate again; review the results.
-在新分頁開啟 YouTube 轉 MP4 工具	Open YouTube to MP4 in a new tab`;
+在新分頁開啟 YouTube 轉 MP4 工具	Open YouTube to MP4 in a new tab
+複製選取物件與設定（Ctrl+C）	Copy selected object and settings (Ctrl+C)
+貼到播放頭位置（Ctrl+V）	Paste at playhead (Ctrl+V)
+已複製物件與設定，移動播放頭後按 Ctrl+V 貼上	Object and settings copied. Move the playhead and press Ctrl+V.
+來源素材已無法讀取，請重新匯入後複製	Source media is no longer readable. Import it again before copying.
+已貼上；影片軌有片段，已順延到可放置的位置	Pasted at the next available position on the video track.
+已貼上，設定與長度已保留	Pasted with settings and duration preserved.
+貼上失敗：	Paste failed:
+貼上	Paste`;
 
 </script>
 <script>
@@ -5638,8 +5649,8 @@ function themeInit(){
    ========================================================================== */
 'use strict';
 
-const VER = 'V13.2';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
-const VER_DATE = '2026/09/23';
+const VER = 'V13.3';          // 每次更新都會變，用來確認瀏覽器有沒有載到新版
+const VER_DATE = '2026/09/24';
 // 版號旁邊顯示的發版日期。刻意跟 VER 分成兩個 DOM 元素（#verTag / #verDate），
 // 因為十六支測試都在斷言 $('#verTag').textContent === 'vX.Y'；
 // 日期每次發版都會動，混進 #verTag 會讓那些斷言變成每次都要改。
@@ -6165,7 +6176,8 @@ function syncAutoLens(){
   const tot = totalDur();
   for (const m of A.musics){
     if (m.autoLen) m.len = Math.max(0.5, (m.loop ? tot : Math.min(musicSeg(m), tot)) - m.startAt);
-    m.len = Math.max(0.3, Math.min(m.len, Math.max(0.3, tot - m.startAt)));
+    // 貼上的配樂固定保留複製時長度，末端超過畫面仍可再延長畫面使用。
+    if (!m.preserveLen) m.len = Math.max(0.3, Math.min(m.len, Math.max(0.3, tot - m.startAt)));
   }
 }
 
@@ -6942,6 +6954,87 @@ function addTitle(startAt){
   toast('標題加在播放頭位置，可在「標題」軌左右拖、兩端拉長縮短');
 }
 
+/* 時間軸剪貼簿：只快照編輯設定；媒體在貼上時建立獨立播放元素。
+   切換專案清空，避免指向已失效的專案切片。 */
+let _timelineClipboard = null, _timelinePasting = false;
+const timelineItems = type => ({clip:A.clips, title:A.titles, overlay:A.overlays,
+  music:A.musics, sub:A.subs}[type]);
+function timelineSelected(){
+  return (timelineItems(A.sel.type) || []).find(o => o.id === A.sel.id);
+}
+function updateClipboardBtns(){
+  const copy = $('#btnCopy'), paste = $('#btnPaste');
+  if (copy) copy.disabled = A.exporting || !timelineSelected();
+  if (paste) paste.disabled = A.exporting || _timelinePasting || !_timelineClipboard;
+}
+function clearTimelineClipboard(){
+  _timelineClipboard = null;
+  updateClipboardBtns();
+}
+function copyTimelineObject(){
+  if (A.exporting) return;
+  const o = timelineSelected();
+  if (!o) return;
+  _timelineClipboard = {type:A.sel.type, data:JSON.parse(JSON.stringify(_strip(o))),
+    file:o.file, thumb:o.thumb};
+  updateClipboardBtns();
+  toast('已複製物件與設定，移動播放頭後按 Ctrl+V 貼上');
+}
+async function pasteTimelineObject(){
+  if (A.exporting || _timelinePasting || !_timelineClipboard) return;
+  const cb = _timelineClipboard, epoch = _gifEpoch;
+  const at = Math.max(0, A.playhead), type = cb.type;
+  const o = {...JSON.parse(JSON.stringify(cb.data)), id:uid()};
+  let url = null, el = null, gif = null, inserted = false;
+  _timelinePasting = true; updateClipboardBtns();
+  if (A.playing) setPlaying(false);
+  try {
+    if (type === 'clip' || type === 'music' || type === 'overlay'){
+      // 儲存覆寫專案會重新綁定檔案：優先用登記表中的最新素材。
+      const file = (MEDIA.get(cb.data.id) || {}).file || cb.file;
+      if (!file || !await fileAlive(file)) throw new Error(L('來源素材已無法讀取，請重新匯入後複製'));
+      if (type === 'overlay'){
+        const loaded = await loadOverlayImage(file);
+        url = loaded.url; el = loaded.im; gif = loaded.gif;
+        Object.assign(o, {img:el, _gif:gif});
+      } else {
+        url = URL.createObjectURL(file);
+        el = await elFor(type === 'music' ? 'audio' : isImg(o) ? 'image' : 'video', url);
+        if (type === 'clip' && !isImg(o) && el.error) throw new Error(L('媒體載入失敗'));
+        Object.assign(o, {el, video:type === 'clip' && !isImg(o) ? el : null,
+          img:type === 'clip' && isImg(o) ? el : undefined, buf:null, audioBuf:null,
+          audioTried:type === 'clip' && isImg(o)});
+      }
+      Object.assign(o, {file, url, thumb:cb.thumb});
+    }
+    if (epoch !== _gifEpoch || A.exporting) return;
+    if (type === 'clip') o.at = at;
+    else if (type === 'music') Object.assign(o, {startAt:at, autoLen:false, preserveLen:true});
+    else { o.end = at + (o.end - o.start); o.start = at; }
+    // 字幕重新綁定貼上位置，不沿用原句的素材時間。
+    if (type === 'sub') tagSub(o);
+    if (gif) gif.pending = true; // pushUndo 清理快取時先保護待加入的畫格
+    pushUndo();
+    timelineItems(type).push(o); inserted = true;
+    if (url) regMedia(o);
+    if (type === 'clip') placeClip(o, clipTrack(o), at);
+    A.sel = {type, id:o.id};
+    render(); refreshProp();
+    toast(type === 'clip' && o.at > at + 1e-6
+      ? '已貼上；影片軌有片段，已順延到可放置的位置' : '已貼上，設定與長度已保留');
+    return o;
+  } catch(e){ toast(L('貼上失敗：') + (e.message || e), true); }
+  finally {
+    if (!inserted){
+      if (!el && url) el = [...$('#videoPool').children].find(e => e.src === url);
+      if (el){ if (el.pause) el.pause(); el.removeAttribute('src'); if (el.load) el.load(); el.remove(); }
+      if (url) URL.revokeObjectURL(url);
+      if (gif){ gif.pending = false; pruneGifMedia(); }
+    }
+    _timelinePasting = false; updateClipboardBtns();
+  }
+}
+
 function delSelected(){
   const s = A.sel;
   if (s.type !== 'proj') pushUndo();
@@ -7560,6 +7653,7 @@ function pruneGifMedia(){
 }
 
 function clearGifMedia(){
+  clearTimelineClipboard();
   ++_gifEpoch;                         // 取消舊專案尚在解碼的 GIF
   for (const g of _gifAssets) closeGifAsset(g);
   _gifCache = new WeakMap();
@@ -9732,6 +9826,7 @@ function render(){
   }
   const db = $('#btnDel');
   if (db) db.textContent = A.sel.type === 'proj' ? '刪除' : `刪除${what}`;
+  updateClipboardBtns();
   renderClipList();
   renderTimeline();
 }
@@ -11492,6 +11587,8 @@ function initUI(){
   });
   $('#btnAddTitle').onclick = () => { if (!A.clips.length) return toast('先加入影片再放標題', true); addTitle(); };
   $('#btnProj').onclick = () => { A.sel = { type:'proj', id:null }; render(); refreshProp(); };
+  $('#btnCopy').onclick = copyTimelineObject;
+  $('#btnPaste').onclick = pasteTimelineObject;
   $('#btnDel').onclick = delSelected;
   $('#btnSplit').onclick = splitAtPlayhead;
   $('#playBtn').onclick = () => { if (!A.clips.length) return; setPlaying(!A.playing); };
@@ -11646,6 +11743,15 @@ function initUI(){
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')){
       if (inTextField(el)) return;
       e.preventDefault(); return redo();
+    }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && /^[cv]$/i.test(e.key)){
+      // 輸入欄、可編輯文字與對話框保留瀏覽器原生剪貼簿。
+      if (inTextField(el) || (el && el.tagName === 'SELECT') || $('dialog[open]')) return;
+      if (e.key.toLowerCase() === 'c' && window.getSelection()?.toString()) return;
+      if (e.key.toLowerCase() === 'c' ? !timelineSelected() : !_timelineClipboard) return;
+      e.preventDefault();
+      if (!e.repeat) e.key.toLowerCase() === 'c' ? copyTimelineObject() : pasteTimelineObject();
+      return;
     }
     if (e.ctrlKey || e.metaKey) return;
     /* 其他快捷鍵照舊讓給任何表單元素：空白鍵要能勾核取方塊、
@@ -12304,7 +12410,7 @@ function serialize(){
                'cropShape','cropKeep','cropX','cropY','cropW','cropH','cropSize','kf','kfT','trans','transOut','thumb','grade']),
       { mediaKey: reg(c.file, c) })),
     musics: A.musics.map(m => Object.assign(
-      pick(m, ['id','name','dur','offset','startAt','len','autoLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
+      pick(m, ['id','name','dur','offset','startAt','len','autoLen','preserveLen','vol','fadeIn','fadeOut','loop','xfade','vk']),
       { mediaKey: reg(m.file, m) })),
     overlays: A.overlays.map(o => Object.assign(
       pick(o, ['id','name','w','h','start','end','x','y','scale','opacity','rot','fadeIn','fadeOut','thumb','gifOffset','kf','kfT']),   // v10.2 起沒有 per-object z 了
