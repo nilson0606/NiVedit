@@ -1,6 +1,6 @@
-<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NiVedit · YT → MP4</title>
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NiVedit Basic · YT → MP4</title>
 <style>:root{color-scheme:dark;--bg:#10151e;--panel:#1b2432;--text:#edf3ff;--muted:#aabbd3;--border:#34425c;--accent:#a8c8ff}:root[data-theme=light]{color-scheme:light;--bg:#f1f5fc;--panel:#fff;--text:#172840;--muted:#566b86;--border:#cbd8eb;--accent:#245bb5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.75 "Segoe UI","Microsoft JhengHei",sans-serif}main{max-width:860px;margin:48px auto;padding:0 24px}header,.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}.brand{font-weight:700;color:var(--accent)}h1{font-size:38px;margin:18px 0 6px}h2{font-size:21px}p,li{color:var(--muted)}section{background:var(--panel);border:1px solid var(--border);padding:26px;border-radius:18px;margin:24px 0}a,button{color:var(--accent)}.button,button{display:inline-block;text-decoration:none;font:inherit;border:1px solid var(--border);border-radius:9px;padding:9px 15px;background:var(--panel);cursor:pointer}.primary{background:#376fd2;color:#fff;border-color:#376fd2}.note{border-left:3px solid var(--accent);padding-left:15px}.small{font-size:13px}code{overflow-wrap:anywhere}li{margin:9px 0}strong{color:var(--text)}:focus-visible{outline:3px solid var(--accent);outline-offset:4px}</style>
-<main><header><div class="brand">NiVedit · 獨立工具</div><button id="theme">白天模式</button></header>
+<main><header><div class="brand">NiVedit Basic · 獨立工具</div><button id="theme">白天模式</button></header>
 <h1>YT → MP4</h1><p>把 YouTube 影片的畫面與聲音存到電腦，再加入你的剪輯。</p>
 <section><h2>已啟動本機工具？</h2><p>按下方按鈕開啟下載介面。貼上網址、選擇 720p／1080p／4K 畫質上限，即可下載及預覽。完成後為相容的 H.264／AAC MP4；原片畫質較低時不會放大。</p>
 <div class="actions"><a class="button primary" id="openLocal" href="http://127.0.0.1:19627/?format=mp4" target="_blank" rel="noopener noreferrer">開啟本機下載器 ↗</a><a class="button" id="downloadTool" href="yt-mp3-tools/NiVedit_YT_MP3_Windows.zip" download>下載 Windows 工具</a></div>
@@ -9,7 +9,7 @@
 <li><strong>下載並解壓縮 Windows 工具。</strong>放在你可以寫入檔案的資料夾中，請勿直接在 ZIP 內執行。</li>
 <li><strong>雙擊「setup.cmd」完成初始化。</strong>需要 Windows 10／11 x64 與 <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener">Python 3.10 以上</a>。初始化會下載 yt-dlp、Node 與 FFmpeg，需網路且可能花幾分鐘；不需要管理員權限。</li>
 <li><strong>雙擊「啟動下載器.vbs」。</strong>以 Edge 開啟；之後每次使用只需啟動這個檔案。</li>
-<li><strong>完成後加入 NiVedit。</strong>在下載器按「另存 MP4」或「開啟下載資料夾」，回編輯器按「＋影片」。</li>
+<li><strong>完成後加入 NiVedit Basic。</strong>在下載器按「另存 MP4」或「開啟下載資料夾」，回編輯器按「＋影片」。</li>
 </ol><p class="note">已安裝 MP3 舊版工具的人，請先關閉工具，下載新版 ZIP 並覆蓋解壓到原工具資料夾，再啟動。MP3 與 MP4 共用這個新版工具。這是獨立功能，不會改動目前時間軸或自動替換配樂。</p></section>
 <section><h2>GitHub Pages 也能使用入口</h2><p>GitHub Pages 提供操作入口與工具下載；實際下載及 MP4 轉檔由你的電腦處理。每一台電腦都需要先啟動本機工具，無法只靠網頁執行。</p><p>工具只接受單支 YouTube 影片。影片限制、登入要求或 YouTube 更新可能導致失敗，可查看詳細訊息；更新引擎請重新執行 setup.cmd。</p><p class="small">請使用你有權下載的內容。工具不會讀取你的瀏覽器登入資料。關閉工具請用下載器內的「關閉本機工具」。</p></section>
 <a href="manual.html#timeline" target="_blank" rel="noopener">查看操作手冊 ↗</a>

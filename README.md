@@ -1,4 +1,11 @@
-# NiVedit V13.3
+# NiVedit Basic V14
+
+## NiVedit Basic V14：正式命名（2026-09-25）
+
+- 使用者確認 V13.3 複製貼上操作正常，指定將目前版本命名為「NiVedit Basic」，版號升為 V14。以已驗證的 V13.3 為基礎，更新品牌顯示與發版資訊。
+- 編輯器頁首、中英文瀏覽器標題、診斷標頭、專案存檔類型說明、操作手冊及 YT 工具入口同步顯示 Basic。NiVedit.html／NiVedit.cmd、網站網址、.nvproj 格式與瀏覽器儲存識別沿用，避免影響既有使用。
+- 既有複製貼上專項 35/35、中英文介面 41/41，品牌／版號／手冊／工具連結瀏覽器檢查 16/16；共 92 項。這次未重跑完整編輯器回歸，沒有變更剪輯、合成及專案序列化規則。
+- 驗證紀錄 qa-basic-V14/；完整來源 archive/NiVedit_Basic_原始碼_V14.tar.gz。V13 重要還原點及 V13.3 備份保留。
 
 ## V13.3：時間軸物件複製貼上（2026-09-24）
 
@@ -120,7 +127,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified V13.3 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified NiVedit Basic V14 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 
@@ -132,7 +139,7 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit v12.6 的網站與原始碼。矩形／圓形裁切可選「保留框內」（預設）或「保留框外」，框外模式會挖空框內並露出下方軌道。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit Basic V14 的網站與原始碼。矩形／圓形裁切可選「保留框內」（預設）或「保留框外」，框外模式會挖空框內並露出下方軌道。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
 

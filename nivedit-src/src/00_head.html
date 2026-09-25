@@ -9,7 +9,7 @@ try {
   document.documentElement.dataset.theme = localStorage.getItem('nv.theme') === 'light' ? 'light' : 'dark';
 } catch (e) { document.documentElement.dataset.theme = 'dark'; }
 </script>
-<title>NiVedit — 網頁版影音編輯器</title>
+<title>NiVedit Basic — 網頁版影音編輯器</title>
 <style>
 :root{
   color-scheme:dark;
@@ -66,7 +66,7 @@ label{color:var(--fg2);font-size:11px}
 #app{display:flex;flex-direction:column;flex:1 1 auto;min-height:620px;min-width:1024px}
 header{display:flex;align-items:center;gap:13px;padding:0 13px;height:48px;
   background:var(--bg2);border-bottom:1px solid var(--line);flex:none}
-.logo{font-weight:800;font-size:16px;letter-spacing:.5px}
+.logo{white-space:nowrap;font-weight:800;font-size:16px;letter-spacing:.5px}
 .logo span{color:var(--acc)}
 .badge{font-size:11px;color:var(--fg3);border:1px solid var(--line);border-radius:20px;padding:2px 8px}
 .ver{font-size:11px;font-weight:700;color:#101216;background:var(--acc);border-radius:20px;

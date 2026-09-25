@@ -372,7 +372,7 @@ async function diagReport(){
   const L = layout();
   const out = [];
   const say = x => out.push(x);
-  say(`NiVedit ${VER}`);
+  say(`NiVedit Basic ${VER}`);
   say(`瀏覽器 ${navigator.userAgent}`);
   say(`來源 ${location.protocol}  WebCodecs=${typeof VideoEncoder !== 'undefined'}`);
   say(`專案 ${A.proj.w}x${A.proj.h} ${A.proj.fps}fps fit=${A.proj.fit} ` +

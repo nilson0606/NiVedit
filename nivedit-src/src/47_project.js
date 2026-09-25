@@ -656,7 +656,7 @@ async function dirSave(asNew){
         fh = await window.showSaveFilePicker({
           suggestedName: base + '.nvproj',
           id: 'nivedit-projects',
-          types: [{ description:'NiVedit 專案', accept:{ 'application/octet-stream':['.nvproj'] } }]
+          types: [{ description:'NiVedit Basic 專案', accept:{ 'application/octet-stream':['.nvproj'] } }]
         });
       } catch(e){ return false; }                    // 使用者取消
       _curProj = { id:null, name: fh.name.replace(/\.nvproj$/i, '') };

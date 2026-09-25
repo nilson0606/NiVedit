@@ -153,8 +153,8 @@ function i18nWatch(){
 function _setTitle(){
   const v = (typeof VER === 'string' && VER) ? ' ' + VER : '';
   document.title = LANG === 'en'
-    ? `NiVedit${v} — Web Video Editor`
-    : `NiVedit${v} — 網頁版影音編輯器`;
+    ? `NiVedit Basic${v} — Web Video Editor`
+    : `NiVedit Basic${v} — 網頁版影音編輯器`;
 }
 
 function setLang(l){
