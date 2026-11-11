@@ -54,8 +54,9 @@ function demuxMP4(file){
       if (!vt || !samples.length) return rej(new Error('沒有取到封包'));
       // 取出解碼器需要的 avcC / hvcC / vpcC 設定資料
       const trak = mp4.getTrackById(vt.id);
-      let desc = null;
+      let desc = null, entry = null;
       for (const e of trak.mdia.minf.stbl.stsd.entries){
+        entry = entry || e;
         const box = e.avcC || e.hvcC || e.vpcC || e.av1C;
         if (box){
           // mp4box.all.js 把 DataStream 掛在全域，不是掛在 MP4Box 下面
@@ -71,7 +72,8 @@ function demuxMP4(file){
       // <video> 元素會自動套用它，但我們自己解出來的原始幀不會 —— 要自己轉。
       let matrix = vt.matrix;
       if (!matrix){ try { matrix = trak.tkhd.matrix; } catch(e){} }
-      res({ track: vt, samples, description: desc, timescale: vt.timescale, matrix });
+      // V15：免重壓匯出要沿用原片的色彩資訊與編輯清單起點，所以把 stsd 項目與 trak 一起交出去
+      res({ track: vt, samples, description: desc, timescale: vt.timescale, matrix, entry, trak });
     }).catch(e => { clearTimeout(to); rej(e); });
   });
 }

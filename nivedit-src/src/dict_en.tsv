@@ -1284,3 +1284,64 @@ Lo-fi 爵士	Lo-fi & jazz
 已貼上，設定與長度已保留	Pasted with settings and duration preserved.
 貼上失敗：	Paste failed:
 貼上	Paste
+準備匯出	Preparing export
+檢查能不能免重壓…	Checking whether the video can be exported without re-encoding…
+這次可以免重壓匯出	This export can skip re-encoding
+影像直接沿用原片，只重做聲音：畫質跟原片一樣，也不用一格一格重新編碼。	The video is copied straight from the source and only the audio is rebuilt: same quality as the original, with no frame-by-frame re-encoding.
+輸出尺寸：	Output size:
+原片尺寸	original size
+專案設定是	The project is set to
+。要照專案尺寸輸出，請選「依專案設定重壓」。	. To export at the project size, choose "Re-encode with project settings".
+剪頭在	The trim start is at
+秒，不在關鍵幀上。	s, which is not on a keyframe.
+免重壓會把剪頭往前移到	Exporting without re-encoding moves the trim start back to
+秒（多	s (adds
+秒），時間軸跟著調整，可以復原。	s); the timeline updates to match and you can undo it.
+依專案設定重壓	Re-encode with project settings
+免重壓匯出	Export without re-encoding
+對齊關鍵幀並免重壓匯出	Align to keyframe and export without re-encoding
+照專案的解析度、影格率、位元率重新編碼（舊的做法）	Re-encode at the project resolution, frame rate and bitrate (the previous behavior)
+影像沿用原片，只重做聲音…	Copying the source video and rebuilding only the audio…
+搬移影像封包	Copying video packets
+影片完成，尚未儲存	Video ready, not saved yet
+影片完成，請選擇位置儲存。	Video ready. Choose where to save it.
+影像沿用原片	Video copied from source:
+聲音編碼	Audio:
+免重壓：影像沒有重新編碼，畫質跟原片相同。	No re-encoding: the video was not re-encoded and matches the source quality.
+可以再按一次匯出，改選「依專案設定重壓」。	You can export again and choose "Re-encode with project settings".
+影像有重新編碼，原因：	Video was re-encoded because:
+沒有影片	there is no video
+有標題	there are titles
+有字幕	there are subtitles
+有動畫效果或疊圖	there are animation effects or overlays
+有圖片	there are images
+上層影片軌（L2）有片段	the upper video track (L2) has clips
+影片不是從 0 秒開始	the video does not start at 0 s
+有轉場	there are transitions
+有影像淡入淡出	there are video fades
+有調色或濾鏡	there are color adjustments or filters
+有裁切	there is cropping
+有位置、縮放、透明度或旋轉動態	there is position, scale, opacity or rotation motion
+有非直角的旋轉	there is a non-right-angle rotation
+瀏覽器不能編碼聲音	the browser cannot encode audio
+各段影片的編碼、尺寸或轉向不同，不能直接接起來	the clips differ in codec, size or orientation and cannot be joined directly
+片段接縫處的影像時間接不起來	the video timestamps at a clip join do not line up
+沒有可用的影像封包	no usable video packets
+選擇依專案設定重壓	you chose to re-encode with project settings
+對齊關鍵幀後仍然對不上	it still did not line up after aligning to the keyframe
+免重壓檢查失敗：	Lossless check failed:
+沒有原始影片檔	has no source video file
+前面有空白	has a gap before it
+讀不出影像封包	could not be read as video packets
+的影像編碼	video codec
+不能直接沿用	cannot be copied directly
+缺少解碼設定	is missing its decoder configuration
+的時間刻度不能直接沿用	has a timescale that cannot be copied directly
+有鏡像或縮放的轉向設定	has a mirrored or scaled orientation matrix
+的畫面尺寸和原片標示不一致	has a frame size that does not match the source
+剪頭前面找不到關鍵幀	has no keyframe before the trim start
+的關鍵幀前後有互相參照的畫面（開放式 GOP）	has frames referencing across the keyframe (open GOP)
+的剪尾位置切在畫面相依的中間	has a trim end that splits dependent frames
+耗時	Took
+太短	is too short
+未知	unknown

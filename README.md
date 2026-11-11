@@ -1,4 +1,10 @@
-# NiVedit Basic V14
+# NiVedit Basic V15
+
+## NiVedit Basic V15：免重壓匯出（2026-11-11）
+
+- 畫面上只有原片（沒有標題、字幕、圖片、動畫效果、轉場、淡入淡出、調色、裁切、構圖動態，L2 沒有片段）時，按「匯出影片」會先問要不要免重壓。選「免重壓匯出」，影像封包直接沿用原片，只重做聲音；畫質與原片相同、速度快很多，輸出尺寸＝原片。
+- 支援 H.264、HEVC（hvc1）、VP9 的 MP4／MOV。剪頭要落在關鍵幀，不在時可一鍵對齊（可復原）。不符合條件就照舊重壓，完成視窗寫出原因。
+- 驗證：免重壓專項 39/39（封包雜湊逐一相同），兩支實拍 H.264 檔封包相同；既有 18 支回歸通過，clip-options 與未修改的 V14 在同環境同一步驟相同逾時。HEVC 與 AAC 需 Windows Edge 實機確認。證據 qa-V15/；完整來源 archive/NiVedit_Basic_原始碼_V15.tar.gz。V13 重要還原點保留。
 
 ## NiVedit Basic V14：正式命名（2026-09-25）
 
@@ -127,7 +133,7 @@ Python 3 rebuilds the editor and copies the bundled assets:
 python nivedit-src/build.py docs/index.html
 ```
 
-The checked-in HTML is the verified NiVedit Basic V14 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
+The checked-in HTML is the verified NiVedit Basic V15 build. GitHub Pages serves the `docs` directory on `main`. After pushing a rebuilt `docs/index.html`, Pages updates automatically. Include docs/manual.html and docs/animation-effects/, docs/background-music/, docs/example-project/, docs/video-compat/, docs/yt-mp3-tools/ and docs/yt-mp3.html and docs/yt-mp4.html in every deployment. For local use, keep the manual, YT entry and all five asset folders beside the HTML. The source includes generated payloads, so a normal build needs only Python 3. Regenerating GIF assets needs Pillow; composing music v2/v3/v4 needs NumPy, tinysoundfont, GeneralUser GS and ffmpeg; re-encoding the sample needs ffmpeg and the original project.
 
 ## Projects and storage
 
@@ -139,7 +145,7 @@ This repository publishes the current source for reference. No open-source licen
 
 ## 繁體中文
 
-這是 NiVedit Basic V14 的網站與原始碼。矩形／圓形裁切可選「保留框內」（預設）或「保留框外」，框外模式會挖空框內並露出下方軌道。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
+這是 NiVedit Basic V15 的網站與原始碼。畫面上只有原片時可免重壓匯出（影像直接沿用原片，只重做聲音）。矩形／圓形裁切可選「保留框內」（預設）或「保留框外」，框外模式會挖空框內並露出下方軌道。建議使用桌面版 Microsoft Edge；可切換繁體中文與日／夜模式，預設夜間模式。
 
 影片、圖片及音訊在瀏覽器內處理。AI 字幕首次使用時需要下載程式與模型。從本機版本搬移專案時，請先儲存 `.nvproj`，再由網頁版本開啟。
 

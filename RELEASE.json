@@ -1,7 +1,7 @@
 {
-  "version": "14",
-  "html_sha256": "e66018f92bd1a0fb9e7e0f50cff35b02b1a2bbacb42a8b95acedf0ebf7ffe5f4",
-  "html_bytes": 1218243,
+  "version": "15",
+  "html_sha256": "24338e67d0b2d36d4215eb4ff2294971be794ef2bb2dc48a5bf7d6456c070b26",
+  "html_bytes": 1240841,
   "built_in_effects": 240,
   "built_in_music": 41,
   "music_categories": 4,
@@ -28,18 +28,34 @@
     "chapters": 16,
     "new_tab": true,
     "filename": "manual.html",
-    "revision": "2026-09-25-basic-v14",
-    "sha256": "8d2dc206a54ec4c16a934159ee329cf75bdd419e7006e9f93363dec4ba3ba8ee",
+    "revision": "2026-11-11-basic-v15",
+    "sha256": "b0f417146d4f3f49c99e9b91755d10f1f9e0f2306fdfd1d1a1de61160e38fd88",
     "audited_chapters": 16,
     "browser_checks": 38,
     "browser_checks_revision": "2026-09-18 (v12.5 manual audit)"
   },
   "targeted_regression": {
-    "clipboard": 35,
+    "passthrough": 39,
+    "crop": 62,
+    "dual_track": 45,
     "i18n": 41,
-    "branding_browser": 16
+    "keyframe_ui": 24,
+    "layers": 51,
+    "motion": 67,
+    "overlap": 31,
+    "subtitles": 56,
+    "subtitle_edit": 20,
+    "subtitle_scope": 50,
+    "title_rotation": 25,
+    "track_modes": 29,
+    "tracks": 29,
+    "volume_curve": 25,
+    "clipboard": 35,
+    "end_align": 90,
+    "rotation_save": 71,
+    "gif": 16
   },
-  "release_verification": "92 checks passed: existing clipboard 35, i18n 41 and branding/browser links 16. Basic V14 promotes the user-confirmed V13.3 build with branding/version changes. Editing/rendering/project format behavior is unchanged; full editor regression not rerun.",
+  "release_verification": "V15 lossless export: passthrough suite 39/39 (framemd5 packet-identical H.264 with B-frames, VP9, keyframe alignment, split rejoin, rotation, reasons, English UI); 2 real H.264 recordings packet-identical (4K 8.5 s exported in 0.4 s). Existing suites passed: crop 62, dual-track 45, i18n 41, keyframe-ui 24, layers 51, motion 67, overlap 31, subtitles 56, subtitle-edit 20, subtitle-scope 50, title-rotation 25, track-modes 29, tracks 29, volume-curve 25, clipboard 35, end-align 90, rotation-save 71, gif 16 assertions. clip-options times out at the same frame-grab step on unchanged V14 in the same environment. Linux headless Chromium lacks AAC and HEVC; AAC/HEVC passthrough to be confirmed on Windows Edge.",
   "crop_keep_options": [
     "inside",
     "outside"
@@ -62,9 +78,9 @@
     "zip_sha256": "ce7935bba0c75238b5c0393c03d147746882622641b229c0259b204bc8b42965",
     "public_package_excludes_private_data": true
   },
-  "display_version": "V14",
+  "display_version": "V15",
   "important_release": false,
-  "release_date": "2026-09-25",
+  "release_date": "2026-11-11",
   "previous_targeted_regression": {
     "clipboard": 35,
     "dual_track": 45,
@@ -125,5 +141,28 @@
     "undo_redo": true
   },
   "product_name": "NiVedit Basic",
-  "edition": "Basic"
+  "edition": "Basic",
+  "previous_release_verification": "92 checks passed: existing clipboard 35, i18n 41 and branding/browser links 16. Basic V14 promotes the user-confirmed V13.3 build with branding/version changes. Editing/rendering/project format behavior is unchanged; full editor regression not rerun.",
+  "lossless_export": {
+    "name": "免重壓匯出 (video passthrough)",
+    "codecs": [
+      "avc1",
+      "hvc1",
+      "vp09"
+    ],
+    "containers": [
+      "mp4",
+      "mov"
+    ],
+    "audio": [
+      "AAC",
+      "Opus fallback"
+    ],
+    "output_size": "source",
+    "asks_user": true,
+    "keyframe_start_required": true,
+    "keyframe_align_offer": true,
+    "fallback": "re-encode with reason shown",
+    "tests": 39
+  }
 }

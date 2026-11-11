@@ -1,5 +1,9 @@
 # NiVedit 回歸測試
 
+## V15 免重壓匯出
+
+`node tests/passthrough.e2e.cjs`：39 項。NIVEDIT_HTML／NIVEDIT_CHROME 指定成品與瀏覽器；素材放 NIVEDIT_PT_FIX（缺的自動用 ffmpeg 產生），輸出放 NIVEDIT_PT_OUT。用 ffmpeg framemd5 逐一比對影像封包雜湊確認沒有重新編碼，另驗剪頭對齊關鍵幀、分割接回、轉向、VP9、條件不符時的原因與中英文視窗。headless Chromium 沒有 AAC 編碼器，聲音會走 Opus 備援。
+
 ## V13.2 WebM 音訊匯入
 
 `python tests/make-webm-fixtures.py FFMPEG QA_DIRECTORY/fixtures` 產生合成素材；設定 NIVEDIT_WEBM_OUT 為 QA_DIRECTORY 後執行 `node tests/webm-audio.e2e.cjs`。涵蓋音檔選擇器、各種 MIME、Opus／Vorbis、無時長、未知 Segment 長度、有畫面 WebM、拖曳、復原重做、nvproj 重開與真實 MP4 音訊解碼。NIVEDIT_BASELINE=1 可對舊版重現六项基本檢查。

@@ -378,6 +378,7 @@ async function diagReport(){
   say(`專案 ${A.proj.w}x${A.proj.h} ${A.proj.fps}fps fit=${A.proj.fit} ` +
       `轉場=${A.clips.map(c=>clipMode(c)).join('/')} 總長=${totalDur().toFixed(2)}s ` +
       `片段=${A.clips.length} 標題=${A.titles.length} 字幕=${A.subs.length} 疊圖=${A.overlays.length}`);
+  { const why = ptQuickReason(); say(`免重壓 ${why ? '不符合：' + why : '初步符合（匯出時再核對原片封包）'}`); }
   for (let i = 0; i < A.clips.length; i++){
     const c = A.clips[i];
     const el = c.video || c.img;
@@ -547,6 +548,331 @@ async function buildAudio(total){
   return oc.startRendering();
 }
 
+/* ── V15 免重壓匯出（影像直通） ───────────────────────────────
+   使用者的情境：影片本身完全沒動，只換配樂。以前一樣會把整支片解碼、
+   畫到畫布、再壓一次 H.264 —— 畫質掉一代，時間也全花在跑影格上。
+
+   這裡判斷「畫面上只有原片」的時候，直接把原片已壓縮的影像封包搬進新的 MP4，
+   只重做聲音。條件刻意寫得很嚴：只要有任何一樣東西會改到畫面就照舊重壓，
+   並把原因寫在完成視窗，不讓使用者猜。
+
+   幾個細節：
+   1. 時間一律用原片自己的 timescale 整數單位算，muxer 也用同一個 timescale，
+      封包時間逐一對得回去，不會有浮點誤差。
+   2. 有 B 幀的片子，第一格的 DTS 會比 PTS 早。MP4 沒有編輯清單時，每條軌的
+      第一個 DTS 都算 0 秒，所以影像第一格會晚出現（例如 2 格）。聲音前面就
+      補同樣長度的靜音，兩邊才會對齊 —— 實測過不補會差 67ms。
+   3. 剪頭只能剪在關鍵幀上。不在的話，問使用者要不要把剪頭往前對齊到
+      前一個關鍵幀（時間軸會跟著變，可復原），不偷偷改。
+   ─────────────────────────────────────────────────────────── */
+const PT_CODECS = { avc1:'avc', hvc1:'hevc', vp09:'vp9' };
+const PT_LABEL  = { avc:'H.264', hevc:'HEVC', vp9:'VP9' };
+// mp4-muxer 的 colr 只認得這幾個值；認不得就不寫 colr，交給影像串流裡的 VUI
+const PT_PRIM = { 1:'bt709', 5:'bt470bg', 6:'smpte170m' };
+const PT_TRC  = { 1:'bt709', 6:'smpte170m', 13:'iec61966-2-1' };
+const PT_MTX  = { 0:'rgb', 1:'bt709', 5:'bt470bg', 6:'smpte170m' };
+const PT_AAC  = { codec:'mp4a.40.2', sampleRate:48000, numberOfChannels:2, bitrate:192000 };
+const PT_OPUS = { codec:'opus', sampleRate:48000, numberOfChannels:2, bitrate:128000 };
+/** 聲音用哪一種：AAC 優先（Windows Edge／Chrome 都有）；沒有 AAC 的瀏覽器退回 MP4 裝 Opus */
+async function ptAudio(){
+  if (typeof AudioEncoder === 'undefined') return null;
+  for (const [cfg, mux, label] of [[PT_AAC, 'aac', 'AAC'], [PT_OPUS, 'opus', 'Opus']]){
+    try { if ((await AudioEncoder.isConfigSupported(cfg)).supported) return { cfg, mux, label }; } catch(e){}
+  }
+  return null;
+}
+let _ptBusy = false;
+
+/** 不用讀檔就能判斷的條件。回傳原因；空字串＝初步符合。 */
+function ptQuickReason(){
+  if (!A.clips.length) return '沒有影片';
+  if (A.titles.length) return '有標題';
+  if (A.subs.length) return '有字幕';
+  if (A.overlays.length) return '有動畫效果或疊圖';
+  const L = layout();
+  const num = (v, d) => Number.isFinite(+v) && v !== null && v !== '' ? +v : d;
+  const on = t => !!(t && t.type && t.type !== 'none' && (+t.dur || 0) > 0);
+  let end = 0;
+  for (let i = 0; i < A.clips.length; i++){
+    const c = A.clips[i], q = L[i];
+    if (isImg(c)) return '有圖片';
+    if (clipTrack(c) !== 0) return '上層影片軌（L2）有片段';
+    if (!c.video || !c.file) return `「${c.name}」沒有原始影片檔`;
+    if (Math.abs(q.startAt - end) > 1e-3) return i ? `「${c.name}」前面有空白` : '影片不是從 0 秒開始';
+    if (on(c.trans) || on(c.transOut)) return '有轉場';
+    if (num(c.fadeIn, 0) > 0 || num(c.fadeOut, 0) > 0) return '有影像淡入淡出';
+    if (c.grade && hasGrade(c.grade)) return '有調色或濾鏡';
+    if (c.cropShape === 'rect' || c.cropShape === 'circle') return '有裁切';
+    if (kfOn(c) || Math.abs(num(c.x, .5) - .5) > 1e-9 || Math.abs(num(c.y, .5) - .5) > 1e-9 ||
+        Math.abs(num(c.scale, 1) - 1) > 1e-9 || Math.abs(num(c.opacity, 1) - 1) > 1e-9 ||
+        Math.abs(num(c.motionRot, 0)) > 1e-9)
+      return '有位置、縮放、透明度或旋轉動態';
+    if (num(c.rot, 0) % 90 !== 0) return '有非直角的旋轉';
+    end = q.end;
+  }
+  return '';
+}
+
+/** tkhd 矩陣必須是單純的 0／90／180／270 度，不能有鏡像或縮放；回傳度數，不是就回 null */
+function ptMatrixRot(m){
+  if (!m || m.length < 5) return 0;
+  const a = m[0], b = m[1], c = m[3], d = m[4], U = 65536;
+  if (a === U && b === 0 && c === 0 && d === U) return 0;
+  if (a === 0 && b === U && c === -U && d === 0) return 90;
+  if (a === -U && b === 0 && c === 0 && d === -U) return 180;
+  if (a === 0 && b === -U && c === U && d === 0) return 270;
+  return null;
+}
+function ptColor(entry, kind){
+  const boxes = (entry && entry.boxes) || [];
+  const cl = boxes.find(b => b && b.type === 'colr' && b.colour_type === 'nclx');
+  if (kind === 'vp9'){          // mp4-muxer 寫 VP9 一定要有 colorSpace；它只用到 fullRange
+    const v = entry && entry.vpcC;
+    return { primaries:'bt709', transfer:'bt709', matrix:'bt709',
+             fullRange: !!(v ? v.videoFullRangeFlag : cl && cl.full_range_flag) };
+  }
+  if (!cl) return null;
+  const p = PT_PRIM[cl.colour_primaries], t = PT_TRC[cl.transfer_characteristics], m = PT_MTX[cl.matrix_coefficients];
+  if (!p || !t || !m) return null;
+  return { primaries:p, transfer:t, matrix:m, fullRange: !!cl.full_range_flag };
+}
+const ptHex = u => u ? Array.from(u, x => x.toString(16).padStart(2, '0')).join('') : '';
+const ptSec = t => (Math.round(t * 100) / 100).toFixed(2);
+
+/** 讀原片、逐段核對，算出每一個影像封包在新檔裡的時間。
+    cache：同一個檔案只拆一次（分割過的片段共用同一支原片）。
+    回傳 { ok:false, why } 或 { ok:true, ref, out, snaps, bytes } */
+async function ptPlan(cache){
+  const why = ptQuickReason();
+  const no = w => ({ ok:false, why:w });
+  if (why) return no(why);
+  const audio = await ptAudio();
+  if (!audio) return no('瀏覽器不能編碼聲音');
+
+  const out = [], snaps = [];
+  let ref = null, startU = 0, bytes = 0;
+  for (let i = 0; i < A.clips.length; i++){
+    const c = A.clips[i], last = i === A.clips.length - 1;
+    let d = cache.get(c.file);
+    if (!d){
+      try { d = await demuxMP4(c.file); }
+      catch(e){ return no(`「${c.name}」讀不出影像封包（${e && e.message || e}）`); }
+      cache.set(c.file, d);
+    }
+    const codec = String(d.track.codec || ''), kind = PT_CODECS[codec.slice(0, 4)];
+    if (!kind) return no(`「${c.name}」的影像編碼 ${codec.split('.')[0] || '未知'} 不能直接沿用`);
+    if (kind !== 'vp9' && !d.description) return no(`「${c.name}」缺少解碼設定`);
+    const ts = d.timescale;
+    if (!Number.isInteger(ts) || ts <= 0 || ts > 1e6) return no(`「${c.name}」的時間刻度不能直接沿用`);
+    const fileRot = ptMatrixRot(d.matrix);
+    if (fileRot === null) return no(`「${c.name}」有鏡像或縮放的轉向設定`);
+    const W = d.track.video.width, H = d.track.video.height;
+    const sw = fileRot % 180 ? H : W, sh = fileRot % 180 ? W : H;
+    if (c.w && c.h && (c.w !== sw || c.h !== sh)) return no(`「${c.name}」的畫面尺寸和原片標示不一致`);
+    const rot = (((fileRot + (+c.rot || 0)) % 360) + 360) % 360;
+    const sig = [codec, W, H, ts, rot, ptHex(d.description)].join('|');
+    if (ref && sig !== ref.sig) return no('各段影片的編碼、尺寸或轉向不同，不能直接接起來');
+    if (!ref) ref = { sig, kind, codec, W, H, ts, rot, desc: d.description, color: ptColor(d.entry, kind) };
+
+    // 原片時間 0 對到哪一個 cts：有編輯清單就用它的起點，沒有就用最早的 cts
+    const S = d.samples;
+    let base = Infinity;
+    try {
+      const el = d.trak.edts.elst.entries.find(e => e.media_time >= 0);
+      if (el) base = el.media_time;
+    } catch(e){}
+    if (!Number.isFinite(base)) base = S.reduce((m, s) => Math.min(m, s.cts), Infinity);
+    const tOf = s => (s.cts - base) / ts;
+    const tol = Math.max(0.001, ((S[0].duration || 1) / ts) / 2);
+
+    let k = -1, prevKey = -1;
+    for (let j = 0; j < S.length; j++){
+      if (!S[j].is_sync) continue;
+      const t = tOf(S[j]);
+      if (Math.abs(t - c.inP) <= tol){ k = j; break; }
+      if (t < c.inP) prevKey = j; else break;
+    }
+    if (k < 0){
+      if (prevKey < 0) return no(`「${c.name}」剪頭前面找不到關鍵幀`);
+      snaps.push({ c, from: c.inP, to: tOf(S[prevKey]) });
+      continue;                                  // 先問使用者，同意後整個重算
+    }
+    const inT = tOf(S[k]), outT = c.outP;
+    let mx = -1;
+    for (let j = k; j < S.length; j++){ const t = tOf(S[j]); if (t >= inT - tol && t < outT - tol) mx = j; }
+    if (mx < 0) return no(`「${c.name}」太短`);
+    let extra = 0, endCts = Infinity, maxEnd = -Infinity;
+    for (let j = k; j <= mx; j++){
+      const t = tOf(S[j]);
+      if (t < inT - tol) return no(`「${c.name}」的關鍵幀前後有互相參照的畫面（開放式 GOP）`);
+      if (t >= outT - tol) extra++;
+      maxEnd = Math.max(maxEnd, S[j].cts + (S[j].duration || 0));
+    }
+    if (extra && !last) return no(`「${c.name}」的剪尾位置切在畫面相依的中間`);
+    for (let j = k; j < S.length; j++){ const t = tOf(S[j]); if (t >= outT - tol) endCts = Math.min(endCts, S[j].cts); }
+    const k0 = S[k].cts;
+    for (let j = k; j <= mx; j++){
+      const s = S[j];
+      out.push({ s, pts: s.cts - k0 + startU, dts: s.dts - k0 + startU });
+      bytes += s.size || (s.data ? s.data.byteLength : 0);
+    }
+    startU += (Number.isFinite(endCts) && !extra ? endCts : maxEnd) - k0;
+  }
+  if (snaps.length) return { ok:true, ref, out:[], snaps, bytes:0, audio };
+  for (let j = 1; j < out.length; j++)
+    if (out[j].dts <= out[j - 1].dts) return no('片段接縫處的影像時間接不起來');
+  if (!out.length) return no('沒有可用的影像封包');
+  return { ok:true, ref, out, snaps, bytes, audio };
+}
+
+/** 匯出前先判斷；可以免重壓就問使用者要哪一種。
+    回傳 { mode:'pass', plan } / { mode:'encode', why } / { mode:'cancel' } */
+async function ptChoose(){
+  const quick = ptQuickReason();
+  if (quick) return { mode:'encode', why:quick };
+  const cache = new Map();
+  const check = async () => {
+    mShow('準備匯出', '檢查能不能免重壓…');
+    $('#mCancel').classList.add('hide');
+    try { return await ptPlan(cache); }
+    catch(e){ return { ok:false, why:'免重壓檢查失敗：' + (e && e.message || e) }; }
+    finally { $('#mask').classList.remove('on'); }
+  };
+  let plan = await check();
+  if (!plan.ok) return { mode:'encode', why:plan.why };
+  const R = plan.ref;
+  const ow = R.rot % 180 ? R.H : R.W, oh = R.rot % 180 ? R.W : R.H;
+  let msg = '<div>影像直接沿用原片，只重做聲音：畫質跟原片一樣，也不用一格一格重新編碼。</div>' +
+            `<div style="margin-top:8px"><span>輸出尺寸：</span> <b>${ow}×${oh}</b>　<span>原片尺寸</span>　${PT_LABEL[R.kind]}</div>`;
+  if (ow !== A.proj.w || oh !== A.proj.h)
+    msg += `<div class="hint" style="margin-top:6px"><span>專案設定是</span> <b>${A.proj.w}×${A.proj.h}</b>` +
+           '<span>。要照專案尺寸輸出，請選「依專案設定重壓」。</span></div>';
+  for (const s of plan.snaps)
+    msg += '<div class="hint" style="margin-top:8px;color:var(--warn)">' +
+           `<span data-nt>「${esc(s.c.name)}」</span><span>剪頭在 </span>${ptSec(s.from)}<span> 秒，不在關鍵幀上。</span>` +
+           `<span>免重壓會把剪頭往前移到 </span>${ptSec(s.to)}<span> 秒（多 </span>${ptSec(s.from - s.to)}` +
+           '<span> 秒），時間軸跟著調整，可以復原。</span></div>';
+  const k = await asrAsk('這次可以免重壓匯出', msg, [
+    { k:'cancel', label:'取消' },
+    { k:'encode', label:'依專案設定重壓', title:'照專案的解析度、影格率、位元率重新編碼（舊的做法）' },
+    { k:'pass', label: plan.snaps.length ? '對齊關鍵幀並免重壓匯出' : '免重壓匯出', pri:true }
+  ]);
+  if (k === 'cancel') return { mode:'cancel' };
+  if (k === 'encode') return { mode:'encode', why:'選擇依專案設定重壓' };
+  if (plan.snaps.length){
+    pushUndo();
+    for (const s of plan.snaps) s.c.inP = s.to;
+    syncAutoLens();
+    if (typeof render === 'function') render();
+    if (typeof refreshProp === 'function') refreshProp();
+    plan = await check();
+    if (!plan.ok) return { mode:'encode', why:plan.why };
+    if (plan.snaps.length) return { mode:'encode', why:'對齊關鍵幀後仍然對不上' };
+  }
+  return { mode:'pass', plan };
+}
+
+/** 影像封包原封不動搬進新 MP4，聲音照原本的混音重新編 AAC */
+async function exportPassthrough(plan){
+  A.exporting = true; cancelExport = false;
+  $('#mCancel').onclick = () => { cancelExport = true; $('#mLog').textContent = '取消中…'; };
+  mShow('匯出中', '影像沿用原片，只重做聲音…');
+  const t0 = performance.now(), R = plan.ref;
+  let aEnc = null;
+  try {
+    if (typeof revalidateMedia === 'function'){
+      const rv = await revalidateMedia();
+      if (!rv.ok && rv.lost.length) throw new Error('這些素材已經讀不到了：' + rv.lost.join('、'));
+    }
+    const total = totalDur();
+    mProg(3, '混音中…');
+    const pcm = await buildAudio(total);
+    if (cancelExport) throw new Error('__cancel__');
+
+    const target = new Mp4Muxer.ArrayBufferTarget();
+    const muxer = new Mp4Muxer.Muxer({
+      target,
+      video: { codec:R.kind, width:R.W, height:R.H, rotation:R.rot, frameRate:R.ts },
+      audio: { codec:plan.audio.mux, numberOfChannels:2, sampleRate:48000 },
+      fastStart: 'in-memory',
+      // 兩條軌各自從 0 起算。不要用 cross-track-offset：它會把聲音第一個封包
+      // 的長度撐大來補位，結果聲音晚了兩倍、中間還夾一段空白（實測抓到）。
+      firstTimestampBehavior: 'offset'
+    });
+    const dc = { codec:R.codec, codedWidth:R.W, codedHeight:R.H };
+    if (R.desc) dc.description = R.desc;
+    if (R.color) dc.colorSpace = R.color;
+    const us = u => u * 1e6 / R.ts;
+    const N = plan.out.length;
+    for (let n = 0; n < N; n++){
+      if (cancelExport) throw new Error('__cancel__');
+      const o = plan.out[n], s = o.s;
+      const data = s.data instanceof Uint8Array ? s.data : new Uint8Array(s.data);
+      muxer.addVideoChunkRaw(data, s.is_sync ? 'key' : 'delta', us(o.pts), us(s.duration || 0),
+        n === 0 ? { decoderConfig: dc } : undefined, us(o.pts - o.dts));
+      if (n % 240 === 0 || n === N - 1){
+        mProg(8 + (n + 1) / N * 72, `搬移影像封包 ${n + 1} / ${N}`);
+        await yieldNow();
+      }
+    }
+
+    mProg(82, '編碼音訊…');
+    let aErr = null;
+    aEnc = new AudioEncoder({ output:(chunk, meta) => muxer.addAudioChunk(chunk, meta), error:e => { aErr = e; } });
+    aEnc.configure(plan.audio.cfg);
+    const sr = pcm.sampleRate;
+    const L0 = pcm.getChannelData(0), R0 = pcm.numberOfChannels > 1 ? pcm.getChannelData(1) : L0;
+    // 影像第一格實際出現的時間（見上面第 2 點），聲音前面補這麼長的靜音
+    const lead = Math.max(0, -plan.out[0].dts) / R.ts, pad = Math.round(lead * sr);
+    const len = pad + pcm.length;
+    for (let off = 0; off < len; off += 1024){
+      if (cancelExport) throw new Error('__cancel__');
+      if (aErr) throw aErr;
+      const n = Math.min(1024, len - off), data = new Float32Array(n * 2);
+      const a0 = Math.max(off, pad), a1 = off + n;          // 這一塊裡真正有聲音的範圍
+      if (a1 > a0){
+        data.set(L0.subarray(a0 - pad, a1 - pad), a0 - off);
+        data.set(R0.subarray(a0 - pad, a1 - pad), n + a0 - off);
+      }
+      const ad = new AudioData({ format:'f32-planar', sampleRate:sr, numberOfFrames:n, numberOfChannels:2,
+                                 timestamp: Math.round(off / sr * 1e6), data });
+      aEnc.encode(ad); ad.close();
+      await drain(aEnc, 12);
+    }
+    await aEnc.flush();
+    if (aErr) throw aErr;
+    aEnc.close(); aEnc = null;
+
+    mProg(97, '封裝檔案…');
+    muxer.finalize();
+    const blob = new Blob([target.buffer], { type:'video/mp4' });
+    const name = `NiVedit_${new Date().toISOString().slice(0,19).replace(/[:T-]/g,'').slice(0,14)}.mp4`;
+    const ow = R.rot % 180 ? R.H : R.W, oh = R.rot % 180 ? R.W : R.H;
+    const mb = (blob.size / 1048576).toFixed(1), secs = Math.max(0, Math.round((performance.now() - t0) / 1000));
+    mDone(typeof window.showSaveFilePicker === 'function' ? '影片完成，尚未儲存' : '匯出完成', name,
+      `MP4　<span>影像沿用原片</span> ${PT_LABEL[R.kind]}　<span>聲音編碼</span> ${plan.audio.label}　${ow}×${oh}　${mb} MB　` +
+      `<span>耗時 </span>${secs}<span> 秒</span>` +
+      '<br><span style="color:var(--ok, var(--acc))">免重壓：影像沒有重新編碼，畫質跟原片相同。</span>');
+    offerExportSave(blob, name);
+    toast(typeof window.showSaveFilePicker === 'function' ? '影片完成，請選擇位置儲存。' : '匯出完成');
+  } catch(err){
+    if (String(err && err.message) === '__cancel__'){
+      $('#mask').classList.remove('on');
+      toast('已取消匯出');
+    } else {
+      console.error(err);
+      mDone('匯出失敗', '', `<span style="color:var(--danger)">${esc(err && err.message || err)}</span>` +
+        '<br><span>可以再按一次匯出，改選「依專案設定重壓」。</span>');
+    }
+  } finally {
+    try { if (aEnc && aEnc.state !== 'closed') aEnc.close(); } catch(e){}
+    plan.out = null;
+    A.exporting = false;
+    if (typeof markDirty === 'function') markDirty(700);
+    _last = performance.now();
+  }
+}
+
 /* ── 主流程 ────────────────────────────────────────────────── */
 async function startExport(){
   if (A.exporting) return;
@@ -557,6 +883,21 @@ async function startExport(){
   if (total < 0.1){ toast('影片長度太短', true); return; }
 
   setPlaying(false);
+  /* V15：畫面上只有原片時，先問要不要免重壓（影像直通）。
+     不符合條件就照舊重壓，原因寫在完成視窗。 */
+  if (_ptBusy) return;
+  let ptWhy = '';
+  _ptBusy = true;
+  try {
+    const pick = await ptChoose();
+    if (pick.mode === 'cancel') return;
+    if (pick.mode === 'pass') return await exportPassthrough(pick.plan);
+    ptWhy = pick.why || '';
+  } catch(e){
+    ptWhy = '免重壓檢查失敗：' + (e && e.message || e);
+  } finally { _ptBusy = false; }
+  if (A.exporting) return;
+
   A.exporting = true; cancelExport = false;
   $('#mCancel').onclick = () => { cancelExport = true; $('#mLog').textContent = '取消中…'; };
   $('#mClose').onclick = () => { $('#mask').classList.remove('on'); };
@@ -779,6 +1120,7 @@ async function startExport(){
       `<br><span style="color:var(--fg3)">每格花費：取幀 ${(msDecode/nFrames).toFixed(1)} ms　`+
       `合成 ${(msRender/nFrames).toFixed(1)} ms　編碼 ${(msEncode/nFrames).toFixed(1)} ms　`+
       `（合計 ${((msDecode+msRender+msEncode)/nFrames).toFixed(1)} ms）</span>` +
+      (ptWhy ? `<br><span style="color:var(--fg3)"><span>影像有重新編碼，原因：</span> ${esc(ptWhy)}</span>` : '') +
       (cap.note ? `<br><br><span style="color:var(--warn)">⚠ ${cap.note}</span>` : ''));
     offerExportSave(blob, name);
     toast(typeof window.showSaveFilePicker === 'function' ? '影片編碼完成，請選擇位置儲存。' : '匯出完成');
